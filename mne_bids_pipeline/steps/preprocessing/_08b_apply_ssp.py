@@ -14,7 +14,7 @@ from mne_bids_pipeline._config_utils import (
     _limit_which_clean,
     _proj_path,
 )
-from mne_bids_pipeline._import_data import _get_run_rest_noise_path, _import_data_kwargs
+from mne_bids_pipeline._import_data import _get_run_rest_noise_path, _raw_path_kwargs
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
 from mne_bids_pipeline._report import _add_raw, _open_report
@@ -161,9 +161,10 @@ def get_config(
     session: str | None,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        processing="filt" if config.regress_artifact is None else "regress",
         _epochs_split_size=config._epochs_split_size,
-        **_import_data_kwargs(config=config, subject=subject, session=session),
+        plot_psd_for_runs=config.plot_psd_for_runs,
+        _raw_split_size=config._raw_split_size,
+        **_raw_path_kwargs(config=config, subject=subject, session=session),
     )
     return cfg
 

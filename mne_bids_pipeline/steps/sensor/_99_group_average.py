@@ -26,6 +26,7 @@ from mne_bids_pipeline._config_utils import (
     get_sessions,
     get_subjects,
     get_subjects_given_session,
+    get_subjects_sessions,
 )
 from mne_bids_pipeline._decoding import _handle_csp_args
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
@@ -545,7 +546,7 @@ def average_time_by_time_decoding(
             f"resamples. CI must not be used for statistical inference here, "
             f"as it is not corrected for multiple testing."
         )
-        if len(get_subjects(cfg)) > 1:
+        if len(cfg.subjects) > 1:
             caption += (
                 f" Time periods with decoding performance significantly above "
                 f"chance, if any, were derived with a one-tailed "
@@ -565,7 +566,7 @@ def average_time_by_time_decoding(
             plt.close(fig)
 
         # Plot t-values used to form clusters
-        if len(get_subjects(cfg)) > 1:
+        if len(cfg.subjects) > 1:
             fig = plot_time_by_time_decoding_t_values(decoding_data=decoding_data)
             t_threshold = np.round(decoding_data["cluster_t_threshold"], 3).item()
             caption = (
@@ -1052,8 +1053,8 @@ def get_config(
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
         subjects=get_subjects(config),
+        subjects_sessions=get_subjects_sessions(config),
         allow_missing_sessions=config.allow_missing_sessions,
-        task_is_rest=config.task_is_rest,
         conditions=_get_task_conditions_dict(conditions=config.conditions, task=task),
         contrasts=_get_task_contrasts(contrasts=config.contrasts, task=task),
         epochs_tmin=_get_task_float(config.epochs_tmin, task=task),
@@ -1078,12 +1079,8 @@ def get_config(
         interpolate_bads_grand_average=config.interpolate_bads_grand_average,
         ch_types=config.ch_types,
         eeg_reference=get_eeg_reference(config),
-        sessions=get_sessions(config),
-        exclude_subjects=config.exclude_subjects,
         report_evoked_n_time_points=config.report_evoked_n_time_points,
         cluster_permutation_p_threshold=config.cluster_permutation_p_threshold,
-        # TODO: needed because get_datatype gets called again...
-        data_type=config.data_type,
         **_bids_kwargs(config=config),
     )
     return cfg

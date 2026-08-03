@@ -382,7 +382,6 @@ def get_config(
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
         ch_types=config.ch_types,
-        run_source_estimation=config.run_source_estimation,
         noise_cov=_sanitize_callable(config.noise_cov),
         conditions=config.conditions,
         contrasts=config.contrasts,

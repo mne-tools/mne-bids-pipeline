@@ -423,6 +423,12 @@ def test_session_specific_mri(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     """Test of (faked) session-specific MRIs."""
+    # The BIDS side of this dataset is ~1.8G, and the pipeline only ever reads it
+    # (everything it writes goes under deriv_root, set below), so symlink rather
+    # than copy -- copying it does not fit in a typical /tmp tmpfs. The FreeSurfer
+    # derivatives below are copied for real, because source/_01_make_bem_surfaces
+    # can write BEM surfaces into subjects_dir, which through a symlink would
+    # corrupt the user's cached dataset.
     dataset = "MNE-funloc-data"
     test_options = TEST_SUITE[dataset]
     config = test_options.get("config", f"config_{dataset}.py")
@@ -454,13 +460,11 @@ def test_session_specific_mri(
                 # `raw.info["subject_info"]["his_id"]` is not necessary because MNE-BIDS
                 # overwrites it with the value in `participants.tsv` anyway.
                 else:
-                    shutil.copyfile(
-                        src=walk_root / _file, dst=dst_dir / offset / bp.basename
-                    )
+                    os.symlink(walk_root / _file, dst_dir / offset / bp.basename)
     # emptyroom
     src_dir = config_obj.bids_root / "sub-emptyroom"
     dst_dir = new_bids_path.root / "sub-emptyroom"
-    shutil.copytree(src=src_dir, dst=dst_dir)
+    shutil.copytree(src=src_dir, dst=dst_dir, copy_function=os.symlink)
     # root-level files (dataset description, etc)
     src_dir = config_obj.bids_root
     dst_dir = new_bids_path.root
@@ -468,7 +472,7 @@ def test_session_specific_mri(
     for _file in files:
         # in theory we should rewrite `participants.tsv` to remove the `sub-02` line,
         # but in practice it will just get ignored so we won't bother.
-        shutil.copyfile(src=_file, dst=dst_dir / _file.name)
+        os.symlink(_file, dst_dir / _file.name)
     # derivatives (freesurfer files)
     src_dir = config_obj.bids_root / "derivatives" / "freesurfer" / "subjects"
     dst_dir = new_bids_path.root / "derivatives" / "freesurfer" / "subjects"

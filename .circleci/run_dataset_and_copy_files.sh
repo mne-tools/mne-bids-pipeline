@@ -47,6 +47,10 @@ else
 fi
 test $RUN_TIME -le $RERUN_LIMIT
 
+# Merge in coverage from loky/dask workers; --append keeps the parent's data.
+coverage combine --append || true
+coverage xml || true
+
 if [[ "$COPY_FILES" == "false" ]]; then
   echo -e "${EMPH}Not copying files${RESET}"
   exit 0

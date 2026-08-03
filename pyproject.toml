@@ -104,6 +104,21 @@ interactive = 3
 enable-colors = ""
 count = ""
 
+[tool.coverage.run]
+source = ["mne_bids_pipeline"]
+# Measure loky/dask workers, too; reports need `coverage combine --append`.
+patch = ["subprocess", "_exit"]  # fork/execv raise on Windows
+parallel = true
+concurrency = ["multiprocessing", "thread"]
+sigterm = true  # dask kills workers rather than letting them exit
+
+[tool.coverage.report]
+exclude_also = [
+  "if TYPE_CHECKING:",
+  "raise NotImplementedError",
+  "@overload",
+]
+
 [tool.hatch.version]
 source = "vcs"
 raw-options = { version_scheme = "release-branch-semver" }
@@ -120,17 +135,21 @@ exclude = [
   "ignore_words.txt",
 ]
 
-[tool.pytest]
+[tool.pytest.ini_options]
 addopts = [
-  "--cov-report=",
   "--cov=mne_bids_pipeline",
+  "--cov-report=xml",
   "--durations=10",
   "--junit-xml=junit-results.xml",
+  "--strict-markers",
   "--tb=short",
   "-ra",
-  "-vv"
+  "-vv",
 ]
 junit_family = "xunit2"
+markers = [
+  "dataset_test: a test that downloads and processes a real BIDS dataset",
+]
 testpaths = ["mne_bids_pipeline"]
 
 [tool.ruff]

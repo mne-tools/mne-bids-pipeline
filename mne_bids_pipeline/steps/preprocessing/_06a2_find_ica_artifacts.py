@@ -20,7 +20,6 @@ from mne_bids import BIDSPath
 from mne_bids_pipeline._config_utils import (
     _bids_kwargs,
     _get_ss,
-    get_eeg_reference,
     get_eog_channels,
     get_runs_tasks,
 )
@@ -593,7 +592,6 @@ def get_config(
         ica_exclusion_thresholds=config.ica_exclusion_thresholds,
         ica_class_thresholds=config.ica_class_thresholds,
         ch_types=config.ch_types,
-        eeg_reference=get_eeg_reference(config),
         eog_channels=config.eog_channels,
         processing="filt" if config.regress_artifact is None else "regress",
         **_bids_kwargs(config=config),

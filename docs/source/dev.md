@@ -28,3 +28,4 @@
 ### :medical_symbol: Code health and infrastructure
 
 - Pinned Python version for development to 3.13. (#1243 by @hoechenberger)
+- Improved the accounting of options used in each step (#1268 by @larsoner)

@@ -26,6 +26,9 @@ jobs:
     - run: pip install -ve . --group dev "mne-bids[full] @ git+https://github.com/mne-tools/mne-bids@main" "openneuro-py @ https://api.github.com/repos/openneuro-py/openneuro-py/zipball/main" codespell tomli --only-binary="numpy,scipy,pandas,matplotlib,pyarrow,numexpr"
     - run: lefthook run pre-commit --all-files  # fail early if code style issues!
     - run: pytest mne_bids_pipeline -m "not dataset_test"
+    # merge in coverage from loky/dask workers; see [tool.coverage.run]
+    - run: coverage combine --append || true
+    - run: coverage xml || true
     - uses: codecov/codecov-action@v7
       if: success()
       name: 'Upload coverage to CodeCov'
@@ -79,6 +82,8 @@ jobs:
       - run: pytest --cov-append -k ${{ matrix.dataset }} mne_bids_pipeline/
         timeout-minutes: 1
         name: Rerun ${{ matrix.dataset }} test to check all steps cached
+      - run: coverage combine --append || true
+      - run: coverage xml || true
       - uses: codecov/codecov-action@v7
         if: success() || failure()
   non-doc-dataset-tests:
@@ -108,3 +113,8 @@ jobs:
       - run: python -m mne_bids_pipeline._download MNE-funloc-data
         if: steps.MNE-funloc-data-cache.outputs.cache-hit != 'true'
       - run: pytest --cov-append -k test_session_specific_mri mne_bids_pipeline/
+      - run: coverage combine --append || true
+      - run: coverage xml || true
+      - uses: codecov/codecov-action@v7
+        if: success()
+        name: 'Upload coverage to CodeCov'

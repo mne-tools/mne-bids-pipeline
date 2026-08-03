@@ -8,9 +8,8 @@ import pandas as pd
 from mne_bids_pipeline._config_utils import (
     _do_mf_autobad,
     _get_ssrt,
+    _mf_cal_kwargs,
     _pl,
-    get_mf_cal_fname,
-    get_mf_ctc_fname,
 )
 from mne_bids_pipeline._import_data import (
     _bads_path,
@@ -355,26 +354,17 @@ def get_config(
     subject: str,
     session: str | None,
 ) -> SimpleNamespace:
+    # only needed when we actually run automatic bad-channel detection
+    # If these change, need to update hooks.py in doc build
     extra_kwargs = dict()
     if config.find_noisy_channels_meg or config.find_flat_channels_meg:
-        # If these change, need to update hooks.py in doc build
-        extra_kwargs["mf_cal_fname"] = get_mf_cal_fname(
-            config=config,
-            subject=subject,
-            session=session,
-        )
-        extra_kwargs["mf_ctc_fname"] = get_mf_ctc_fname(
-            config=config,
-            subject=subject,
-            session=session,
-        )
-        extra_kwargs["mf_head_origin"] = config.mf_head_origin
+        extra_kwargs = _mf_cal_kwargs(config=config, subject=subject, session=session)
     cfg = SimpleNamespace(
-        # These are included in _import_data_kwargs for automatic add_bads
-        # detection
-        # find_flat_channels_meg=config.find_flat_channels_meg,
-        # find_noisy_channels_meg=config.find_noisy_channels_meg,
-        # find_bad_channels_extra_kws=config.find_bad_channels_extra_kws,
+        # automatic add_bads detection; this is the only step that does it
+        find_flat_channels_meg=config.find_flat_channels_meg,
+        find_noisy_channels_meg=config.find_noisy_channels_meg,
+        find_bad_channels_extra_kws=config.find_bad_channels_extra_kws,
+        plot_psd_for_runs=config.plot_psd_for_runs,
         **_import_data_kwargs(config=config, subject=subject, session=session),
         **extra_kwargs,
     )

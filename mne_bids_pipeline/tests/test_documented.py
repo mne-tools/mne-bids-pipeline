@@ -1,40 +1,29 @@
 """Test that all config values are documented."""
 
 import ast
-import importlib
-import inspect
 import logging
 import os
 import re
 import sys
 from collections.abc import Generator
 from pathlib import Path
+from types import ModuleType
 
 import pytest
 import yaml
 
 from mne_bids_pipeline._config_import import _get_default_config, _import_config
 from mne_bids_pipeline._config_template import create_template_config
-from mne_bids_pipeline._config_utils import (
-    _get_decoding_proc,
-    _get_rank,
-    _get_task_contrasts,
-    _limit_which_clean,
-    _restrict_analyze_channels,
-    get_fs_subject,
-    get_mf_cal_fname,
-    get_mf_ctc_fname,
+from mne_bids_pipeline._config_utils import _bids_kwargs, _get_step_modules
+from mne_bids_pipeline._docs import (
+    _EXECUTION_OPTIONS,
+    _FORCE_EMPTY,
+    _ParseConfigSteps,
+    get_kwargs_helper_fields,
+    get_step_cfg_fields,
+    get_step_reads,
 )
-from mne_bids_pipeline._docs import _EXECUTION_OPTIONS, _ParseConfigSteps
-from mne_bids_pipeline._import_data import _import_data_kwargs
 from mne_bids_pipeline._logging import _log_context
-from mne_bids_pipeline._report import (
-    _all_conditions,
-    add_csp_grand_average,
-)
-from mne_bids_pipeline.steps.preprocessing._07_make_epochs import (
-    _add_epochs_image_kwargs,
-)
 from mne_bids_pipeline.tests.datasets import DATASET_OPTIONS
 from mne_bids_pipeline.tests.test_run import TEST_SUITE
 
@@ -105,6 +94,9 @@ def test_config_options_passed_to_any_steps() -> None:
         config_names.add(key)
     for key in _EXECUTION_OPTIONS:
         config_names.remove(key)
+    # a stale entry here would silently blank out a step list forever
+    stale = sorted(set(_FORCE_EMPTY) - config_names - set(_EXECUTION_OPTIONS))
+    assert stale == [], f"No longer config options, drop from _FORCE_EMPTY: {stale}"
     pcs = _ParseConfigSteps(force_empty=())
     missing_from_config = sorted(set(pcs.steps) - config_names)
     assert missing_from_config == [], f"Missing from config: {missing_from_config}"
@@ -116,96 +108,68 @@ def test_config_options_passed_to_any_steps() -> None:
     assert "sensor/_03_decoding_time_by_time" in pcs.steps["cov_rank"]
 
 
-def test_config_options_used_in_steps() -> None:
-    """Test that config options passed to a given step are referenced in that step."""
-    # Find our mapping from config vars from get_config() to steps...
-    pcs = _ParseConfigSteps()  # allow the force_empty defaults here
-    # ... and invert it so it maps steps to get_config() vars
-    step_vars: dict[str, set[str]] = {}
-    for key, steps in pcs.steps.items():
-        for step in steps:
-            step_vars.setdefault(step, set())
-            step_vars[step].add(key)
-    del pcs
-
-    # Some explicit ignores
-    ignores = {
-        # Triaged in get_config itself
-        "source/_04_make_forward": ["mri_landmarks_kind", "mri_t1_path_generator"],
+def _step_modules() -> dict[ModuleType, str]:
+    """Get each step module and its "group/name" label, without duplicates."""
+    modules = sum(_get_step_modules().values(), ())  # "all" repeats other groups
+    return {
+        module: "/".join(module.__name__.split(".")[-2:])
+        for module in dict.fromkeys(modules)
     }
-    # Parse some helper functions to find nested config uses
-    helpers: dict[str, set[str]] = {}
-    for func, count, nested in (
-        # These "count" values can be updated when the helper functions change,
-        # but it's nice to make sure we're getting what we expect otherwise
-        (_import_data_kwargs, 27, ()),
-        (_limit_which_clean, 3, ()),
-        (_restrict_analyze_channels, 3, ()),
-        (_get_decoding_proc, 2, (_get_rank,)),
-        (_all_conditions, 2, (_get_task_contrasts,)),
-        (add_csp_grand_average, 9, ()),
-        (get_fs_subject, 1, ()),
-        (_add_epochs_image_kwargs, 1, ()),
-        (get_mf_cal_fname, 3, ()),
-        (get_mf_ctc_fname, 3, ()),
-        (_get_rank, 1, ()),
-    ):
-        this_key = f"{func.__name__}("
-        helpers[this_key] = set()
-        for this_func in (func,) + nested:
-            spec = inspect.getfullargspec(this_func)
-            kind = "cfg" if "cfg" in (spec.args + spec.kwonlyargs) else "config"
-            this_src = inspect.getsource(this_func)
-            vars_ = set(re.findall(rf"\b{kind}\.([a-z_]+)\b", this_src))
-            helpers[this_key].update(vars_)
-        assert len(helpers[this_key]) == count, (
-            f"{this_key} has {len(helpers[this_key])} vars, expected {count}, does the "
-            "'count' need to be updated due to code changes?"
+
+
+def _format_errors(errors: list[tuple[str, str]], what: str, hint: str) -> str:
+    use_len = max(len(err[0]) for err in errors)
+    error_str = "\n".join(f"- {err[0].ljust(use_len)} : {err[1]}" for err in errors)
+    return f"{len(errors)} {what}:\n\n{error_str}\n\n{hint}"
+
+
+def test_cfg_fields_used_in_steps() -> None:
+    """Test that every cfg field a step builds is actually read by that step."""
+    # `_bids_kwargs` is deliberately all-or-nothing: it is the BIDS identity of
+    # the data, and the steps that use any of it get all of it. That is the same
+    # reasoning behind listing those options in `_FORCE_EMPTY` -- see the comment
+    # there. Everything else has to earn its place in `cfg`.
+    bids_fields = get_kwargs_helper_fields(_bids_kwargs)
+    errors = []
+    for module, step in _step_modules().items():
+        unread = get_step_cfg_fields(module) - get_step_reads(module) - bids_fields
+        errors.extend(
+            (f"mne_bids_pipeline/steps/{step}.py", var) for var in sorted(unread)
+        )
+    if errors:  # pragma: no cover
+        raise AssertionError(
+            _format_errors(
+                errors,
+                "cfg field(s) passed to a step that never reads them",
+                "Passing a config option a step does not use makes the docs claim a "
+                "dependency that is not real, and needlessly invalidates that step's "
+                "cache when the option changes. Drop the field from get_config(), or "
+                "if it really is used, teach _docs.get_step_reads() how to see it.",
+            )
         )
 
-    # Now let's go through each step and ensure each config var is used
+
+def test_cfg_fields_passed_to_steps() -> None:
+    """Test that every cfg field a step reads is actually built by that step."""
+    # `get_tasks()` returns early on `config.all_tasks`, which `_bids_kwargs`
+    # always supplies, so the `config.task` fallback inside it is unreachable
+    # when it is handed a cfg rather than the real config.
+    guarded = {"task"}
     errors = []
-    for step in step_vars:
-        # Get the step source
-        step_mod = importlib.import_module(
-            f"mne_bids_pipeline.steps.{step.replace('/', '.')}"
+    for module, step in _step_modules().items():
+        missing = get_step_reads(module) - get_step_cfg_fields(module) - guarded
+        errors.extend(
+            (f"mne_bids_pipeline/steps/{step}.py", var) for var in sorted(missing)
         )
-        step_main = step_mod.main
-        step_src = inspect.getsource(step_mod)
-        step_src = "\n".join(line.split("#")[0] for line in step_src.splitlines())
-        # find the main() call and its source
-        step_main_src = inspect.getsource(step_main)
-        step_main_src = "\n".join(
-            line.split("#")[0] for line in step_main_src.splitlines()
-        )
-        for var in sorted(step_vars[step]):
-            if var in ignores.get(step, []):
-                continue
-            # cfg.<var> in step source?
-            if re.search(rf"\bcfg\.{var}\b", step_src):
-                continue
-            # config.<var> in main() source (need to avoid looking at get_config, etc.)?
-            if re.search(rf"\bconfig\.{var}\b", step_main_src):
-                continue
-            # do any helpers use it?
-            helpers_use = False
-            for helper, helper_vars in helpers.items():
-                if helper in step_src and var in helper_vars:
-                    helpers_use = True
-                    break
-            if helpers_use:
-                continue
-            errors.append((f"mne_bids_pipeline/steps/{step}.py", var))
     if errors:  # pragma: no cover
-        use_len = max(len(err[0]) for err in errors)
-        error_str = "\n".join(f"- {err[0].ljust(use_len)} : {err[1]}" for err in errors)
-        error_str += (
-            "\n\nIf this is a false alarm and a config var truly used, update this "
-            "test by expanding the list of 'helpers', adding the variable to the "
-            "'ignores' dict, or otherwise improve this test to be smarter."
-        )
         raise AssertionError(
-            f"{len(errors)} config option(s) not used in steps:\n\n{error_str}"
+            _format_errors(
+                errors,
+                "cfg field(s) read by a step that never builds them",
+                "This is an AttributeError waiting to happen: the step reads "
+                "cfg.<field> but its get_config() never sets it. Add it to "
+                "get_config(), or stop reading it.",
+            )
         )
 
 

@@ -281,10 +281,14 @@ def get_subjects_sessions(
 def get_subjects_given_session(
     config: SimpleNamespace, session: str | None
 ) -> tuple[str, ...]:
-    """Get the subjects who actually have data for a given session."""
-    sub_ses = get_subjects_sessions(config)
+    """Get the subjects who actually have data for a given session.
+
+    Steps call this at run time with their ``cfg``, so it reads the mapping that
+    ``get_config()`` already resolved instead of re-scanning the dataset (which
+    it used to do on every call, and then discard unless sessions were missing).
+    """
     subjects = (
-        tuple(sub for sub, ses in sub_ses.items() if session in ses)
+        tuple(sub for sub, ses in config.subjects_sessions.items() if session in ses)
         if config.allow_missing_sessions
         else config.subjects
     )
@@ -955,6 +959,17 @@ def _bids_kwargs(*, config: SimpleNamespace) -> dict[str, str | None]:
         bids_root=config.bids_root,
         deriv_root=config.deriv_root,
         all_tasks=config.all_tasks,  # we compute this once and store it for brevity
+    )
+
+
+def _mf_cal_kwargs(
+    *, config: SimpleNamespace, subject: str, session: str | None
+) -> dict[str, Any]:
+    """Get the Maxwell filter calibration / cross-talk params."""
+    return dict(
+        mf_cal_fname=get_mf_cal_fname(config=config, subject=subject, session=session),
+        mf_ctc_fname=get_mf_ctc_fname(config=config, subject=subject, session=session),
+        mf_head_origin=config.mf_head_origin,
     )
 
 

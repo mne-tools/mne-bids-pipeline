@@ -5,6 +5,7 @@ The M/EEG-channel data are averaged for group averages.
 
 import os
 import os.path as op
+from collections.abc import Sequence
 from functools import partial
 from types import SimpleNamespace
 
@@ -356,7 +357,7 @@ def _get_input_fnames_decoding(
 def _exclude_all_nan_decoding_subjects(
     *,
     mean_scores: FloatArrayT,
-    subjects: list[str],
+    subjects: Sequence[str],
     contrast_msg: str,
 ) -> tuple[FloatArrayT, list[str]]:
     """Exclude subject-level decoding results that contain only NaNs."""
@@ -366,10 +367,12 @@ def _exclude_all_nan_decoding_subjects(
             f"{mean_scores.shape[0]} != {len(subjects)}"
         )
 
-    if mean_scores.ndim == 1:
-        all_nan = np.isnan(mean_scores)
-    else:
-        all_nan = np.isnan(mean_scores).all(axis=tuple(range(1, mean_scores.ndim)))
+    all_nan = np.asarray(
+        np.isnan(mean_scores)
+        if mean_scores.ndim == 1
+        else np.isnan(mean_scores).all(axis=tuple(range(1, mean_scores.ndim))),
+        dtype=bool,
+    ).reshape(-1)
     excluded_subjects = [
         this_subject for this_subject, exclude in zip(subjects, all_nan) if exclude
     ]

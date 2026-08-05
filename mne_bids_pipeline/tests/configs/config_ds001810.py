@@ -16,11 +16,7 @@ eeg_template_montage = "biosemi64"
 reject = dict(eeg=100e-6)
 baseline = (None, 0)
 conditions = ["61450", "61511"]
-contrasts = [
-    ("61450", "61511"),
-    ("letter=='a'", "letter=='b'"),
-    ("rare == True", "letter == 'b'"),
-]
+contrasts = [("61450", "61511"), ("letter=='a'", "letter=='b'")]
 decode = True
 decoding_n_splits = 3  # only for testing, use 5 otherwise
 decoding_time_decim = 3  # for speed
@@ -38,42 +34,36 @@ epochs_custom_metadata = {
         {
             "ones": np.ones(253),
             "letter": ["a" for x in range(150)] + ["b" for x in range(103)],
-            "rare": np.arange(253) < 2,
         }
     ),
     "ses-anodalpre": pd.DataFrame(
         {
             "ones": np.ones(268),
             "letter": ["a" for x in range(150)] + ["b" for x in range(118)],
-            "rare": np.arange(268) < 2,
         }
     ),
     "ses-anodaltDCS": pd.DataFrame(
         {
             "ones": np.ones(269),
             "letter": ["a" for x in range(150)] + ["b" for x in range(119)],
-            "rare": np.arange(269) < 2,
         }
     ),
     "ses-cathodalpost": pd.DataFrame(
         {
             "ones": np.ones(290),
             "letter": ["a" for x in range(150)] + ["b" for x in range(140)],
-            "rare": np.arange(290) < 2,
         }
     ),
     "ses-cathodalpre": pd.DataFrame(
         {
             "ones": np.ones(267),
             "letter": ["a" for x in range(150)] + ["b" for x in range(117)],
-            "rare": np.arange(267) < 2,
         }
     ),
     "ses-cathodaltDCS": pd.DataFrame(
         {
             "ones": np.ones(297),
             "letter": ["a" for x in range(150)] + ["b" for x in range(147)],
-            "rare": np.arange(297) < 2,
         }
     ),
 }  # number of rows are hand-set

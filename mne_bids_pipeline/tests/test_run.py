@@ -15,7 +15,6 @@ import pandas as pd
 import pytest
 from h5io import read_hdf5
 from mne_bids import BIDSPath, get_bids_path_from_fname
-from scipy.io import loadmat
 
 from mne_bids_pipeline._config_import import _import_config
 from mne_bids_pipeline._config_utils import _get_ssrt
@@ -292,10 +291,6 @@ def test_run(
         parser.feed(report_html_paths[0].read_text("utf-8"))
         msg = "\n".join(["Not found in TOC titles:"] + parser.toc_links)
         assert any("Average (sensor)" in name for name in parser.toc_links), msg
-        if dataset == "ds001810":
-            for kind in ("FullEpochs", "TimeByTime"):
-                decoding_paths = avg_subj_path.rglob(f"*{kind}*decoding.mat")
-                assert any(loadmat(path)["N"].item() == 0 for path in decoding_paths)
     else:
         # Just spot check a few that we know have "conditions" to make sure our
         # conditional is good

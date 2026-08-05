@@ -155,14 +155,48 @@ def _plot_full_epochs_decoding_scores(
         metric = "ROC AUC"
     score_label = f"Score ({metric})"
 
+    if len(contrast_names) != len(scores):
+        raise ValueError(
+            "The number of contrast names does not match the score arrays: "
+            f"{len(contrast_names)} != {len(scores)}"
+        )
+
+    score_lengths = [len(this_scores) for this_scores in scores]
+    if sum(score_lengths):
+        contrast_column = np.concatenate(
+            [
+                np.repeat(contrast_name, score_length)
+                for contrast_name, score_length in zip(contrast_names, score_lengths)
+            ]
+        )
+        score_column = np.hstack(scores)
+    else:
+        contrast_column = np.empty(0, dtype=str)
+        score_column = np.empty(0, dtype=float)
+
     data = pd.DataFrame(
         {
-            "Contrast": np.array(
-                [[c] * len(scores[0]) for c in contrast_names]
-            ).flatten(),
-            score_label: np.hstack(scores),
+            "Contrast": contrast_column,
+            score_label: score_column,
         }
     )
+
+    if data.empty or not np.isfinite(data[score_label]).any():
+        fig, ax = plt.subplots(constrained_layout=True)
+        ax.text(
+            0.5,
+            0.5,
+            "No valid decoding scores available",
+            ha="center",
+            va="center",
+            transform=ax.transAxes,
+        )
+        ax.set_axis_off()
+        if kind == "grand-average":
+            caption = "No valid subject-level decoding scores were available."
+        else:
+            caption = "No valid cross-validation scores were available."
+        return fig, caption, data
 
     if kind == "grand-average":
         # First create a grid of boxplots …
@@ -171,16 +205,24 @@ def _plot_full_epochs_decoding_scores(
             y=score_label,
             kind="box",
             col="Contrast",
+            col_order=contrast_names,
             col_wrap=3,
             aspect=0.33,
         )
         # … and now add swarmplots on top to visualize every single data point.
         g.map_dataframe(sns.swarmplot, y=score_label, color="black")
+        if len(set(score_lengths)) == 1:
+            sample_size = f"Based on effective N={score_lengths[0]} subjects. "
+        else:
+            sample_size_items = []
+            for name, n_subjects in zip(contrast_names, score_lengths):
+                name = name.replace("\n", " ")
+                sample_size_items.append(f"{name}: N={n_subjects}")
+            sample_sizes = "; ".join(sample_size_items)
+            sample_size = f"Effective sample size by contrast: {sample_sizes}. "
         caption = (
-            f"Based on N={len(scores[0])} "
-            f"subjects. Each dot represents the mean cross-validation score "
-            f"for a single subject. The dashed line is expected chance "
-            f"performance."
+            f"{sample_size}Each dot represents the mean cross-validation score "
+            f"for a single subject. The dashed line is expected chance performance."
         )
     else:
         # First create a grid of swarmplots to visualize every single
@@ -190,6 +232,7 @@ def _plot_full_epochs_decoding_scores(
             y=score_label,
             kind="swarm",
             col="Contrast",
+            col_order=contrast_names,
             col_wrap=3,
             aspect=0.33,
             color="black",

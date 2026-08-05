@@ -353,6 +353,41 @@ def _get_input_fnames_decoding(
     return in_files
 
 
+def _exclude_all_nan_decoding_subjects(
+    *,
+    mean_scores: FloatArrayT,
+    subjects: list[str],
+    contrast_msg: str,
+) -> tuple[FloatArrayT, list[str]]:
+    """Exclude subject-level decoding results that contain only NaNs."""
+    if mean_scores.shape[0] != len(subjects):
+        raise ValueError(
+            "The number of subject score arrays does not match the subject list: "
+            f"{mean_scores.shape[0]} != {len(subjects)}"
+        )
+
+    if mean_scores.ndim == 1:
+        all_nan = np.isnan(mean_scores)
+    else:
+        all_nan = np.isnan(mean_scores).all(axis=tuple(range(1, mean_scores.ndim)))
+    excluded_subjects = [
+        this_subject for this_subject, exclude in zip(subjects, all_nan) if exclude
+    ]
+    if excluded_subjects:
+        joined_subjects = ", ".join(excluded_subjects)
+        msg = (
+            f"Excluding {len(excluded_subjects)} subject(s) from the group decoding "
+            f"average for {contrast_msg} because their scores are all NaN: "
+            f"{joined_subjects}."
+        )
+        logger.warning(**gen_log_kwargs(message=msg))
+
+    valid_subjects = [
+        this_subject for this_subject, exclude in zip(subjects, all_nan) if not exclude
+    ]
+    return mean_scores[~all_nan], valid_subjects
+
+
 @failsafe_run(
     get_input_fnames=partial(
         _get_input_fnames_decoding,
@@ -389,18 +424,36 @@ def average_time_by_time_decoding(
         time_points_shape += (len(times),)
 
     subjects = get_subjects_given_session(cfg, session)
+    n_subjects_total = len(subjects)
+
+    # Extract mean CV scores from all subjects.
+    mean_scores: FloatArrayT = np.empty((n_subjects_total, *time_points_shape))
+
+    # Remaining in_files are all decoding data
+    assert len(in_files) == n_subjects_total, list(in_files.keys())
+    for sub_idx, key in enumerate(list(in_files)):
+        decoding_data = loadmat(in_files.pop(key))
+        mean_scores[sub_idx, :] = decoding_data["scores"].mean(axis=0)
+
+    mean_scores, subjects = _exclude_all_nan_decoding_subjects(
+        mean_scores=mean_scores,
+        subjects=subjects,
+        contrast_msg=contrast_msg,
+    )
     n_subjects = len(subjects)
-    mean = np.empty(time_points_shape)
-    mean_min = np.empty(time_points_shape)
-    mean_max = np.empty(time_points_shape)
-    mean_se = np.empty(time_points_shape)
-    mean_ci_lower = np.empty(time_points_shape)
-    mean_ci_upper = np.empty(time_points_shape)
+
+    mean = np.full(time_points_shape, np.nan)
+    mean_min = np.full(time_points_shape, np.nan)
+    mean_max = np.full(time_points_shape, np.nan)
+    mean_se = np.full(time_points_shape, np.nan)
+    mean_ci_lower = np.full(time_points_shape, np.nan)
+    mean_ci_upper = np.full(time_points_shape, np.nan)
     contrast_score_stats = {
         "cond_1": cond_1,
         "cond_2": cond_2,
         "times": times,
         "N": n_subjects,
+        "subjects": subjects,
         "decim": decim,
         "mean": mean,
         "mean_min": mean_min,
@@ -414,15 +467,6 @@ def average_time_by_time_decoding(
         "cluster_n_permutations": np.nan,
         "clusters": list(),
     }
-
-    # Extract mean CV scores from all subjects.
-    mean_scores: FloatArrayT = np.empty((n_subjects, *time_points_shape))
-
-    # Remaining in_files are all decoding data
-    assert len(in_files) == n_subjects, list(in_files.keys())
-    for sub_idx, key in enumerate(list(in_files)):
-        decoding_data = loadmat(in_files.pop(key))
-        mean_scores[sub_idx, :] = decoding_data["scores"].mean(axis=0)
 
     # Cluster permutation test.
     # We can only permute for two or more subjects
@@ -481,32 +525,36 @@ def average_time_by_time_decoding(
     #
     # For time generalization, all values (each time point vs each other)
     # are considered.
-    mean[:] = mean_scores.mean(axis=0)
-    mean_min[:] = mean_scores.min(axis=0)
-    mean_max[:] = mean_scores.max(axis=0)
+    if n_subjects:
+        mean[:] = mean_scores.mean(axis=0)
+        mean_min[:] = mean_scores.min(axis=0)
+        mean_max[:] = mean_scores.max(axis=0)
 
     # Finally, for each time point, bootstrap the mean, and calculate the
     # SD of the bootstrapped distribution: this is the standard error of
     # the mean. We also derive 95% confidence intervals.
-    rng = np.random.default_rng(seed=cfg.random_state)
-    for time_idx in range(len(times)):
-        if cfg.decoding_time_generalization:
-            data = mean_scores[:, time_idx, time_idx]
-        else:
-            data = mean_scores[:, time_idx]
-        scores_resampled = rng.choice(data, size=(cfg.n_boot, n_subjects), replace=True)
-        bootstrapped_means = scores_resampled.mean(axis=1)
+    if n_subjects:
+        rng = np.random.default_rng(seed=cfg.random_state)
+        for time_idx in range(len(times)):
+            if cfg.decoding_time_generalization:
+                data = mean_scores[:, time_idx, time_idx]
+            else:
+                data = mean_scores[:, time_idx]
+            scores_resampled = rng.choice(
+                data, size=(cfg.n_boot, n_subjects), replace=True
+            )
+            bootstrapped_means = scores_resampled.mean(axis=1)
 
-        # SD of the bootstrapped distribution == SE of the metric.
-        se = bootstrapped_means.std(ddof=1)
-        ci_lower = np.quantile(bootstrapped_means, q=0.025)
-        ci_upper = np.quantile(bootstrapped_means, q=0.975)
+            # SD of the bootstrapped distribution == SE of the metric.
+            se = bootstrapped_means.std(ddof=1)
+            ci_lower = np.quantile(bootstrapped_means, q=0.025)
+            ci_upper = np.quantile(bootstrapped_means, q=0.975)
 
-        mean_se[time_idx] = se
-        mean_ci_lower[time_idx] = ci_lower
-        mean_ci_upper[time_idx] = ci_upper
+            mean_se[time_idx] = se
+            mean_ci_lower[time_idx] = ci_lower
+            mean_ci_upper[time_idx] = ci_upper
 
-        del bootstrapped_means, se, ci_lower, ci_upper
+            del bootstrapped_means, se, ci_lower, ci_upper
 
     out_files = dict()
     out_files["mat"] = _decoding_out_fname(
@@ -533,20 +581,23 @@ def average_time_by_time_decoding(
         )
         tags = ("epochs", "contrast", "decoding") + extra_tags
         decoding_data = loadmat(out_files["mat"])
+        effective_n = int(decoding_data["N"].squeeze())
 
         # Plot scores
         fig = _plot_time_by_time_decoding_scores_gavg(
             cfg=cfg,
             decoding_data=decoding_data,
         )
-        caption = (
-            f"Based on N={decoding_data['N'].squeeze()} "
-            f"subjects. Standard error and confidence interval "
-            f"of the mean were bootstrapped with {cfg.n_boot} "
-            f"resamples. CI must not be used for statistical inference here, "
-            f"as it is not corrected for multiple testing."
-        )
-        if len(cfg.subjects) > 1:
+        if effective_n:
+            caption = (
+                f"Based on N={effective_n} subjects. Standard error and confidence "
+                f"interval of the mean were bootstrapped with {cfg.n_boot} "
+                f"resamples. CI must not be used for statistical inference here, "
+                f"as it is not corrected for multiple testing."
+            )
+        else:
+            caption = "No subjects had valid decoding scores for this contrast."
+        if effective_n > 1:
             caption += (
                 f" Time periods with decoding performance significantly above "
                 f"chance, if any, were derived with a one-tailed "
@@ -554,19 +605,19 @@ def average_time_by_time_decoding(
                 f"({decoding_data['cluster_n_permutations'].squeeze()} "
                 f"permutations) and are highlighted in yellow."
             )
-            title = f"Decoding over time: {cond_1} vs. {cond_2}"
-            report.add_figure(
-                fig=fig,
-                title=title,
-                caption=caption,
-                section=section,
-                tags=tags,
-                replace=True,
-            )
-            plt.close(fig)
+        title = f"Decoding over time: {cond_1} vs. {cond_2}"
+        report.add_figure(
+            fig=fig,
+            title=title,
+            caption=caption,
+            section=section,
+            tags=tags,
+            replace=True,
+        )
+        plt.close(fig)
 
         # Plot t-values used to form clusters
-        if len(cfg.subjects) > 1:
+        if effective_n > 1:
             fig = plot_time_by_time_decoding_t_values(decoding_data=decoding_data)
             t_threshold = np.round(decoding_data["cluster_t_threshold"], 3).item()
             caption = (
@@ -627,15 +678,28 @@ def average_full_epochs_decoding(
     in_files: InFilesT,
 ) -> OutFilesT:
     subjects = get_subjects_given_session(cfg, session)
-    n_subjects = len(subjects)
+    n_subjects_total = len(subjects)
     in_files.pop("epochs")  # not used but okay to include
 
+    # Extract mean CV scores from all subjects.
+    mean_scores = np.empty(n_subjects_total)
+    for sub_idx, key in enumerate(list(in_files)):
+        decoding_data = loadmat(in_files.pop(key))
+        mean_scores[sub_idx] = decoding_data["scores"].mean()
+
+    contrast_msg = f"{cond_1} – {cond_2}"
+    mean_scores, subjects = _exclude_all_nan_decoding_subjects(
+        mean_scores=mean_scores,
+        subjects=subjects,
+        contrast_msg=contrast_msg,
+    )
+    n_subjects = len(subjects)
     contrast_score_stats = {
         "cond_1": cond_1,
         "cond_2": cond_2,
         "N": n_subjects,
         "subjects": subjects,
-        "scores": np.empty(0, float),
+        "scores": mean_scores,
         "mean": np.nan,
         "mean_min": np.nan,
         "mean_max": np.nan,
@@ -644,39 +708,31 @@ def average_full_epochs_decoding(
         "mean_ci_upper": np.nan,
     }
 
-    # Extract mean CV scores from all subjects.
-    mean_scores = np.empty(n_subjects)
-    for sub_idx, key in enumerate(list(in_files)):
-        decoding_data = loadmat(in_files.pop(key))
-        mean_scores[sub_idx] = decoding_data["scores"].mean()
-
     # Now we can calculate some descriptive statistics on the mean scores.
-    # We use the [:] here as a safeguard to ensure we don't mess up the
-    # dimensions.
-    contrast_score_stats["scores"] = mean_scores
-    contrast_score_stats["mean"] = mean_scores.mean()
-    contrast_score_stats["mean_min"] = mean_scores.min()
-    contrast_score_stats["mean_max"] = mean_scores.max()
+    if n_subjects:
+        contrast_score_stats["mean"] = mean_scores.mean()
+        contrast_score_stats["mean_min"] = mean_scores.min()
+        contrast_score_stats["mean_max"] = mean_scores.max()
 
-    # Finally, bootstrap the mean, and calculate the
-    # SD of the bootstrapped distribution: this is the standard error of
-    # the mean. We also derive 95% confidence intervals.
-    rng = np.random.default_rng(seed=cfg.random_state)
-    scores_resampled = rng.choice(
-        mean_scores, size=(cfg.n_boot, n_subjects), replace=True
-    )
-    bootstrapped_means = scores_resampled.mean(axis=1)
+        # Finally, bootstrap the mean, and calculate the
+        # SD of the bootstrapped distribution: this is the standard error of
+        # the mean. We also derive 95% confidence intervals.
+        rng = np.random.default_rng(seed=cfg.random_state)
+        scores_resampled = rng.choice(
+            mean_scores, size=(cfg.n_boot, n_subjects), replace=True
+        )
+        bootstrapped_means = scores_resampled.mean(axis=1)
 
-    # SD of the bootstrapped distribution == SE of the metric.
-    se = bootstrapped_means.std(ddof=1)
-    ci_lower = np.quantile(bootstrapped_means, q=0.025)
-    ci_upper = np.quantile(bootstrapped_means, q=0.975)
+        # SD of the bootstrapped distribution == SE of the metric.
+        se = bootstrapped_means.std(ddof=1)
+        ci_lower = np.quantile(bootstrapped_means, q=0.025)
+        ci_upper = np.quantile(bootstrapped_means, q=0.975)
 
-    contrast_score_stats["mean_se"] = se
-    contrast_score_stats["mean_ci_lower"] = ci_lower
-    contrast_score_stats["mean_ci_upper"] = ci_upper
+        contrast_score_stats["mean_se"] = se
+        contrast_score_stats["mean_ci_lower"] = ci_lower
+        contrast_score_stats["mean_ci_upper"] = ci_upper
 
-    del bootstrapped_means, se, ci_lower, ci_upper
+        del bootstrapped_means, se, ci_lower, ci_upper
 
     out_files = dict()
     fname_out = out_files["mat"] = _decoding_out_fname(
@@ -741,8 +797,6 @@ def average_full_epochs_report(
         kind="FullEpochs",
         extension=".xlsx",
     )
-    subjects = get_subjects_given_session(cfg, session)
-
     with _open_report(
         cfg=cfg, exec_params=exec_params, subject=subject, session=session, task=task
     ) as report:
@@ -770,6 +824,14 @@ def average_full_epochs_report(
         )
         with pd.ExcelWriter(out_files["cluster"]) as w:
             data.to_excel(w, sheet_name="FullEpochs", index=False)
+        effective_ns = [len(scores) for scores in all_decoding_scores]
+        if len(set(effective_ns)) == 1:
+            section = f"Decoding: full-epochs, N = {effective_ns[0]}"
+        else:
+            section = (
+                "Decoding: full-epochs, effective N = "
+                f"{min(effective_ns)}–{max(effective_ns)}"
+            )
         tags = ("epochs", "contrast", "decoding") + extra_tags
         tags += tuple(
             f"{_sanitize_cond_tag(cond_1)}–{_sanitize_cond_tag(cond_2)}"
@@ -778,7 +840,7 @@ def average_full_epochs_report(
         report.add_figure(
             fig=fig,
             title=f"Full-epochs decoding{prefix}",
-            section=f"Decoding: full-epochs, N = {len(subjects)}",
+            section=section,
             caption=caption,
             tags=tags,
             replace=True,

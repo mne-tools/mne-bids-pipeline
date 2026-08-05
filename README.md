@@ -1,5 +1,9 @@
 # <img src="https://raw.github.com/mne-tools/mne-bids-pipeline/main/docs/source/assets/mne.svg" alt="MNE Logo" height="20"> MNE-BIDS-Pipeline
 
+<!-- hy-mt2-i18n:start -->
+**English** · [中文](./README_zh-CN.md) · [日本語](./README_ja.md) · [Español](./README_es.md)
+<!-- hy-mt2-i18n:end -->
+
 <!--keep description in sync with pyproject.toml-->
 
 <!--tagline-start-->
@@ -55,7 +59,7 @@ for EEG and MEG. See the following two references:
 > Data, 6, 103. <https://doi.org/10.1038/s41597-019-0104-8>
 
 > Niso, G., Gorgolewski, K. J., Bock, E., Brooks, T. L., Flandin, G., Gramfort, A.,
-> Henson, R. N., Jas, M., Litvak, V., Moreau, J., Oostenveld, R., Schoffelen, J.,
+> Henson, R. N., Jas, M., Litvak, V., Moreau, J., Oosterveld, R., Schoffelen, J.,
 > Tadel, F., Wexler, J., Baillet, S. (2018). MEG-BIDS, the brain imaging data
 > structure extended to magnetoencephalography. Scientific Data, 5, 180110.
 > <https://doi.org/10.1038/sdata.2018.110>

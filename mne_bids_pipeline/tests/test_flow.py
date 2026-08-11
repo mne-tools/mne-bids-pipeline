@@ -5,6 +5,7 @@ import xml.etree.ElementTree as ET
 from types import SimpleNamespace
 from typing import Any
 
+import mne
 import pytest
 from mne_bids import BIDSPath
 
@@ -19,6 +20,7 @@ from mne_bids_pipeline._flow import (
     _report_flow_html,
     _write_flow_entry,
 )
+from mne_bids_pipeline._report import _add_flow_diagram
 from mne_bids_pipeline._run import _prep_out_files_path, failsafe_run
 from mne_bids_pipeline.typing import InFilesT, OutFilesT
 
@@ -301,6 +303,29 @@ def test_flow_svg() -> None:
 
     titles = [el.text or "" for el in svg.findall(f".//{SVG_NS}title")]
     assert any("/deriv/sub-01_task-av_run-01_proc-filt_raw.fif" in t for t in titles)
+
+
+def test_flow_report(tmp_path: pathlib.Path) -> None:
+    """Test that the diagram makes it into a saved report."""
+    report = mne.Report(title="sub-01")
+    exec_params = SimpleNamespace(deriv_root=tmp_path)
+    _add_flow_diagram(
+        report=report, exec_params=exec_params, subject="01", session=None
+    )
+    assert report.html == []  # nothing recorded yet
+    for entry in _pipeline_entries():
+        _write_flow_entry(deriv_root=tmp_path, entry=entry)
+    for _ in range(2):  # must refresh in place as more steps run
+        _add_flow_diagram(
+            report=report, exec_params=exec_params, subject="01", session=None
+        )
+    assert len(report.html) == 1  # replaced in place rather than appended
+
+    fname = tmp_path / "report.html"
+    report.save(fname, open_browser=False)
+    content = fname.read_text(encoding="utf-8")
+    assert content.count('<svg id="mbp-flow-svg"') == 1
+    assert "_04_frequency_filter" in content
 
 
 _N_CALLS: list[str] = list()

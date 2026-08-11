@@ -6,6 +6,7 @@
 
 - Added [`ignore_warnings`][mne_bids_pipeline._config.ignore_warnings] config option to allow users to specify warnings to ignore when calling `read_raw_bids` (#1224 by @larsoner)
 - Added tracking of the current step in the terminal title (#1266 by @larsoner)
+- Added a "Pipeline flow" section to the reports with an auto-generated diagram of the steps that ran for a subject and the files they passed to one another (#1289 by @larsoner)
 
 ### :warning: Behavior changes
 

@@ -24,6 +24,7 @@ from scipy.io import loadmat
 
 from ._config_utils import _get_task_contrasts
 from ._decoding import _handle_csp_args
+from ._flow import _report_flow_html
 from ._logging import _linkfile, gen_log_kwargs, logger
 from .typing import FloatArrayT
 
@@ -570,6 +571,12 @@ def _finalize(
     task: str | None,
 ) -> None:
     """Add system information and the pipeline configuration to the report."""
+    _add_flow_diagram(
+        report=report,
+        exec_params=exec_params,
+        subject=subject,
+        session=session,
+    )
     # ensure they are always appended
     titles = ["Configuration file", "System information"]
     for title in titles:
@@ -597,6 +604,31 @@ div.accordion-body pre.my-0 code {
 """
     if css not in report.include:
         report.add_custom_css(css=css)
+
+
+def _add_flow_diagram(
+    *,
+    report: mne.Report,
+    exec_params: SimpleNamespace,
+    subject: str,
+    session: str | None,
+) -> None:
+    """Add a diagram of the steps that ran and the files they exchanged."""
+    try:
+        html = _report_flow_html(
+            deriv_root=exec_params.deriv_root, subject=subject, session=session
+        )
+    except Exception as exc:
+        logger.warning(**gen_log_kwargs(message=f"Flow diagram failed: {exc}"))
+        return
+    if html is None:  # nothing recorded yet, e.g. reports from older runs
+        return
+    report.add_html(
+        html,
+        title="Pipeline flow",
+        tags=("pipeline-flow",),
+        replace=True,
+    )
 
 
 # We make a lot of calls to this function and it takes > 1 sec generally

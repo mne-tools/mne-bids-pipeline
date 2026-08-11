@@ -225,6 +225,8 @@ def _edge_lines(paths: Sequence[str]) -> list[str]:
         if run is not None:
             runs.add(run)
     descriptors = sorted(processings) + sorted(suffixes) + sorted(extensions)
+    # e.g. proc- entities built from contrast names get long; the tooltip has the rest
+    descriptors = [d if len(d) <= 24 else f"{d[:23]}…" for d in descriptors]
     if len(descriptors) > 3:  # e.g. one proc- entity per contrast; keep the label sane
         descriptors = descriptors[:3] + [f"+{len(descriptors) - 3} more"]
     lines = [" ".join(descriptors)] if descriptors else [f"{len(paths)} files"]
@@ -547,11 +549,13 @@ def _flow_svg(graph: _FlowGraph, *, svg_id: str = f"{_ID_PREFIX}-svg") -> str:
     fracs: dict[str, float] = dict()
     for key, group in groups.items():
         far = -1 if key.startswith("src-") else 0  # the end that is not shared
-        n_levels = min(len(group), 4)
+        # Curves converge at the shared end, so edges that wrap onto a reused level
+        # collide there; only wrap for fans too big to give every edge its own level
+        n_levels = min(len(group), 6)
         for ii, edge in enumerate(sorted(group, key=lambda e: e.points[far][0])):
             level = ii % n_levels
             fracs[edge.id] = (
-                0.5 if n_levels == 1 else 0.28 + 0.44 * level / (n_levels - 1)
+                0.5 if n_levels == 1 else 0.15 + 0.7 * level / (n_levels - 1)
             )
 
     edge_html: list[str] = list()

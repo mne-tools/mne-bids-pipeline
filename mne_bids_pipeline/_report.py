@@ -623,11 +623,14 @@ def _add_flow_diagram(
         return
     if html is None:  # nothing recorded yet, e.g. reports from older runs
         return
+    # remove+add rather than replace=True so it stays pinned near the end, just
+    # before the config/sys-info sections that _finalize re-appends after us
+    title = "Pipeline flow"
+    report.remove(title=title, remove_all=True)
     report.add_html(
         html,
-        title="Pipeline flow",
+        title=title,
         tags=("pipeline-flow",),
-        replace=True,
     )
 
 

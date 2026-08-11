@@ -3,7 +3,7 @@ name = "mne-bids-pipeline"
 # Keep in sync with README.md:
 description = "A full-flegded processing pipeline for your MEG and EEG data"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = "BSD-3-Clause"
 license-files = ["LICENSE.txt"]
 authors = [
@@ -18,27 +18,27 @@ classifiers = [
   "Programming Language :: Python",
 ]
 dependencies = [
-  "annotated-types",  # for distributed dashboard
-  "autoreject",  # to have dask and jupyter working together
-  "bokeh",  # for joblib
-  "dask[distributed]",  # from pandas
+  "annotated-types",
+  "autoreject",
+  "bokeh",  # for distributed dashboard
+  "dask[distributed]",
   "filelock",
   "h5io",
-  "joblib >= 0.14",
+  "joblib >= 1.4.1",  # MemorizedFunc.call returns metadata
   "json_tricks",
-  "jupyter-server-proxy",
+  "jupyter-server-proxy",  # to have dask and jupyter working together
   "matplotlib",
   "meegkit",
-  "mne-bids[full] >=0.12",  # BIDSPath.find_matching_sidecar
+  "mne-bids[full] >=0.16",
   "mne-icalabel",
-  "mne[hdf5] >=1.7",
+  "mne[hdf5] >=1.8",
   "nibabel",
   "numpy",
   "openpyxl",
   "packaging",
   "pandas",
-  "psutil",
-  "pyarrow",
+  "psutil",  # for joblib
+  "pyarrow",  # from pandas
   "pydantic >= 2.0.0",
   "python-picard",
   "pyvista",
@@ -48,7 +48,8 @@ dependencies = [
   "scikit-learn",
   "scipy",
   "seaborn",
-  "threadpoolctl"
+  "threadpoolctl",
+  "typing_extensions; python_version < '3.12'",  # pydantic needs its TypedDict
 ]
 dynamic = ["version"]
 
@@ -68,7 +69,7 @@ dev = [
   "jinja2",
   "lefthook",
   "openneuro-py >= 2022.2.0",
-  "pooch",
+  "pooch >= 1.9.0",  # passes filter= to TarFile.extractall
   "psutil",
   "pytest-cov",
   "pytest >= 9.0",

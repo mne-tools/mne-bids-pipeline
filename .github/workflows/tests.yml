@@ -48,7 +48,7 @@ jobs:
         include:
           - os: ubuntu-latest
             dataset: ds001971
-            python: "3.10"
+            python: "3.11"
           - os: ubuntu-latest
             dataset: ds003392
             python: "3.13"

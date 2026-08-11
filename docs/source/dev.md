@@ -11,7 +11,9 @@
 
 - The default for [`mne_log_level`][mne_bids_pipeline._config.mne_log_level] has been changed from `'error'` to `'warning'` to make possible dataset and processing errors more visible (#1224 by @larsoner)
 
-[//3]: # (### :package: Requirements)
+### :package: Requirements
+
+- Minimum supported versions were raised to Python 3.11, MNE-Python 1.8, MNE-BIDS 0.16, and joblib 1.4.1, following [SPEC 0](https://scientific-python.org/specs/spec-0000) (#1289 by @larsoner)
 
 ### :bug: Bug fixes
 

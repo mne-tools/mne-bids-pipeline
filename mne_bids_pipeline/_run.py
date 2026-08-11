@@ -21,6 +21,7 @@ from filelock import FileLock
 from joblib import Memory
 from mne_bids import BIDSPath
 
+from ._flow import FlowEntryT, _flow_files, _write_flow_entry
 from ._logging import _is_testing, gen_log_kwargs, logger
 from .typing import InFilesPathT, InFilesT, OutFilesT
 
@@ -162,8 +163,12 @@ class ConditionalStepMemory:
         self.require_output = require_output
         self.func_name = func_name
         self.sidecars = sidecars
+        self.deriv_root = exec_params.deriv_root
 
     def cache(self, func: Callable[..., Any]) -> Callable[..., Any]:
+        step = _short_step_path(pathlib.Path(inspect.getfile(func)))
+        func_name = func.__name__
+
         def __mbp_cached_func_wrapper__(
             *args: list[Any], **kwargs: dict[str, Any]
         ) -> bool:
@@ -176,8 +181,22 @@ class ConditionalStepMemory:
             if self.get_input_fnames is not None:
                 in_files = kwargs["in_files"] = self.get_input_fnames(**these_kwargs)
             del these_kwargs
+            # Snapshot now: the worker funcs pop entries off in_files as they go
+            record = functools.partial(
+                _record_flow,
+                deriv_root=self.deriv_root,
+                step=step,
+                func_name=func_name,
+                kwargs=kwargs,
+                in_files=_flow_files(in_files),
+            )
+            # Steps write to the report before they return, so seed the recording with
+            # the inputs now or the last step to run would be missing from its own
+            # diagram until some later run rewrites the report.
+            record(out_files=None, only_if_new=True)
             if self.memory is None:
-                func(*args, **kwargs)
+                out_files = func(*args, **kwargs)
+                record(out_files=out_files)
                 return True
 
             # This is an implementation detail so we don't need a proper error
@@ -296,6 +315,7 @@ class ConditionalStepMemory:
                     msg = "Computation unnecessary (output files exist) …"
                     emoji = "🔍"
                     short_circuit = True
+                    record(out_files=out_files)  # `out_files` is deleted below
             else:
                 # Ensure memorized_func.check_call_in_cache returned False
                 # as opposed to raised an error (which already sets `msg` above)
@@ -326,6 +346,7 @@ class ConditionalStepMemory:
             else:
                 with _ignore_warnings(self.ignore_warnings):
                     out_files = memorized_func(*args, **kwargs)
+            record(out_files=out_files)  # covers cache hits, forced and fresh runs
             if self.require_output:
                 assert isinstance(out_files, dict) and len(out_files), (
                     f"Internal error: step must return non-empty out_files dict, got "
@@ -342,6 +363,34 @@ class ConditionalStepMemory:
 
     def clear(self) -> None:
         self.memory.clear()
+
+
+def _record_flow(
+    *,
+    deriv_root: pathlib.Path,
+    step: str,
+    func_name: str,
+    kwargs: dict[str, Any],
+    in_files: dict[str, str],
+    out_files: Any,
+    only_if_new: bool = False,
+) -> None:
+    """Record which files a step call read and wrote, for the report flow diagram."""
+    try:
+        entry: FlowEntryT = {
+            "step": step,
+            "func": func_name,
+            "subject": kwargs.get("subject", None),
+            "session": kwargs.get("session", None),
+            "run": kwargs.get("run", None),
+            "task": kwargs.get("task", None),
+            "in_files": in_files,
+            "out_files": _flow_files(out_files),
+        }
+        _write_flow_entry(deriv_root=deriv_root, entry=entry, only_if_new=only_if_new)
+    except Exception as exc:
+        msg = f"Could not record pipeline flow information: {exc}"
+        logger.warning(**gen_log_kwargs(message=msg, emoji="⚠️"))
 
 
 @contextlib.contextmanager

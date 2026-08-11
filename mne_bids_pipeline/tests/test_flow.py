@@ -1,6 +1,7 @@
-"""Test recording of the files that pipeline steps read and write."""
+"""Test the pipeline flow diagram."""
 
 import pathlib
+import xml.etree.ElementTree as ET
 from types import SimpleNamespace
 from typing import Any
 
@@ -9,12 +10,19 @@ from mne_bids import BIDSPath
 
 from mne_bids_pipeline._flow import (
     FlowEntryT,
+    _build_flow_graph,
+    _collapse_runs,
     _flow_files,
+    _flow_html,
+    _layout_flow_graph,
     _read_flow_entries,
+    _report_flow_html,
     _write_flow_entry,
 )
 from mne_bids_pipeline._run import _prep_out_files_path, failsafe_run
 from mne_bids_pipeline.typing import InFilesT, OutFilesT
+
+SVG_NS = "{http://www.w3.org/2000/svg}"
 
 
 def _entry(
@@ -85,6 +93,22 @@ def _pipeline_entries() -> list[FlowEntryT]:
     return entries
 
 
+@pytest.mark.parametrize(
+    "runs, want",
+    [
+        ([], ""),
+        (["01"], "run 01"),
+        (["01", "02", "03", "04", "05", "06"], "runs 01–06"),
+        (["03", "01", "02", "07"], "runs 01–03, 07"),
+        (["1", "2"], "runs 1–2"),
+        (["rest", "noise"], "runs noise, rest"),
+    ],
+)
+def test_collapse_runs(runs: list[str], want: str) -> None:
+    """Test that run labels collapse into ranges."""
+    assert _collapse_runs(runs) == want
+
+
 def test_flow_files() -> None:
     """Test normalization of the in_files/out_files mappings."""
     bids_path = BIDSPath(
@@ -151,10 +175,132 @@ def test_flow_recording_roundtrip(tmp_path: pathlib.Path) -> None:
 def test_flow_recording_missing(tmp_path: pathlib.Path) -> None:
     """Test that an absent or unreadable recording is not fatal."""
     assert _read_flow_entries(deriv_root=tmp_path, subject="01", session=None) == []
+    assert _report_flow_html(deriv_root=tmp_path, subject="01", session=None) is None
     fname = tmp_path / ".pipeline_flow" / "sub-01.json"
     fname.parent.mkdir()
     fname.write_text("not json")
     assert _read_flow_entries(deriv_root=tmp_path, subject="01", session=None) == []
+
+
+def test_flow_graph_build() -> None:
+    """Test that edges follow the produced/consumed relationships."""
+    graph = _build_flow_graph(_pipeline_entries())
+    labels = {node.id: " ".join(node.lines) for node in graph.nodes}
+    edges = {(labels[edge.src], labels[edge.dst]): edge.lines for edge in graph.edges}
+    assert edges == {
+        ("BIDS raw data", "preprocessing _04_frequency_filter"): [
+            "meg",
+            "runs 01–03",
+        ],
+        ("preprocessing _04_frequency_filter", "preprocessing _07_make_epochs"): [
+            "proc-filt raw",
+            "runs 01–03",
+        ],
+        ("preprocessing _07_make_epochs", "sensor _01_make_evoked"): ["epo"],
+        ("preprocessing _07_make_epochs", "sensor _06_make_cov"): ["epo"],
+    }
+    # init only writes a file nobody consumes, so it contributes no node
+    assert not any("init" in label for label in labels.values())
+    # The full paths are kept for the tooltips
+    edge = next(edge for edge in graph.edges if edge.lines[0] == "proc-filt raw")
+    assert len(edge.paths) == 3
+    assert edge.paths[0] == "/deriv/sub-01_task-av_run-01_proc-filt_raw.fif"
+
+
+def test_flow_graph_no_self_edges() -> None:
+    """Test that a step reading its own output does not add a self-edge."""
+    entries = [
+        _entry(
+            "preprocessing/_03_maxfilter",
+            run="01",
+            out_files={"raw": "/deriv/sub-01_run-01_proc-sss_raw.fif"},
+        ),
+        _entry(
+            "preprocessing/_03_maxfilter",
+            run="02",
+            in_files={"ref": "/deriv/sub-01_run-01_proc-sss_raw.fif"},
+            out_files={"raw": "/deriv/sub-01_run-02_proc-sss_raw.fif"},
+        ),
+    ]
+    assert _build_flow_graph(entries).edges == []
+
+
+def test_flow_layout() -> None:
+    """Test that the layout respects the topology and does not overlap."""
+    graph = _layout_flow_graph(_build_flow_graph(_pipeline_entries()))
+    nodes = {node.id: node for node in graph.nodes}
+    assert [node.layer for node in graph.nodes] == [0, 1, 2, 3, 3]
+    for edge in graph.edges:
+        src, dst = nodes[edge.src], nodes[edge.dst]
+        assert src.layer < dst.layer
+        assert src.y < dst.y
+        assert edge.points[0][1] < edge.points[-1][1]
+    for layer in range(4):
+        spans = sorted(
+            (node.x - node.width / 2, node.x + node.width / 2)
+            for node in graph.nodes
+            if node.layer == layer
+        )
+        for (_, right), (left, _) in zip(spans[:-1], spans[1:]):
+            assert right <= left
+        assert spans[0][0] >= 0 and spans[-1][1] <= graph.width
+    assert all(0 < node.y < graph.height for node in graph.nodes)
+
+
+def test_flow_layout_long_edges() -> None:
+    """Test that edges skipping a layer are routed through the layers in between."""
+    entries = _pipeline_entries()
+    entries.append(
+        _entry(
+            "sensor/_06_make_cov",
+            in_files={"raw": "/deriv/sub-01_task-av_run-01_proc-filt_raw.fif"},
+        )
+    )
+    graph = _layout_flow_graph(_build_flow_graph(entries))
+    nodes = {node.id: node for node in graph.nodes}
+    long_edge = next(
+        edge
+        for edge in graph.edges
+        if nodes[edge.dst].layer - nodes[edge.src].layer > 1
+    )
+    assert len(long_edge.points) == 3  # one routing point in the skipped layer
+    assert nodes[long_edge.src].y < long_edge.points[1][1] < nodes[long_edge.dst].y
+
+
+def test_flow_svg() -> None:
+    """Test that the emitted SVG is well-formed and self-consistent."""
+    graph = _layout_flow_graph(_build_flow_graph(_pipeline_entries()))
+    html = _flow_html(graph)
+    assert "<script>" in html
+    svg = ET.fromstring(html[html.index("<svg") : html.index("</svg>") + 6])
+    assert svg.get("class") == "mbp-flow"
+
+    groups = svg.findall(f".//{SVG_NS}g")
+    node_els = [el for el in groups if "mbp-flow-node" in el.get("class", "").split()]
+    edge_els = [el for el in groups if el.get("class") == "mbp-flow-edge"]
+    assert len(node_els) == len(graph.nodes) == 5
+    assert len(edge_els) == len(graph.edges) == 4
+    assert sum("mbp-flow-source" in el.get("class", "") for el in node_els) == 1
+    # Node links would need report anchors, which we cannot derive; see _flow.py
+    assert svg.find(f".//{SVG_NS}a") is None
+
+    ids = {el.get("id") for el in node_els + edge_els}
+    assert None not in ids
+    for el in node_els:
+        for attr in ("ancestors", "descendants", "edges"):
+            related = (el.get(f"data-flow-{attr}") or "").split()
+            assert set(related) <= ids
+    filt = next(
+        el
+        for el in node_els
+        if "_04_frequency_filter" in "".join(el.itertext())  # tspans
+    )
+    assert len(filt.get("data-flow-ancestors", "").split()) == 1  # the raw data
+    assert len(filt.get("data-flow-descendants", "").split()) == 3
+    assert len(filt.get("data-flow-edges", "").split()) == 4
+
+    titles = [el.text or "" for el in svg.findall(f".//{SVG_NS}title")]
+    assert any("/deriv/sub-01_task-av_run-01_proc-filt_raw.fif" in t for t in titles)
 
 
 _N_CALLS: list[str] = list()

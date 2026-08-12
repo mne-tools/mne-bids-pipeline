@@ -1,6 +1,7 @@
 """Test the pipeline flow diagram."""
 
 import pathlib
+import shutil
 import xml.etree.ElementTree as ET
 from types import SimpleNamespace
 from typing import Any
@@ -13,6 +14,7 @@ from mne_bids_pipeline._flow import (
     FlowEntryT,
     _build_flow_graph,
     _collapse_runs,
+    _flow_completed,
     _flow_files,
     _read_flow_entries,
     _read_flow_roots,
@@ -253,15 +255,22 @@ def test_flow_node_tooltip() -> None:
     ]
     graph = _build_flow_graph(entries)
     node = next(node for node in graph.nodes if "preprocessing" in node.lines)
+    # The cached=True call (run 01) has no recorded original, so timing sums the rest
     assert node.paths[:4] == [
         "Frequency filter",
-        "took 6.0 s over 3 calls (1/3 from cache)",
-        "finished 2026-08-12 09:03:00",
+        "took 4.0 s over 2 calls",
+        "completed 2026-08-12 09:03:00",
         "writes:",
     ]
     assert node.paths[4:] == [
         f"/deriv/sub-01_run-{run}_proc-filt_raw.fif" for run in ("01", "02", "03")
     ]
+    # All-cached with no recorded original: say so instead of showing check times
+    for entry in entries:
+        entry["cached"] = True
+    graph = _build_flow_graph(entries)
+    node = next(node for node in graph.nodes if "preprocessing" in node.lines)
+    assert node.paths[1] == "cached (original run not recorded)"
 
 
 def test_flow_graph_no_self_edges() -> None:
@@ -495,17 +504,32 @@ def test_flow_recorder(flow_kwargs: dict[str, Any], memory_location: bool) -> No
         "out_files": {"filt": str(cfg.out)},
     }
 
-    def _check(cached: bool) -> None:
+    def _check(cached: bool) -> tuple[float, str]:
         (entry,) = (dict(e) for e in _recorded(flow_kwargs))
-        assert entry.pop("duration") >= 0.0
-        assert entry.pop("finished") is not None
+        duration, finished = entry.pop("duration"), entry.pop("finished")
+        assert duration >= 0.0
+        assert finished is not None
         assert entry.pop("cached") is cached
         assert entry == want
+        return duration, finished
 
-    _check(cached=False)
+    first = _check(cached=False)
     _flow_step(**flow_kwargs)
     assert len(_N_CALLS) == (1 if memory_location else 2)  # cache hit the 2nd time
-    _check(cached=memory_location)  # ... and still recorded
+    second = _check(cached=False)  # ... still recorded, as the original computation
+    if memory_location:
+        assert second == first  # the cache hit preserved the original timing
+    deriv_root = flow_kwargs["exec_params"].deriv_root
+    key = dict(step="tests/test_flow", func="_flow_step_impl", kwargs=flow_kwargs)
+    assert _flow_completed(deriv_root=deriv_root, **key) == second[1]
+    if memory_location:
+        # With the recording gone but the joblib cache kept, the original run time
+        # is unknowable: the entry marks that, and the log helper returns nothing
+        shutil.rmtree(deriv_root / ".pipeline_flow")
+        _flow_step(**flow_kwargs)
+        (entry,) = _recorded(flow_kwargs)
+        assert entry["cached"] is True
+        assert _flow_completed(deriv_root=deriv_root, **key) is None
 
 
 def test_flow_recorder_short_circuit(flow_kwargs: dict[str, Any]) -> None:

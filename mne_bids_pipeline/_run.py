@@ -22,7 +22,7 @@ from filelock import FileLock
 from joblib import Memory
 from mne_bids import BIDSPath
 
-from ._flow import FlowEntryT, _flow_files, _write_flow_entry
+from ._flow import FlowEntryT, _flow_completed, _flow_files, _write_flow_entry
 from ._logging import _is_testing, gen_log_kwargs, logger
 from .typing import InFilesPathT, InFilesT, OutFilesT
 
@@ -172,6 +172,13 @@ class ConditionalStepMemory:
         module_doc = getattr(inspect.getmodule(func), "__doc__", None) or ""
         title = module_doc.strip().split("\n")[0].rstrip(".") or None
 
+        def _ran_when(kwargs: dict[str, Any]) -> str:
+            """Get ', ran <when>' for the original computation, for log messages."""
+            completed = _flow_completed(
+                deriv_root=self.deriv_root, step=step, func=func_name, kwargs=kwargs
+            )
+            return f", ran {completed[:16]}" if completed else ""
+
         def __mbp_cached_func_wrapper__(
             *args: list[Any], **kwargs: dict[str, Any]
         ) -> bool:
@@ -304,7 +311,10 @@ class ConditionalStepMemory:
                             bad_out_files = True
                             break
                     else:
-                        msg = f"Computation unnecessary (cached {func.__name__}(…)) …"
+                        msg = (
+                            f"Computation unnecessary (cached "
+                            f"{func.__name__}(…){_ran_when(kwargs)}) …"
+                        )
                         emoji = "cache"
             # When out_files_expected is not None, we should check if the output files
             # exist and stop if they do (e.g., in bem surface or coreg surface
@@ -318,10 +328,13 @@ class ConditionalStepMemory:
                     msg = "Computation forced despite existing output files …"
                     emoji = "🔂"
                 else:
-                    msg = "Computation unnecessary (output files exist) …"
-                    emoji = "🔍"
                     short_circuit = True
                     record(out_files=out_files, cached=True)  # deleted below
+                    msg = (
+                        "Computation unnecessary (output files exist"
+                        f"{_ran_when(kwargs)}) …"
+                    )
+                    emoji = "🔍"
             else:
                 # Ensure memorized_func.check_call_in_cache returned False
                 # as opposed to raised an error (which already sets `msg` above)

@@ -96,6 +96,22 @@ def _write_flow_entry(
         key = _flow_entry_key(entry)
         if only_if_new and key in entries:
             return
+        old = entries.get(key, None)
+        if (
+            entry["cached"]
+            and old is not None
+            and not old.get("cached", False)
+            and old.get("finished") is not None
+            and old.get("out_files") == entry["out_files"]
+        ):
+            # A cache hit replays the same computation, so keep when the original
+            # run happened and how long it took rather than the cache-check timing
+            entry = dict(  # type: ignore[assignment]
+                entry,
+                duration=old["duration"],
+                finished=old["finished"],
+                cached=old["cached"],
+            )
         entries[key] = entry
         have_roots.update(roots or dict())
         fname.write_text(
@@ -129,6 +145,32 @@ def _read_flow_entries(
                 entries.append(entry)
     entries.sort(key=_flow_entry_key)
     return entries
+
+
+def _flow_completed(
+    *, deriv_root: pathlib.Path, step: str, func: str, kwargs: Mapping[str, object]
+) -> str | None:
+    """Get when the recorded original computation of one step call completed."""
+    try:
+        key = _flow_entry_key(
+            {  # type: ignore[typeddict-item]
+                "step": step,
+                "func": func,
+                "subject": kwargs.get("subject", None),
+                "session": kwargs.get("session", None),
+                "run": kwargs.get("run", None),
+                "task": kwargs.get("task", None),
+            }
+        )
+        subject = kwargs.get("subject", None)
+        assert subject is None or isinstance(subject, str)
+        fname = _flow_fname(deriv_root=deriv_root, subject=subject)
+        old = _read_flow_file(fname).get(key, None)
+        if old is not None and not old.get("cached", False):
+            return old.get("finished", None)
+    except Exception:
+        pass  # never let a log nicety break the pipeline
+    return None
 
 
 def _read_flow_roots(*, deriv_root: pathlib.Path, subject: str) -> dict[str, str]:
@@ -255,21 +297,20 @@ def _node_tooltip(entries: Sequence[FlowEntryT], out_paths: Sequence[str]) -> li
     if titles:
         lines.append(titles[0])
     timed = [entry for entry in entries if entry.get("duration") is not None]
-    if timed:
-        total = sum(entry["duration"] or 0.0 for entry in timed)
+    # cached=True survives only when no original computation was ever recorded
+    # (e.g. the recording was deleted but the joblib cache kept), see
+    # _write_flow_entry; normally timing describes the last real computation
+    fresh = [entry for entry in timed if not entry.get("cached")]
+    if fresh:
+        total = sum(entry["duration"] or 0.0 for entry in fresh)
         took = f"{total:.1f} s" if total < 60 else f"{total / 60:.1f} min"
-        calls = f" over {len(timed)} calls" if len(timed) > 1 else ""
-        n_cached = sum(bool(entry.get("cached")) for entry in timed)
-        if n_cached == len(timed):
-            note = " (from cache)"
-        elif n_cached:
-            note = f" ({n_cached}/{len(timed)} from cache)"
-        else:
-            note = ""
-        lines.append(f"took {took}{calls}{note}")
-        stamps = [stamp for entry in timed if (stamp := entry.get("finished"))]
+        calls = f" over {len(fresh)} calls" if len(fresh) > 1 else ""
+        lines.append(f"took {took}{calls}")
+        stamps = [stamp for entry in fresh if (stamp := entry.get("finished"))]
         if stamps:
-            lines.append(f"finished {max(stamps)}")
+            lines.append(f"completed {max(stamps)}")
+    elif timed:
+        lines.append("cached (original run not recorded)")
     if out_paths:
         lines.append("writes:")
         lines.extend(out_paths)

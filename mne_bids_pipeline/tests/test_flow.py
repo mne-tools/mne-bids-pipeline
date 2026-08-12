@@ -32,20 +32,28 @@ def _entry(
     step: str,
     *,
     func: str = "func",
+    title: str | None = None,
     subject: str | None = "01",
     session: str | None = None,
     run: str | None = None,
     task: str | None = "av",
+    duration: float | None = None,
+    finished: str | None = None,
+    cached: bool | None = None,
     in_files: dict[str, str] | None = None,
     out_files: dict[str, str] | None = None,
 ) -> FlowEntryT:
     return {
         "step": step,
         "func": func,
+        "title": title,
         "subject": subject,
         "session": session,
         "run": run,
         "task": task,
+        "duration": duration,
+        "finished": finished,
+        "cached": cached,
         "in_files": in_files or dict(),
         "out_files": out_files or dict(),
     }
@@ -226,6 +234,34 @@ def test_flow_graph_build() -> None:
     edge = next(edge for edge in graph.edges if edge.lines[0] == "proc-filt raw")
     assert len(edge.paths) == 3
     assert edge.paths[0] == "/deriv/sub-01_task-av_run-01_proc-filt_raw.fif"
+
+
+def test_flow_node_tooltip() -> None:
+    """Test that node tooltips summarize title, timing, cache state, and outputs."""
+    entries = [
+        _entry(
+            "preprocessing/_04_frequency_filter",
+            title="Frequency filter",
+            run=run,
+            duration=2.0,
+            finished=f"2026-08-12 09:0{run[-1]}:00",
+            cached=run == "01",
+            in_files={"raw": f"/bids/sub-01_run-{run}_meg.fif"},
+            out_files={"raw": f"/deriv/sub-01_run-{run}_proc-filt_raw.fif"},
+        )
+        for run in ("01", "02", "03")
+    ]
+    graph = _build_flow_graph(entries)
+    node = next(node for node in graph.nodes if "preprocessing" in node.lines)
+    assert node.paths[:4] == [
+        "Frequency filter",
+        "took 6.0 s over 3 calls (1/3 from cache)",
+        "finished 2026-08-12 09:03:00",
+        "writes:",
+    ]
+    assert node.paths[4:] == [
+        f"/deriv/sub-01_run-{run}_proc-filt_raw.fif" for run in ("01", "02", "03")
+    ]
 
 
 def test_flow_graph_no_self_edges() -> None:
@@ -447,22 +483,29 @@ def test_flow_recorder(flow_kwargs: dict[str, Any], memory_location: bool) -> No
     flow_kwargs["exec_params"].memory_location = memory_location
     cfg = flow_kwargs["cfg"]
     _flow_step(**flow_kwargs)
-    want = [
-        {
-            "step": "tests/test_flow",
-            "func": "_flow_step_impl",
-            "subject": "01",
-            "session": None,
-            "run": "01",
-            "task": "av",
-            "in_files": {"raw": str(cfg.raw)},
-            "out_files": {"filt": str(cfg.out)},
-        }
-    ]
-    assert _recorded(flow_kwargs) == want
+    want = {
+        "step": "tests/test_flow",
+        "func": "_flow_step_impl",
+        "title": "Test the pipeline flow diagram",
+        "subject": "01",
+        "session": None,
+        "run": "01",
+        "task": "av",
+        "in_files": {"raw": str(cfg.raw)},
+        "out_files": {"filt": str(cfg.out)},
+    }
+
+    def _check(cached: bool) -> None:
+        (entry,) = (dict(e) for e in _recorded(flow_kwargs))
+        assert entry.pop("duration") >= 0.0
+        assert entry.pop("finished") is not None
+        assert entry.pop("cached") is cached
+        assert entry == want
+
+    _check(cached=False)
     _flow_step(**flow_kwargs)
     assert len(_N_CALLS) == (1 if memory_location else 2)  # cache hit the 2nd time
-    assert _recorded(flow_kwargs) == want  # ... and still recorded
+    _check(cached=memory_location)  # ... and still recorded
 
 
 def test_flow_recorder_short_circuit(flow_kwargs: dict[str, Any]) -> None:

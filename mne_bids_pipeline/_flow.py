@@ -27,10 +27,14 @@ class FlowEntryT(TypedDict):
 
     step: str
     func: str
+    title: str | None
     subject: str | None
     session: str | None
     run: str | None
     task: str | None
+    duration: float | None  # None (with finished/cached) until the call completes
+    finished: str | None
+    cached: bool | None
     in_files: dict[str, str]
     out_files: dict[str, str]
 
@@ -244,14 +248,44 @@ def _edge_lines(paths: Sequence[str]) -> list[str]:
     return lines
 
 
+def _node_tooltip(entries: Sequence[FlowEntryT], out_paths: Sequence[str]) -> list[str]:
+    """Summarize a step's recorded calls for its hover tooltip."""
+    lines: list[str] = list()
+    titles = [title for entry in entries if (title := entry.get("title"))]
+    if titles:
+        lines.append(titles[0])
+    timed = [entry for entry in entries if entry.get("duration") is not None]
+    if timed:
+        total = sum(entry["duration"] or 0.0 for entry in timed)
+        took = f"{total:.1f} s" if total < 60 else f"{total / 60:.1f} min"
+        calls = f" over {len(timed)} calls" if len(timed) > 1 else ""
+        n_cached = sum(bool(entry.get("cached")) for entry in timed)
+        if n_cached == len(timed):
+            note = " (from cache)"
+        elif n_cached:
+            note = f" ({n_cached}/{len(timed)} from cache)"
+        else:
+            note = ""
+        lines.append(f"took {took}{calls}{note}")
+        stamps = [stamp for entry in timed if (stamp := entry.get("finished"))]
+        if stamps:
+            lines.append(f"finished {max(stamps)}")
+    if out_paths:
+        lines.append("writes:")
+        lines.extend(out_paths)
+    return lines
+
+
 def _build_flow_graph(entries: Sequence[FlowEntryT]) -> _Graph:
     """Build the step graph implied by a set of recorded step calls."""
     produced_by: dict[str, set[str]] = dict()
     step_paths: dict[str, set[str]] = dict()
+    step_entries: dict[str, list[FlowEntryT]] = dict()
     for entry in entries:
         for path in entry["out_files"].values():
             produced_by.setdefault(path, set()).add(entry["step"])
         step_paths.setdefault(entry["step"], set()).update(entry["out_files"].values())
+        step_entries.setdefault(entry["step"], []).append(entry)
 
     edge_paths: dict[tuple[str, str], set[str]] = dict()
     for entry in entries:
@@ -277,7 +311,9 @@ def _build_flow_graph(entries: Sequence[FlowEntryT]) -> _Graph:
             node = _Node(
                 id=_node_id(step),
                 lines=_step_lines(step),
-                paths=sorted(step_paths.get(step, set())),
+                paths=_node_tooltip(
+                    step_entries.get(step, []), sorted(step_paths.get(step, set()))
+                ),
                 klass=f"mbp-flow-cat-{category}" if category else "",
             )
         graph.nodes.append(node)

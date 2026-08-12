@@ -2,6 +2,7 @@
 
 import contextlib
 import copy
+import datetime
 import functools
 import hashlib
 import inspect
@@ -168,10 +169,13 @@ class ConditionalStepMemory:
     def cache(self, func: Callable[..., Any]) -> Callable[..., Any]:
         step = _short_step_path(pathlib.Path(inspect.getfile(func)))
         func_name = func.__name__
+        module_doc = getattr(inspect.getmodule(func), "__doc__", None) or ""
+        title = module_doc.strip().split("\n")[0].rstrip(".") or None
 
         def __mbp_cached_func_wrapper__(
             *args: list[Any], **kwargs: dict[str, Any]
         ) -> bool:
+            t0 = time.time()
             in_files = out_files = None
             force_run = kwargs.pop("force_run", False)
             these_kwargs = kwargs.copy()
@@ -187,8 +191,10 @@ class ConditionalStepMemory:
                 deriv_root=self.deriv_root,
                 step=step,
                 func_name=func_name,
+                title=title,
                 kwargs=kwargs,
                 in_files=_flow_files(in_files),
+                t0=t0,
             )
             # Steps write to the report before they return, so seed the recording with
             # the inputs now or the last step to run would be missing from its own
@@ -196,7 +202,7 @@ class ConditionalStepMemory:
             record(out_files=None, only_if_new=True)
             if self.memory is None:
                 out_files = func(*args, **kwargs)
-                record(out_files=out_files)
+                record(out_files=out_files, cached=False)
                 return True
 
             # This is an implementation detail so we don't need a proper error
@@ -315,7 +321,7 @@ class ConditionalStepMemory:
                     msg = "Computation unnecessary (output files exist) …"
                     emoji = "🔍"
                     short_circuit = True
-                    record(out_files=out_files)  # `out_files` is deleted below
+                    record(out_files=out_files, cached=True)  # deleted below
             else:
                 # Ensure memorized_func.check_call_in_cache returned False
                 # as opposed to raised an error (which already sets `msg` above)
@@ -346,7 +352,7 @@ class ConditionalStepMemory:
             else:
                 with _ignore_warnings(self.ignore_warnings):
                     out_files = memorized_func(*args, **kwargs)
-            record(out_files=out_files)  # covers cache hits, forced and fresh runs
+            record(out_files=out_files, cached=done)  # cache hits, forced, and fresh
             if self.require_output:
                 assert isinstance(out_files, dict) and len(out_files), (
                     f"Internal error: step must return non-empty out_files dict, got "
@@ -370,20 +376,32 @@ def _record_flow(
     deriv_root: pathlib.Path,
     step: str,
     func_name: str,
+    title: str | None,
     kwargs: dict[str, Any],
     in_files: dict[str, str],
+    t0: float,
     out_files: Any,
+    cached: bool | None = None,
     only_if_new: bool = False,
 ) -> None:
     """Record which files a step call read and wrote, for the report flow diagram."""
     try:
+        # cached is None for the pre-run seed entry, which has not completed
+        duration = finished = None
+        if cached is not None:
+            duration = round(time.time() - t0, 3)
+            finished = datetime.datetime.now().isoformat(sep=" ", timespec="seconds")
         entry: FlowEntryT = {
             "step": step,
             "func": func_name,
+            "title": title,
             "subject": kwargs.get("subject", None),
             "session": kwargs.get("session", None),
             "run": kwargs.get("run", None),
             "task": kwargs.get("task", None),
+            "duration": duration,
+            "finished": finished,
+            "cached": cached,
             "in_files": in_files,
             "out_files": _flow_files(out_files),
         }

@@ -6,7 +6,6 @@ import xml.etree.ElementTree as ET
 from types import SimpleNamespace
 from typing import Any
 
-import mne
 import pytest
 from mne_bids import BIDSPath
 
@@ -20,7 +19,6 @@ from mne_bids_pipeline._flow import (
     _write_flow_entry,
 )
 from mne_bids_pipeline._graph import _graph_html, _layout_graph
-from mne_bids_pipeline._report import _add_flow_diagram
 from mne_bids_pipeline._run import (
     _flow_files,
     _prep_out_files_path,
@@ -71,7 +69,11 @@ def _pipeline_entries() -> list[FlowEntryT]:
             _entry(
                 "preprocessing/_04_frequency_filter",
                 func="filter_data",
+                title="Frequency filter",
                 run=run,
+                duration=2.0,
+                finished=f"2026-08-12 09:0{run[-1]}:00",
+                cached=run == "01",
                 in_files={"raw": f"/bids/sub-01_task-av_run-{run}_meg.fif"},
                 out_files={"raw": f"/deriv/sub-01_task-av_run-{run}_proc-filt_raw.fif"},
             )
@@ -124,37 +126,14 @@ def test_collapse_runs(runs: list[str], want: str) -> None:
     assert _collapse_runs(runs) == want
 
 
-def test_flow_files() -> None:
-    """Test normalization of the in_files/out_files mappings."""
-    bids_path = BIDSPath(
-        subject="01",
-        root="/bids",
-        datatype="meg",
-        suffix="meg",
-        extension=".fif",
-        check=False,
-    )
-    got = _flow_files(
-        {
-            "path": pathlib.Path("/deriv/a.fif"),
-            "bids": bids_path,
-            "hashed": ("/deriv/b.fif", 1234.0),
-            "__unknown_inputs__": "custom cov",
-            "junk": None,
-        }
-    )
-    assert got == {
-        "path": "/deriv/a.fif",
-        "bids": str(bids_path.fpath),
-        "hashed": "/deriv/b.fif",
-    }
-
-
-def test_flow_recording_roundtrip(tmp_path: pathlib.Path) -> None:
-    """Test that recorded entries survive a write/read cycle without duplicating."""
+def test_flow_storage(tmp_path: pathlib.Path) -> None:
+    """Test the write/read roundtrip, roots, and missing/corrupt recordings."""
+    assert _read_flow(deriv_root=tmp_path, subject="01", session=None) == ([], {})
+    assert _report_flow_html(deriv_root=tmp_path, subject="01", session=None) is None
+    roots = {"bids_root": "/bids"}
     entries = _pipeline_entries()
     for entry in entries:
-        _write_flow_entry(deriv_root=tmp_path, entry=entry)
+        _write_flow_entry(deriv_root=tmp_path, entry=entry, roots=roots)
     # Re-running a step must overwrite its own entry rather than add another
     changed = _entry(
         entries[0]["step"],
@@ -165,7 +144,8 @@ def test_flow_recording_roundtrip(tmp_path: pathlib.Path) -> None:
     )
     _write_flow_entry(deriv_root=tmp_path, entry=changed)
 
-    got = _read_flow(deriv_root=tmp_path, subject="01", session=None)[0]
+    got, got_roots = _read_flow(deriv_root=tmp_path, subject="01", session=None)
+    assert got_roots == roots
     assert len(got) == len(entries)
     assert changed in got
     assert entries[0] not in got
@@ -173,7 +153,6 @@ def test_flow_recording_roundtrip(tmp_path: pathlib.Path) -> None:
     assert sum(entry["subject"] is None for entry in got) == 1
     assert (tmp_path / ".pipeline_flow" / "dataset.json").is_file()
     assert (tmp_path / ".pipeline_flow" / "sub-01.json").is_file()
-
     dataset_only = [entry for entry in got if entry["subject"] is None]
     assert _read_flow(deriv_root=tmp_path, subject="02", session=None)[0] == (
         dataset_only
@@ -184,39 +163,20 @@ def test_flow_recording_roundtrip(tmp_path: pathlib.Path) -> None:
     assert other not in _read_flow(deriv_root=tmp_path, subject="01", session="t1")[0]
     assert other in _read_flow(deriv_root=tmp_path, subject="01", session="t2")[0]
 
-
-def test_flow_recording_missing(tmp_path: pathlib.Path) -> None:
-    """Test that an absent or unreadable recording is not fatal."""
-    assert _read_flow(deriv_root=tmp_path, subject="01", session=None)[0] == []
-    assert _report_flow_html(deriv_root=tmp_path, subject="01", session=None) is None
-    fname = tmp_path / ".pipeline_flow" / "sub-01.json"
-    fname.parent.mkdir()
-    fname.write_text("not json")
-    assert _read_flow(deriv_root=tmp_path, subject="01", session=None)[0] == []
-
-
-def test_flow_roots(tmp_path: pathlib.Path) -> None:
-    """Test that recorded roots shorten the tooltip paths."""
-    roots = {"bids_root": "/bids"}
-    for entry in _pipeline_entries():
-        _write_flow_entry(deriv_root=tmp_path, entry=entry, roots=roots)
-    assert _read_flow(deriv_root=tmp_path, subject="01", session=None)[1] == roots
     assert _shorten_paths(
         ["/bids/sub-01_meg.fif", f"{tmp_path}/a.fif", "/elsewhere/b.fif"],
         dict(roots, deriv_root=str(tmp_path)),
     ) == ["<bids_root>/sub-01_meg.fif", "<deriv_root>/a.fif", "/elsewhere/b.fif"]
-    html = _report_flow_html(deriv_root=tmp_path, subject="01", session=None)
-    assert html is not None
-    assert 'aria-label="Pipeline flow diagram"' in html
-    assert "mbp-flow-cat-preproc .mbp-flow-box" in html  # category CSS included
-    assert "&lt;bids_root&gt;/sub-01_task-av_run-01_meg.fif" in html
-    # The source node's tooltip lists the roots themselves
-    assert "&lt;bids_root&gt; = /bids" in html
-    assert f"&lt;deriv_root&gt; = {tmp_path}" in html
+
+    # A corrupt per-subject file is skipped rather than fatal
+    (tmp_path / ".pipeline_flow" / "sub-01.json").write_text("not json")
+    assert _read_flow(deriv_root=tmp_path, subject="01", session=None)[0] == (
+        dataset_only
+    )
 
 
-def test_flow_graph_build() -> None:
-    """Test that edges follow the produced/consumed relationships."""
+def test_flow_graph() -> None:
+    """Test that edges follow produced/consumed and node tooltips summarize calls."""
     graph = _build_flow_graph(_pipeline_entries())
     labels = {node.id: " ".join(node.lines) for node in graph.nodes}
     edges = {(labels[edge.src], labels[edge.dst]): edge.lines for edge in graph.edges}
@@ -239,44 +199,29 @@ def test_flow_graph_build() -> None:
     assert len(edge.paths) == 3
     assert edge.paths[0] == "/deriv/sub-01_task-av_run-01_proc-filt_raw.fif"
 
-
-def test_flow_node_tooltip() -> None:
-    """Test that node tooltips summarize title, timing, cache state, and outputs."""
-    entries = [
-        _entry(
-            "preprocessing/_04_frequency_filter",
-            title="Frequency filter",
-            run=run,
-            duration=2.0,
-            finished=f"2026-08-12 09:0{run[-1]}:00",
-            cached=run == "01",
-            in_files={"raw": f"/bids/sub-01_run-{run}_meg.fif"},
-            out_files={"raw": f"/deriv/sub-01_run-{run}_proc-filt_raw.fif"},
-        )
-        for run in ("01", "02", "03")
-    ]
-    graph = _build_flow_graph(entries)
-    node = next(node for node in graph.nodes if "preprocessing" in node.lines)
-    # The cached=True call (run 01) has no recorded original, so timing sums the rest
-    assert node.paths[:4] == [
+    # Node tooltips: title, then timing (the cached=True run-01 call has no recorded
+    # original so timing sums the other two), then the outputs
+    node = next(node for node in graph.nodes if "_04_frequency_filter" in node.lines)
+    assert node.paths == [
         "Frequency filter",
         "took 4.0 s over 2 calls",
         "completed 2026-08-12 09:03:00",
         "writes:",
-    ]
-    assert node.paths[4:] == [
-        f"/deriv/sub-01_run-{run}_proc-filt_raw.fif" for run in ("01", "02", "03")
+        *(
+            f"/deriv/sub-01_task-av_run-{run}_proc-filt_raw.fif"
+            for run in ("01", "02", "03")
+        ),
     ]
     # All-cached with no recorded original: say so instead of showing check times
-    for entry in entries:
-        entry["cached"] = True
-    graph = _build_flow_graph(entries)
-    node = next(node for node in graph.nodes if "preprocessing" in node.lines)
+    entries = [dict(entry, cached=True) for entry in _pipeline_entries()]
+    graph = _build_flow_graph(entries)  # type: ignore[arg-type]
+    node = next(node for node in graph.nodes if "_04_frequency_filter" in node.lines)
     assert node.paths[1] == "cached (original run not recorded)"
 
 
-def test_flow_graph_no_self_edges() -> None:
-    """Test that a step reading its own output does not add a self-edge."""
+def test_flow_edge_logic() -> None:
+    """Test self-edge suppression and the routing of layer-skipping edges."""
+    # A step reading its own output (e.g. a reference run) adds no self-edge
     entries = [
         _entry(
             "preprocessing/_03_maxfilter",
@@ -291,6 +236,24 @@ def test_flow_graph_no_self_edges() -> None:
         ),
     ]
     assert _build_flow_graph(entries).edges == []
+
+    # Edges skipping a layer are routed through the layers in between
+    entries = _pipeline_entries()
+    entries.append(
+        _entry(
+            "sensor/_06_make_cov",
+            in_files={"raw": "/deriv/sub-01_task-av_run-01_proc-filt_raw.fif"},
+        )
+    )
+    graph = _layout_graph(_build_flow_graph(entries))
+    nodes = {node.id: node for node in graph.nodes}
+    long_edge = next(
+        edge
+        for edge in graph.edges
+        if nodes[edge.dst].layer - nodes[edge.src].layer > 1
+    )
+    assert len(long_edge.points) == 3  # one routing point in the skipped layer
+    assert nodes[long_edge.src].y < long_edge.points[1][1] < nodes[long_edge.dst].y
 
 
 def test_flow_layout() -> None:
@@ -313,26 +276,6 @@ def test_flow_layout() -> None:
             assert right <= left
         assert spans[0][0] >= 0 and spans[-1][1] <= graph.width
     assert all(0 < node.y < graph.height for node in graph.nodes)
-
-
-def test_flow_layout_long_edges() -> None:
-    """Test that edges skipping a layer are routed through the layers in between."""
-    entries = _pipeline_entries()
-    entries.append(
-        _entry(
-            "sensor/_06_make_cov",
-            in_files={"raw": "/deriv/sub-01_task-av_run-01_proc-filt_raw.fif"},
-        )
-    )
-    graph = _layout_graph(_build_flow_graph(entries))
-    nodes = {node.id: node for node in graph.nodes}
-    long_edge = next(
-        edge
-        for edge in graph.edges
-        if nodes[edge.dst].layer - nodes[edge.src].layer > 1
-    )
-    assert len(long_edge.points) == 3  # one routing point in the skipped layer
-    assert nodes[long_edge.src].y < long_edge.points[1][1] < nodes[long_edge.dst].y
 
 
 def test_flow_svg() -> None:
@@ -380,29 +323,6 @@ def test_flow_svg() -> None:
         if el.get("class") == "mbp-flow-edge-label"
     ]
     assert len(label_els) == len(edge_els) - 1 == 3
-
-
-def test_flow_report(tmp_path: pathlib.Path) -> None:
-    """Test that the diagram makes it into a saved report."""
-    report = mne.Report(title="sub-01")
-    exec_params = SimpleNamespace(deriv_root=tmp_path)
-    _add_flow_diagram(
-        report=report, exec_params=exec_params, subject="01", session=None
-    )
-    assert report.html == []  # nothing recorded yet
-    for entry in _pipeline_entries():
-        _write_flow_entry(deriv_root=tmp_path, entry=entry)
-    for _ in range(2):  # must refresh in place as more steps run
-        _add_flow_diagram(
-            report=report, exec_params=exec_params, subject="01", session=None
-        )
-    assert len(report.html) == 1  # replaced in place rather than appended
-
-    fname = tmp_path / "report.html"
-    report.save(fname, open_browser=False)
-    content = fname.read_text(encoding="utf-8")
-    assert content.count('<svg id="mbp-flow-svg"') == 1
-    assert "_04_frequency_filter" in content
 
 
 _N_CALLS: list[str] = list()
@@ -477,6 +397,29 @@ def _recorded(flow_kwargs: dict[str, Any]) -> list[FlowEntryT]:
 @pytest.mark.parametrize("memory_location", (True, False))
 def test_flow_recorder(flow_kwargs: dict[str, Any], memory_location: bool) -> None:
     """Test that the step wrapper records files on fresh runs and on cache hits."""
+    # The wrapper snapshots in_files/out_files through _flow_files normalization
+    bids_path = BIDSPath(
+        subject="01",
+        root="/bids",
+        datatype="meg",
+        suffix="meg",
+        extension=".fif",
+        check=False,
+    )
+    assert _flow_files(
+        {
+            "path": pathlib.Path("/deriv/a.fif"),
+            "bids": bids_path,
+            "hashed": ("/deriv/b.fif", 1234.0),
+            "__unknown_inputs__": "custom cov",
+            "junk": None,
+        }
+    ) == {
+        "path": "/deriv/a.fif",
+        "bids": str(bids_path.fpath),
+        "hashed": "/deriv/b.fif",
+    }
+
     flow_kwargs["exec_params"].memory_location = memory_location
     cfg = flow_kwargs["cfg"]
     _flow_step(**flow_kwargs)
@@ -525,8 +468,11 @@ def test_flow_recorder(flow_kwargs: dict[str, Any], memory_location: bool) -> No
         assert _ran_when(entry) == ""
 
 
-def test_flow_recorder_short_circuit(flow_kwargs: dict[str, Any]) -> None:
-    """Test that a step skipped because its outputs exist is still recorded."""
+def test_flow_recorder_edge_cases(
+    flow_kwargs: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Test the output-exists short circuit and recording-failure tolerance."""
+    # A step skipped because its outputs already exist is still recorded
     flow_kwargs["cfg"].out.write_text("stale")
     _flow_step_out(**flow_kwargs)
     assert _N_CALLS == []
@@ -534,11 +480,8 @@ def test_flow_recorder_short_circuit(flow_kwargs: dict[str, Any]) -> None:
     assert entry["in_files"] == {"raw": str(flow_kwargs["cfg"].raw)}
     assert entry["out_files"] == {"filt": str(flow_kwargs["cfg"].out)}
 
-
-def test_flow_recorder_failure(
-    flow_kwargs: dict[str, Any], monkeypatch: pytest.MonkeyPatch
-) -> None:
-    """Test that a broken recording does not take the pipeline down with it."""
+    # A broken recording must not take the pipeline down with it
+    shutil.rmtree(flow_kwargs["exec_params"].deriv_root / ".pipeline_flow")
 
     def _boom(**kwargs: object) -> None:
         raise RuntimeError("no disk for you")

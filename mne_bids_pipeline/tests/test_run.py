@@ -296,6 +296,26 @@ def test_run(
         # conditional is good
         assert dataset not in ("ds000248", "ds004229", "ERP_CORE_P3")
 
+    # every report gets a flow diagram, replaced in place across report saves
+    deriv_path = (
+        DATA_DIR
+        / "derivatives"
+        / "mne-bids-pipeline"
+        / test_options.get("dataset", dataset)
+    )
+    report_html_paths = sorted(deriv_path.rglob("sub-*_report.html"))
+    if "preprocessing" in steps:
+        assert len(report_html_paths)
+    for report_html_path in report_html_paths[:1]:  # BEM-only runs may have none
+        content = report_html_path.read_text("utf-8")
+        assert content.count('<svg id="mbp-flow-svg"') == 1
+        assert content.count('aria-label="Pipeline flow diagram"') == 1
+        assert "mbp-flow-cat-" in content  # step-category CSS included
+        # tooltip paths are shortened against the recorded roots, which the
+        # source node's tooltip defines
+        assert "&lt;deriv_root&gt; = " in content
+        assert "&lt;bids_root&gt;" in content
+
 
 def _make_fake_bids_dataset(
     bids_root: Path,

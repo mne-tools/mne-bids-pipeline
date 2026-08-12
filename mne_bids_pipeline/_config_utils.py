@@ -919,6 +919,12 @@ def _validate_contrasts(
                 raise ValueError("Contrasts must be tuples or well-formed dicts")
 
 
+def _get_step_title(module: ModuleType | None) -> str | None:
+    """Get a step's human-readable title: its docstring's first line, no period."""
+    doc = getattr(module, "__doc__", None) or ""
+    return doc.strip().split("\n")[0].rstrip(".") or None
+
+
 def _get_step_modules() -> dict[str, tuple[ModuleType, ...]]:
     from .steps import freesurfer, init, preprocessing, sensor, source
 

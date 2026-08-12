@@ -8,10 +8,11 @@ SVG rendering live in ``_graph.py``.
 import json
 import pathlib
 import re
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Iterable, Sequence
+from typing import Any
 
 from filelock import FileLock
-from mne_bids import BIDSPath
+from mne_bids import get_entities_from_fname
 
 from ._graph import _ID_PREFIX, _Edge, _Graph, _graph_html, _layout_graph, _Node
 from .typing import TypedDict
@@ -58,18 +59,15 @@ def _flow_entry_key(entry: FlowEntryT) -> str:
     return "|".join(str(entry[key] or "") for key in keys)  # type: ignore[literal-required]
 
 
-def _read_flow_file(fname: pathlib.Path) -> dict[str, FlowEntryT]:
+def _parse_flow_file(fname: pathlib.Path) -> dict[str, Any]:
+    """Parse one recording file; the caller holds the lock when it matters."""
     if not fname.is_file():
         return dict()
-    with FileLock(f"{fname}.lock"):
-        try:
-            content = json.loads(fname.read_text(encoding="utf-8"))
-        except json.JSONDecodeError:
-            content = dict()
-    if content.get("version", None) != _FLOW_VERSION:
+    try:
+        content = json.loads(fname.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
         return dict()
-    entries: dict[str, FlowEntryT] = content["entries"]
-    return entries
+    return content if content.get("version", None) == _FLOW_VERSION else dict()
 
 
 def _write_flow_entry(
@@ -78,25 +76,18 @@ def _write_flow_entry(
     entry: FlowEntryT,
     roots: dict[str, str] | None = None,
     only_if_new: bool = False,
-) -> None:
-    """Merge a single recorded step call into the on-disk recording."""
+) -> FlowEntryT:
+    """Merge a step call into the on-disk recording; get back the stored entry."""
     fname = _flow_fname(deriv_root=deriv_root, subject=entry["subject"])
     fname.parent.mkdir(parents=True, exist_ok=True)
     with FileLock(f"{fname}.lock"):
-        entries: dict[str, FlowEntryT] = dict()
-        have_roots: dict[str, str] = dict()
-        if fname.is_file():
-            try:
-                content = json.loads(fname.read_text(encoding="utf-8"))
-            except json.JSONDecodeError:
-                content = dict()
-            if content.get("version", None) == _FLOW_VERSION:
-                entries = content["entries"]
-                have_roots = content.get("roots", dict())
+        content = _parse_flow_file(fname)
+        entries: dict[str, FlowEntryT] = content.get("entries", dict())
+        have_roots: dict[str, str] = content.get("roots", dict())
         key = _flow_entry_key(entry)
-        if only_if_new and key in entries:
-            return
         old = entries.get(key, None)
+        if only_if_new and old is not None:
+            return old
         if (
             entry["cached"]
             and old is not None
@@ -121,6 +112,7 @@ def _write_flow_entry(
             ),
             encoding="utf-8",
         )
+    return entry
 
 
 def _flow_fnames(*, deriv_root: pathlib.Path, subject: str) -> list[pathlib.Path]:
@@ -134,59 +126,23 @@ def _flow_fnames(*, deriv_root: pathlib.Path, subject: str) -> list[pathlib.Path
     return fnames
 
 
-def _read_flow_entries(
+def _read_flow(
     *, deriv_root: pathlib.Path, subject: str, session: str | None
-) -> list[FlowEntryT]:
-    """Get the recorded step calls relevant for one report."""
+) -> tuple[list[FlowEntryT], dict[str, str]]:
+    """Get the recorded step calls and roots relevant for one report."""
     entries: list[FlowEntryT] = list()
-    for fname in _flow_fnames(deriv_root=deriv_root, subject=subject):
-        for entry in _read_flow_file(fname).values():
-            if entry["session"] in (None, session):
-                entries.append(entry)
-    entries.sort(key=_flow_entry_key)
-    return entries
-
-
-def _flow_completed(
-    *, deriv_root: pathlib.Path, step: str, func: str, kwargs: Mapping[str, object]
-) -> str | None:
-    """Get when the recorded original computation of one step call completed."""
-    try:
-        key = _flow_entry_key(
-            {  # type: ignore[typeddict-item]
-                "step": step,
-                "func": func,
-                "subject": kwargs.get("subject", None),
-                "session": kwargs.get("session", None),
-                "run": kwargs.get("run", None),
-                "task": kwargs.get("task", None),
-            }
-        )
-        subject = kwargs.get("subject", None)
-        assert subject is None or isinstance(subject, str)
-        fname = _flow_fname(deriv_root=deriv_root, subject=subject)
-        old = _read_flow_file(fname).get(key, None)
-        if old is not None and not old.get("cached", False):
-            return old.get("finished", None)
-    except Exception:
-        pass  # never let a log nicety break the pipeline
-    return None
-
-
-def _read_flow_roots(*, deriv_root: pathlib.Path, subject: str) -> dict[str, str]:
-    """Get the recorded root directories (bids_root etc.) relevant for one report."""
     roots: dict[str, str] = dict()
     for fname in _flow_fnames(deriv_root=deriv_root, subject=subject):
-        if not fname.is_file():
+        if not fname.is_file():  # also avoids creating lock files on pure reads
             continue
         with FileLock(f"{fname}.lock"):
-            try:
-                content = json.loads(fname.read_text(encoding="utf-8"))
-            except json.JSONDecodeError:
-                continue
-        if content.get("version", None) == _FLOW_VERSION:
-            roots.update(content.get("roots", dict()))
-    return roots
+            content = _parse_flow_file(fname)
+        for entry in content.get("entries", dict()).values():
+            if entry["session"] in (None, session):
+                entries.append(entry)
+        roots.update(content.get("roots", dict()))
+    entries.sort(key=_flow_entry_key)
+    return entries, roots
 
 
 # -- Graph -------------------------------------------------------------------
@@ -199,6 +155,19 @@ _CATEGORIES = {
     "sensor": "sensor",
     "source": "source",
 }
+# Categorical hues (validated for CVD + the report's white surface); identity is
+# never color-alone since every node names its category in text
+_FLOW_CSS = """
+svg.mbp-flow .mbp-flow-source .mbp-flow-box { stroke-dasharray: 4 3; }
+svg.mbp-flow .mbp-flow-cat-init .mbp-flow-box { stroke: #2a78d6; fill: #2a78d6; }
+svg.mbp-flow .mbp-flow-cat-preproc .mbp-flow-box { stroke: #eb6834; fill: #eb6834; }
+svg.mbp-flow .mbp-flow-cat-sensor .mbp-flow-box { stroke: #1baf7a; fill: #1baf7a; }
+svg.mbp-flow .mbp-flow-cat-source .mbp-flow-box { stroke: #eda100; fill: #eda100; }
+svg.mbp-flow [class*=" mbp-flow-cat-"] .mbp-flow-box {
+  fill-opacity: 0.12;
+  stroke-width: 1.2;
+}
+"""
 
 
 def _node_id(step: str) -> str:
@@ -210,29 +179,17 @@ def _step_lines(step: str) -> list[str]:
     return [group, name] if name else [group]
 
 
-def _fname_bits(path: str) -> tuple[str | None, str | None, str | None]:
-    """Get the (processing, suffix, extension) descriptors of a filename."""
+def _fname_bits(path: str) -> tuple[str | None, str | None, str | None, str | None]:
+    """Get the (processing, suffix, extension, run) descriptors of a filename."""
     name = pathlib.Path(path).name
     stem, _, _ = name.partition(".")
     extension = name[len(stem) :] or None
     parts = stem.split("_")
     if not any("-" in part for part in parts):  # not a BIDS-style name
-        return None, None, extension
-    processing = None
-    for part in parts:
-        key, sep, value = part.partition("-")
-        if sep and key == "proc":
-            processing = value
+        return None, None, extension, None
+    entities = get_entities_from_fname(name, on_error="ignore")
     suffix = parts[-1] if "-" not in parts[-1] else None
-    return processing, suffix, extension
-
-
-def _fname_run(path: str) -> str | None:
-    for part in pathlib.Path(path).name.split("_"):
-        key, sep, value = part.partition("-")
-        if sep and key == "run":
-            return value
-    return None
+    return entities.get("processing"), suffix, extension, entities.get("run")
 
 
 def _collapse_runs(runs: Iterable[str]) -> str:
@@ -268,14 +225,13 @@ def _edge_lines(paths: Sequence[str]) -> list[str]:
     extensions: set[str] = set()
     runs: set[str] = set()
     for path in paths:
-        processing, suffix, extension = _fname_bits(path)
+        processing, suffix, extension, run = _fname_bits(path)
         if processing is not None:
             processings.add(f"proc-{processing}")
         if suffix is not None:
             suffixes.add(suffix)
         elif extension is not None:
             extensions.add(extension)
-        run = _fname_run(path)
         if run is not None:
             runs.add(run)
     descriptors = sorted(processings) + sorted(suffixes) + sorted(extensions)
@@ -317,8 +273,25 @@ def _node_tooltip(entries: Sequence[FlowEntryT], out_paths: Sequence[str]) -> li
     return lines
 
 
-def _build_flow_graph(entries: Sequence[FlowEntryT]) -> _Graph:
+def _shorten_paths(paths: Sequence[str], roots: dict[str, str]) -> list[str]:
+    """Rewrite absolute paths as ``<root_name>/...`` for readability."""
+    subs = sorted(roots.items(), key=lambda kv: -len(kv[1]))  # deriv may be in bids
+    out: list[str] = list()
+    for path in paths:
+        for name, root in subs:
+            root = root.rstrip("/")
+            if path == root or path.startswith(f"{root}/"):
+                path = f"<{name}>{path[len(root) :]}"
+                break
+        out.append(path)
+    return out
+
+
+def _build_flow_graph(
+    entries: Sequence[FlowEntryT], roots: dict[str, str] | None = None
+) -> _Graph:
     """Build the step graph implied by a set of recorded step calls."""
+    roots = roots or dict()
     produced_by: dict[str, set[str]] = dict()
     step_paths: dict[str, set[str]] = dict()
     step_entries: dict[str, list[FlowEntryT]] = dict()
@@ -344,7 +317,7 @@ def _build_flow_graph(entries: Sequence[FlowEntryT]) -> _Graph:
             node = _Node(
                 id=_node_id(step),
                 lines=[_SOURCE_LABEL],
-                paths=[],
+                paths=[f"<{name}> = {path}" for name, path in sorted(roots.items())],
                 klass="mbp-flow-source",
             )
         else:
@@ -353,7 +326,8 @@ def _build_flow_graph(entries: Sequence[FlowEntryT]) -> _Graph:
                 id=_node_id(step),
                 lines=_step_lines(step),
                 paths=_node_tooltip(
-                    step_entries.get(step, []), sorted(step_paths.get(step, set()))
+                    step_entries.get(step, []),
+                    _shorten_paths(sorted(step_paths.get(step, set())), roots),
                 ),
                 klass=f"mbp-flow-cat-{category}" if category else "",
             )
@@ -366,62 +340,23 @@ def _build_flow_graph(entries: Sequence[FlowEntryT]) -> _Graph:
                 src=_node_id(src),
                 dst=_node_id(dst),
                 lines=_edge_lines(paths),
-                paths=paths,
+                paths=_shorten_paths(paths, roots),
             )
         )
     return graph
-
-
-def _shorten_paths(paths: Sequence[str], roots: dict[str, str]) -> list[str]:
-    """Rewrite absolute paths as ``<root_name>/...`` for readability."""
-    subs = sorted(roots.items(), key=lambda kv: -len(kv[1]))  # deriv may be in bids
-    out: list[str] = list()
-    for path in paths:
-        for name, root in subs:
-            root = root.rstrip("/")
-            if path == root or path.startswith(f"{root}/"):
-                path = f"<{name}>{path[len(root) :]}"
-                break
-        out.append(path)
-    return out
 
 
 def _report_flow_html(
     *, deriv_root: pathlib.Path, subject: str, session: str | None
 ) -> str | None:
     """Get the flow diagram HTML for one report, or None if nothing was recorded."""
-    entries = _read_flow_entries(
-        deriv_root=deriv_root, subject=subject, session=session
-    )
-    graph = _build_flow_graph(entries)
+    entries, roots = _read_flow(deriv_root=deriv_root, subject=subject, session=session)
+    roots["deriv_root"] = str(deriv_root)
+    graph = _build_flow_graph(entries, roots)
     if not graph.edges:
         return None
-    roots = _read_flow_roots(deriv_root=deriv_root, subject=subject)
-    roots["deriv_root"] = str(deriv_root)
-    for node in graph.nodes:
-        node.paths = _shorten_paths(node.paths, roots)
-    for edge in graph.edges:
-        edge.paths = _shorten_paths(edge.paths, roots)
-    source = next(
-        (node for node in graph.nodes if node.id == _node_id(_SOURCE_ID)), None
-    )
-    if source is not None:
-        source.paths = [f"<{name}> = {path}" for name, path in sorted(roots.items())]
     # No links on the nodes: mne.Report derives its anchors from content titles, and
     # nothing maps a pipeline step to the titles it happens to add to the report.
-    return _graph_html(_layout_graph(graph))
-
-
-def _flow_files(files: Mapping[str, object] | None) -> dict[str, str]:
-    """Normalize an in_files/out_files mapping to plain path strings."""
-    out: dict[str, str] = dict()
-    for key, value in (files or dict()).items():
-        if key == "__unknown_inputs__":
-            continue
-        if isinstance(value, tuple):  # out_files carry (path, hash) pairs
-            value = value[0]
-        if isinstance(value, BIDSPath):
-            value = value.fpath
-        if isinstance(value, str | pathlib.Path):
-            out[key] = str(value)
-    return out
+    return _graph_html(
+        _layout_graph(graph), extra_css=_FLOW_CSS, label="Pipeline flow diagram"
+    )

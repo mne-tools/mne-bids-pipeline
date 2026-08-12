@@ -5,11 +5,13 @@ could draw any small DAG. The pipeline-specific graph construction lives in
 ``_flow.py``.
 """
 
+from collections import Counter
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 from xml.sax.saxutils import escape, quoteattr
 
 _ID_PREFIX = "mbp-flow"
+_SVG_ID = f"{_ID_PREFIX}-svg"
 
 
 @dataclass
@@ -172,17 +174,6 @@ svg.mbp-flow .mbp-flow-box {
   stroke-width: 1;
 }
 svg.mbp-flow .mbp-flow-node text { font-weight: 600; }
-svg.mbp-flow .mbp-flow-source .mbp-flow-box { stroke-dasharray: 4 3; }
-/* Categorical hues (validated for CVD + white surface); identity is never
-   color-alone since every node names its category in text */
-svg.mbp-flow .mbp-flow-cat-init .mbp-flow-box { stroke: #2a78d6; fill: #2a78d6; }
-svg.mbp-flow .mbp-flow-cat-preproc .mbp-flow-box { stroke: #eb6834; fill: #eb6834; }
-svg.mbp-flow .mbp-flow-cat-sensor .mbp-flow-box { stroke: #1baf7a; fill: #1baf7a; }
-svg.mbp-flow .mbp-flow-cat-source .mbp-flow-box { stroke: #eda100; fill: #eda100; }
-svg.mbp-flow [class*=" mbp-flow-cat-"] .mbp-flow-box {
-  fill-opacity: 0.12;
-  stroke-width: 1.2;
-}
 svg.mbp-flow .mbp-flow-line {
   fill: none;
   stroke: currentColor;
@@ -255,7 +246,7 @@ def _reachable(
 
 
 def _edge_path(
-    points: Sequence[tuple[float, float]], *, frac: float = 0.5
+    points: Sequence[tuple[float, float]], *, frac: float
 ) -> tuple[str, tuple[float, float]]:
     """Get the SVG path through an edge's routing points and its label anchor.
 
@@ -286,7 +277,8 @@ def _edge_path(
     return d, at((lo + hi) / 2)
 
 
-def _svg_title(paths: Sequence[str], *, limit: int = 20) -> str:
+def _svg_title(paths: Sequence[str]) -> str:
+    limit = 20
     if not paths:
         return ""
     lines = list(paths[:limit])
@@ -304,7 +296,7 @@ def _svg_text(lines: Sequence[str], *, x: float, y: float, klass: str) -> str:
     return f'<text class="{klass}" text-anchor="middle">{spans}</text>'
 
 
-def _graph_svg(graph: _Graph, *, svg_id: str = f"{_ID_PREFIX}-svg") -> str:
+def _graph_svg(graph: _Graph, *, extra_css: str = "", label: str = "Graph") -> str:
     """Render a laid-out graph as a single self-contained SVG element."""
     ancestors, ancestor_edges = _reachable(graph, reverse=True)
     descendants, descendant_edges = _reachable(graph, reverse=False)
@@ -312,17 +304,14 @@ def _graph_svg(graph: _Graph, *, svg_id: str = f"{_ID_PREFIX}-svg") -> str:
     # Fanned edges get one label per distinct text (on the middlemost edge of each
     # cluster), staggered in height — every copy of an identical label is redundant
     # ink and they collide near the shared end, where the curves converge.
-    fan: dict[str, int] = dict()
+    src_fan = Counter(edge.src for edge in graph.edges)
+    groups: dict[tuple[str, str], list[_Edge]] = dict()
     for edge in graph.edges:
-        for key in (f"src-{edge.src}", f"dst-{edge.dst}"):
-            fan[key] = fan.get(key, 0) + 1
-    groups: dict[str, list[_Edge]] = dict()
-    for edge in graph.edges:
-        key = f"src-{edge.src}" if fan[f"src-{edge.src}"] > 1 else f"dst-{edge.dst}"
+        key = ("src", edge.src) if src_fan[edge.src] > 1 else ("dst", edge.dst)
         groups.setdefault(key, []).append(edge)
     fracs: dict[str, float] = dict()
     for key, group in groups.items():
-        far = -1 if key.startswith("src-") else 0  # the end that is not shared
+        far = -1 if key[0] == "src" else 0  # the end that is not shared
         clusters: dict[tuple[str, ...], list[_Edge]] = dict()
         for edge in sorted(group, key=lambda e: e.points[far][0]):
             clusters.setdefault(tuple(edge.lines), []).append(edge)
@@ -346,19 +335,19 @@ def _graph_svg(graph: _Graph, *, svg_id: str = f"{_ID_PREFIX}-svg") -> str:
         width = _text_width(edge.lines) + 10
         height = len(edge.lines) * _LINE_HEIGHT
         if edge.id in fracs:
-            label = (
+            label_html = (
                 f'<rect class="mbp-flow-label-bg" rx="3" x="{mx - width / 2:.1f}" '
                 f'y="{my - height / 2:.1f}" width="{width:.1f}" '
                 f'height="{height:.1f}" />'
                 f"{_svg_text(edge.lines, x=mx, y=my, klass='mbp-flow-edge-label')}"
             )
         else:
-            label = ""
+            label_html = ""
         edge_html.append(
             f'<g id="{edge.id}" class="mbp-flow-edge">'
             f'<path class="mbp-flow-line" d="{d}" '
             f'marker-end="url(#{_ID_PREFIX}-arrow)" />'
-            f"{label}"
+            f"{label_html}"
             f"{_svg_title(edge.paths)}</g>"
         )
 
@@ -385,11 +374,11 @@ def _graph_svg(graph: _Graph, *, svg_id: str = f"{_ID_PREFIX}-svg") -> str:
         )
 
     return (
-        f'<svg id="{svg_id}" class="mbp-flow" xmlns="http://www.w3.org/2000/svg" '
+        f'<svg id="{_SVG_ID}" class="mbp-flow" xmlns="http://www.w3.org/2000/svg" '
         f'viewBox="0 0 {graph.width:.0f} {graph.height:.0f}" '
         f'width="{graph.width:.0f}" height="{graph.height:.0f}" '
-        f'role="img" aria-label="Pipeline flow diagram">'
-        f"<style>{_CSS}</style>"
+        f'role="img" aria-label={quoteattr(label)}>'
+        f"<style>{_CSS}{extra_css}</style>"
         f'<defs><marker id="{_ID_PREFIX}-arrow" viewBox="0 0 8 8" refX="7" refY="4" '
         f'markerWidth="6" markerHeight="6" orient="auto-start-reverse">'
         f'<path class="mbp-flow-arrow" d="M 0 0 L 8 4 L 0 8 z" /></marker></defs>'
@@ -399,9 +388,10 @@ def _graph_svg(graph: _Graph, *, svg_id: str = f"{_ID_PREFIX}-svg") -> str:
     )
 
 
-def _graph_html(graph: _Graph, *, svg_id: str = f"{_ID_PREFIX}-svg") -> str:
+def _graph_html(graph: _Graph, *, extra_css: str = "", label: str = "Graph") -> str:
     """Render a laid-out graph plus its hover-highlighting behavior."""
+    svg = _graph_svg(graph, extra_css=extra_css, label=label)
     return (
-        f'<div class="mbp-flow-wrap">{_graph_svg(graph, svg_id=svg_id)}</div>'
-        f"<script>{_JS % dict(svg_id=svg_id)}</script>"
+        f'<div class="mbp-flow-wrap">{svg}</div>'
+        f"<script>{_JS % dict(svg_id=_SVG_ID)}</script>"
     )

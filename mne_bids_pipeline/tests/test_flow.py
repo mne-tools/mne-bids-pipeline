@@ -14,18 +14,20 @@ from mne_bids_pipeline._flow import (
     FlowEntryT,
     _build_flow_graph,
     _collapse_runs,
-    _flow_completed,
-    _flow_files,
-    _read_flow_entries,
-    _read_flow_roots,
+    _read_flow,
     _report_flow_html,
     _shorten_paths,
     _write_flow_entry,
 )
 from mne_bids_pipeline._graph import _graph_html, _layout_graph
 from mne_bids_pipeline._report import _add_flow_diagram
-from mne_bids_pipeline._run import _prep_out_files_path, failsafe_run
-from mne_bids_pipeline.typing import InFilesT, OutFilesT
+from mne_bids_pipeline._run import (
+    _flow_files,
+    _prep_out_files_path,
+    _ran_when,
+    failsafe_run,
+)
+from mne_bids_pipeline.typing import InFilesPathT, InFilesT, OutFilesT
 
 SVG_NS = "{http://www.w3.org/2000/svg}"
 
@@ -163,7 +165,7 @@ def test_flow_recording_roundtrip(tmp_path: pathlib.Path) -> None:
     )
     _write_flow_entry(deriv_root=tmp_path, entry=changed)
 
-    got = _read_flow_entries(deriv_root=tmp_path, subject="01", session=None)
+    got = _read_flow(deriv_root=tmp_path, subject="01", session=None)[0]
     assert len(got) == len(entries)
     assert changed in got
     assert entries[0] not in got
@@ -173,26 +175,24 @@ def test_flow_recording_roundtrip(tmp_path: pathlib.Path) -> None:
     assert (tmp_path / ".pipeline_flow" / "sub-01.json").is_file()
 
     dataset_only = [entry for entry in got if entry["subject"] is None]
-    assert _read_flow_entries(deriv_root=tmp_path, subject="02", session=None) == (
+    assert _read_flow(deriv_root=tmp_path, subject="02", session=None)[0] == (
         dataset_only
     )
     # Entries of other sessions are filtered out
     other = _entry("sensor/_01_make_evoked", session="t2")
     _write_flow_entry(deriv_root=tmp_path, entry=other)
-    assert other not in _read_flow_entries(
-        deriv_root=tmp_path, subject="01", session="t1"
-    )
-    assert other in _read_flow_entries(deriv_root=tmp_path, subject="01", session="t2")
+    assert other not in _read_flow(deriv_root=tmp_path, subject="01", session="t1")[0]
+    assert other in _read_flow(deriv_root=tmp_path, subject="01", session="t2")[0]
 
 
 def test_flow_recording_missing(tmp_path: pathlib.Path) -> None:
     """Test that an absent or unreadable recording is not fatal."""
-    assert _read_flow_entries(deriv_root=tmp_path, subject="01", session=None) == []
+    assert _read_flow(deriv_root=tmp_path, subject="01", session=None)[0] == []
     assert _report_flow_html(deriv_root=tmp_path, subject="01", session=None) is None
     fname = tmp_path / ".pipeline_flow" / "sub-01.json"
     fname.parent.mkdir()
     fname.write_text("not json")
-    assert _read_flow_entries(deriv_root=tmp_path, subject="01", session=None) == []
+    assert _read_flow(deriv_root=tmp_path, subject="01", session=None)[0] == []
 
 
 def test_flow_roots(tmp_path: pathlib.Path) -> None:
@@ -200,13 +200,15 @@ def test_flow_roots(tmp_path: pathlib.Path) -> None:
     roots = {"bids_root": "/bids"}
     for entry in _pipeline_entries():
         _write_flow_entry(deriv_root=tmp_path, entry=entry, roots=roots)
-    assert _read_flow_roots(deriv_root=tmp_path, subject="01") == roots
+    assert _read_flow(deriv_root=tmp_path, subject="01", session=None)[1] == roots
     assert _shorten_paths(
         ["/bids/sub-01_meg.fif", f"{tmp_path}/a.fif", "/elsewhere/b.fif"],
         dict(roots, deriv_root=str(tmp_path)),
     ) == ["<bids_root>/sub-01_meg.fif", "<deriv_root>/a.fif", "/elsewhere/b.fif"]
     html = _report_flow_html(deriv_root=tmp_path, subject="01", session=None)
     assert html is not None
+    assert 'aria-label="Pipeline flow diagram"' in html
+    assert "mbp-flow-cat-preproc .mbp-flow-box" in html  # category CSS included
     assert "&lt;bids_root&gt;/sub-01_task-av_run-01_meg.fif" in html
     # The source node's tooltip lists the roots themselves
     assert "&lt;bids_root&gt; = /bids" in html
@@ -406,25 +408,11 @@ def test_flow_report(tmp_path: pathlib.Path) -> None:
 _N_CALLS: list[str] = list()
 
 
-def _get_input_fnames_flow(
-    *,
-    cfg: SimpleNamespace,
-    subject: str,
-    session: str | None,
-    run: str | None,
-    task: str | None,
-) -> InFilesT:
+def _get_input_fnames_flow(*, cfg: SimpleNamespace, **kwargs: Any) -> InFilesT:
     return dict(raw=cfg.raw)
 
 
-def _get_output_fnames_flow(
-    *,
-    cfg: SimpleNamespace,
-    subject: str,
-    session: str | None,
-    run: str | None,
-    task: str | None,
-) -> InFilesT:
+def _get_output_fnames_flow(*, cfg: SimpleNamespace, **kwargs: Any) -> InFilesPathT:
     return dict(filt=cfg.out)
 
 
@@ -483,7 +471,7 @@ def flow_kwargs(tmp_path: pathlib.Path) -> dict[str, Any]:
 
 def _recorded(flow_kwargs: dict[str, Any]) -> list[FlowEntryT]:
     deriv_root = flow_kwargs["exec_params"].deriv_root
-    return _read_flow_entries(deriv_root=deriv_root, subject="01", session=None)
+    return _read_flow(deriv_root=deriv_root, subject="01", session=None)[0]
 
 
 @pytest.mark.parametrize("memory_location", (True, False))
@@ -519,17 +507,22 @@ def test_flow_recorder(flow_kwargs: dict[str, Any], memory_location: bool) -> No
     second = _check(cached=False)  # ... still recorded, as the original computation
     if memory_location:
         assert second == first  # the cache hit preserved the original timing
+    (entry,) = _recorded(flow_kwargs)
+    assert _ran_when(entry) == f", ran {second[1][:16]}"
     deriv_root = flow_kwargs["exec_params"].deriv_root
-    key = dict(step="tests/test_flow", func="_flow_step_impl", kwargs=flow_kwargs)
-    assert _flow_completed(deriv_root=deriv_root, **key) == second[1]
     if memory_location:
+        # A cache hit whose original computation is on record skips the write
+        fname = deriv_root / ".pipeline_flow" / "sub-01.json"
+        mtime = fname.stat().st_mtime_ns
+        _flow_step(**flow_kwargs)
+        assert fname.stat().st_mtime_ns == mtime
         # With the recording gone but the joblib cache kept, the original run time
         # is unknowable: the entry marks that, and the log helper returns nothing
         shutil.rmtree(deriv_root / ".pipeline_flow")
         _flow_step(**flow_kwargs)
         (entry,) = _recorded(flow_kwargs)
         assert entry["cached"] is True
-        assert _flow_completed(deriv_root=deriv_root, **key) is None
+        assert _ran_when(entry) == ""
 
 
 def test_flow_recorder_short_circuit(flow_kwargs: dict[str, Any]) -> None:

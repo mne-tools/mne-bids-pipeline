@@ -1,0 +1,2 @@
+artifact-path: 0/site/index.html
+circleci-jobs: build_docs

@@ -10,16 +10,17 @@ import pytest
 from mne_bids import BIDSPath
 
 from mne_bids_pipeline._flow import (
+    _SOURCE_ID,
     FlowEntryT,
     _build_flow_graph,
     _collapse_runs,
     _flow_files,
-    _flow_html,
-    _layout_flow_graph,
+    _node_id,
     _read_flow_entries,
     _report_flow_html,
     _write_flow_entry,
 )
+from mne_bids_pipeline._graph import _graph_html, _layout_graph
 from mne_bids_pipeline._report import _add_flow_diagram
 from mne_bids_pipeline._run import _prep_out_files_path, failsafe_run
 from mne_bids_pipeline.typing import InFilesT, OutFilesT
@@ -229,7 +230,7 @@ def test_flow_graph_no_self_edges() -> None:
 
 def test_flow_layout() -> None:
     """Test that the layout respects the topology and does not overlap."""
-    graph = _layout_flow_graph(_build_flow_graph(_pipeline_entries()))
+    graph = _layout_graph(_build_flow_graph(_pipeline_entries()))
     nodes = {node.id: node for node in graph.nodes}
     assert [node.layer for node in graph.nodes] == [0, 1, 2, 3, 3]
     for edge in graph.edges:
@@ -258,7 +259,7 @@ def test_flow_layout_long_edges() -> None:
             in_files={"raw": "/deriv/sub-01_task-av_run-01_proc-filt_raw.fif"},
         )
     )
-    graph = _layout_flow_graph(_build_flow_graph(entries))
+    graph = _layout_graph(_build_flow_graph(entries))
     nodes = {node.id: node for node in graph.nodes}
     long_edge = next(
         edge
@@ -271,8 +272,8 @@ def test_flow_layout_long_edges() -> None:
 
 def test_flow_svg() -> None:
     """Test that the emitted SVG is well-formed and self-consistent."""
-    graph = _layout_flow_graph(_build_flow_graph(_pipeline_entries()))
-    html = _flow_html(graph)
+    graph = _layout_graph(_build_flow_graph(_pipeline_entries()))
+    html = _graph_html(graph, source_id=_node_id(_SOURCE_ID))
     assert "<script>" in html
     svg = ET.fromstring(html[html.index("<svg") : html.index("</svg>") + 6])
     assert svg.get("class") == "mbp-flow"

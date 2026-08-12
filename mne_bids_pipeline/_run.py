@@ -326,7 +326,8 @@ class ConditionalStepMemory:
                 else:
                     short_circuit = True
                     if not prior_done:
-                        record(out_files=out_files, cached=True)  # deleted below
+                        # must record before the `del out_files` below
+                        record(out_files=out_files, cached=True)
                     msg = (
                         "Computation unnecessary (output files exist"
                         f"{_ran_when(prior)}) …"

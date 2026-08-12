@@ -5,7 +5,6 @@ recordings into the step dependency graph and its labels. The generic layout and
 SVG rendering live in ``_graph.py``.
 """
 
-import json
 import pathlib
 import re
 from collections.abc import Sequence
@@ -15,6 +14,7 @@ from filelock import FileLock
 from mne_bids import get_entities_from_fname
 
 from ._graph import _ID_PREFIX, _Edge, _Graph, _graph_html, _layout_graph, _Node
+from ._io import _read_json, _write_json
 from ._logging import _collapse_runs, _shorten_paths
 from .typing import TypedDict
 
@@ -65,8 +65,8 @@ def _parse_flow_file(fname: pathlib.Path) -> dict[str, Any]:
     if not fname.is_file():
         return dict()
     try:
-        content = json.loads(fname.read_text(encoding="utf-8"))
-    except json.JSONDecodeError:
+        content = _read_json(fname)
+    except ValueError:  # includes JSONDecodeError
         return dict()
     return content if content.get("version", None) == _FLOW_VERSION else dict()
 
@@ -108,13 +108,8 @@ def _write_flow_entry(
             )
         entries[key] = entry
         have_roots.update(roots or dict())
-        fname.write_text(
-            json.dumps(
-                dict(version=_FLOW_VERSION, roots=have_roots, entries=entries),
-                indent=1,
-            ),
-            encoding="utf-8",
-        )
+        content = dict(version=_FLOW_VERSION, roots=have_roots, entries=entries)
+        _write_json(fname, content, indent=1)
     return entry
 
 

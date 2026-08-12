@@ -202,7 +202,7 @@ class ConditionalStepMemory:
             prior = record(out_files=None, only_if_new=True)
             # A completed prior entry means the disk already describes the original
             # computation, so cache hits below need no rewrite at all
-            prior_done = prior is not None and prior.get("finished") is not None
+            prior_done = prior.get("finished") is not None
             if self.memory is None:
                 out_files = func(*args, **kwargs)
                 record(out_files=out_files, cached=False)
@@ -383,9 +383,9 @@ class ConditionalStepMemory:
         self.memory.clear()
 
 
-def _ran_when(prior: FlowEntryT | None) -> str:
+def _ran_when(prior: Mapping[str, Any]) -> str:
     """Get ", ran <when>" when a call's original computation is on record."""
-    if prior is not None and not prior.get("cached") and prior.get("finished"):
+    if not prior.get("cached") and prior.get("finished"):
         return f", ran {prior['finished'][:16]}"
     return ""
 
@@ -417,8 +417,8 @@ def _record_flow(
     out_files: Any,
     cached: bool | None = None,
     only_if_new: bool = False,
-) -> FlowEntryT | None:
-    """Record which files a step call read and wrote, for the report flow diagram."""
+) -> Mapping[str, Any]:
+    """Record a step call's files; get back the stored entry ({} if it failed)."""
     try:
         # cached is None for the pre-run seed entry, which has not completed
         duration = finished = None
@@ -451,7 +451,7 @@ def _record_flow(
     except Exception as exc:
         msg = f"Could not record pipeline flow information: {exc}"
         logger.warning(**gen_log_kwargs(message=msg, emoji="⚠️"))
-        return None
+        return dict()
 
 
 @contextlib.contextmanager

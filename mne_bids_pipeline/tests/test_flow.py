@@ -12,13 +12,12 @@ from mne_bids import BIDSPath
 from mne_bids_pipeline._flow import (
     FlowEntryT,
     _build_flow_graph,
-    _collapse_runs,
     _read_flow,
     _report_flow_html,
-    _shorten_paths,
     _write_flow_entry,
 )
 from mne_bids_pipeline._graph import _graph_html, _layout_graph
+from mne_bids_pipeline._logging import _collapse_runs, _shorten_paths
 from mne_bids_pipeline._run import (
     _flow_files,
     _prep_out_files_path,

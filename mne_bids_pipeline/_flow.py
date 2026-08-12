@@ -8,13 +8,14 @@ SVG rendering live in ``_graph.py``.
 import json
 import pathlib
 import re
-from collections.abc import Iterable, Sequence
+from collections.abc import Sequence
 from typing import Any
 
 from filelock import FileLock
 from mne_bids import get_entities_from_fname
 
 from ._graph import _ID_PREFIX, _Edge, _Graph, _graph_html, _layout_graph, _Node
+from ._logging import _collapse_runs, _shorten_paths
 from .typing import TypedDict
 
 _FLOW_DIRNAME = ".pipeline_flow"
@@ -80,6 +81,8 @@ def _write_flow_entry(
     """Merge a step call into the on-disk recording; get back the stored entry."""
     fname = _flow_fname(deriv_root=deriv_root, subject=entry["subject"])
     fname.parent.mkdir(parents=True, exist_ok=True)
+    # Steps parallelize over runs within a subject, so concurrent worker processes
+    # read-modify-write the same file; the lock prevents lost/torn updates
     with FileLock(f"{fname}.lock"):
         content = _parse_flow_file(fname)
         entries: dict[str, FlowEntryT] = content.get("entries", dict())
@@ -192,32 +195,6 @@ def _fname_bits(path: str) -> tuple[str | None, str | None, str | None, str | No
     return entities.get("processing"), suffix, extension, entities.get("run")
 
 
-def _collapse_runs(runs: Iterable[str]) -> str:
-    """Turn a set of run labels into something like ``runs 01–03, 07``."""
-    runs = sorted(set(runs))
-    if not runs:
-        return ""
-    label = "run" if len(runs) == 1 else "runs"
-    try:
-        numbers = sorted(int(run) for run in runs)
-    except ValueError:
-        return f"{label} {', '.join(runs)}"
-    width = max(len(run) for run in runs)
-    groups: list[list[int]] = [[numbers[0]]]
-    for number in numbers[1:]:
-        if number == groups[-1][-1] + 1:
-            groups[-1].append(number)
-        else:
-            groups.append([number])
-    chunks = [
-        f"{group[0]:0{width}d}"
-        if len(group) == 1
-        else f"{group[0]:0{width}d}–{group[-1]:0{width}d}"
-        for group in groups
-    ]
-    return f"{label} {', '.join(chunks)}"
-
-
 def _edge_lines(paths: Sequence[str]) -> list[str]:
     """Get a compact semantic descriptor for a set of files."""
     processings: set[str] = set()
@@ -271,20 +248,6 @@ def _node_tooltip(entries: Sequence[FlowEntryT], out_paths: Sequence[str]) -> li
         lines.append("writes:")
         lines.extend(out_paths)
     return lines
-
-
-def _shorten_paths(paths: Sequence[str], roots: dict[str, str]) -> list[str]:
-    """Rewrite absolute paths as ``<root_name>/...`` for readability."""
-    subs = sorted(roots.items(), key=lambda kv: -len(kv[1]))  # deriv may be in bids
-    out: list[str] = list()
-    for path in paths:
-        for name, root in subs:
-            root = root.rstrip("/")
-            if path == root or path.startswith(f"{root}/"):
-                path = f"<{name}>{path[len(root) :]}"
-                break
-        out.append(path)
-    return out
 
 
 def _build_flow_graph(

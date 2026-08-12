@@ -387,7 +387,15 @@ def _record_flow(
             "in_files": in_files,
             "out_files": _flow_files(out_files),
         }
-        _write_flow_entry(deriv_root=deriv_root, entry=entry, only_if_new=only_if_new)
+        # Roots let the report show paths as <bids_root>/... instead of absolute
+        roots = {"deriv_root": str(deriv_root)}
+        for name in ("bids_root", "fs_subjects_dir"):
+            value = getattr(kwargs.get("cfg", None), name, None)
+            if value is not None:
+                roots[name] = str(value)
+        _write_flow_entry(
+            deriv_root=deriv_root, entry=entry, roots=roots, only_if_new=only_if_new
+        )
     except Exception as exc:
         msg = f"Could not record pipeline flow information: {exc}"
         logger.warning(**gen_log_kwargs(message=msg, emoji="⚠️"))

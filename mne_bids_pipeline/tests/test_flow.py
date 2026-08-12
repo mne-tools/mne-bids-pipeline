@@ -10,14 +10,14 @@ import pytest
 from mne_bids import BIDSPath
 
 from mne_bids_pipeline._flow import (
-    _SOURCE_ID,
     FlowEntryT,
     _build_flow_graph,
     _collapse_runs,
     _flow_files,
-    _node_id,
     _read_flow_entries,
+    _read_flow_roots,
     _report_flow_html,
+    _shorten_paths,
     _write_flow_entry,
 )
 from mne_bids_pipeline._graph import _graph_html, _layout_graph
@@ -185,6 +185,24 @@ def test_flow_recording_missing(tmp_path: pathlib.Path) -> None:
     assert _read_flow_entries(deriv_root=tmp_path, subject="01", session=None) == []
 
 
+def test_flow_roots(tmp_path: pathlib.Path) -> None:
+    """Test that recorded roots shorten the tooltip paths."""
+    roots = {"bids_root": "/bids"}
+    for entry in _pipeline_entries():
+        _write_flow_entry(deriv_root=tmp_path, entry=entry, roots=roots)
+    assert _read_flow_roots(deriv_root=tmp_path, subject="01") == roots
+    assert _shorten_paths(
+        ["/bids/sub-01_meg.fif", f"{tmp_path}/a.fif", "/elsewhere/b.fif"],
+        dict(roots, deriv_root=str(tmp_path)),
+    ) == ["<bids_root>/sub-01_meg.fif", "<deriv_root>/a.fif", "/elsewhere/b.fif"]
+    html = _report_flow_html(deriv_root=tmp_path, subject="01", session=None)
+    assert html is not None
+    assert "&lt;bids_root&gt;/sub-01_task-av_run-01_meg.fif" in html
+    # The source node's tooltip lists the roots themselves
+    assert "&lt;bids_root&gt; = /bids" in html
+    assert f"&lt;deriv_root&gt; = {tmp_path}" in html
+
+
 def test_flow_graph_build() -> None:
     """Test that edges follow the produced/consumed relationships."""
     graph = _build_flow_graph(_pipeline_entries())
@@ -273,7 +291,7 @@ def test_flow_layout_long_edges() -> None:
 def test_flow_svg() -> None:
     """Test that the emitted SVG is well-formed and self-consistent."""
     graph = _layout_graph(_build_flow_graph(_pipeline_entries()))
-    html = _graph_html(graph, source_id=_node_id(_SOURCE_ID))
+    html = _graph_html(graph)
     assert "<script>" in html
     svg = ET.fromstring(html[html.index("<svg") : html.index("</svg>") + 6])
     assert svg.get("class") == "mbp-flow"
@@ -304,6 +322,17 @@ def test_flow_svg() -> None:
 
     titles = [el.text or "" for el in svg.findall(f".//{SVG_NS}title")]
     assert any("/deriv/sub-01_task-av_run-01_proc-filt_raw.fif" in t for t in titles)
+
+    classes = [el.get("class", "") for el in node_els]
+    assert sum("mbp-flow-cat-preproc" in k for k in classes) == 2
+    assert sum("mbp-flow-cat-sensor" in k for k in classes) == 2
+    # The two identically-labeled fan edges share one rendered label
+    label_els = [
+        el
+        for el in svg.findall(f".//{SVG_NS}text")
+        if el.get("class") == "mbp-flow-edge-label"
+    ]
+    assert len(label_els) == len(edge_els) - 1 == 3
 
 
 def test_flow_report(tmp_path: pathlib.Path) -> None:

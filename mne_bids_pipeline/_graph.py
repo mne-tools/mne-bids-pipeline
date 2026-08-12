@@ -17,6 +17,7 @@ class _Node:
     id: str
     lines: list[str]
     paths: list[str]
+    klass: str = ""  # extra CSS class(es), e.g. a color category
     layer: int = 0
     x: float = 0.0
     y: float = 0.0
@@ -49,7 +50,8 @@ _CHAR_WIDTH = 6.6  # rough advance width of the report's body font at _FONT_SIZE
 _LINE_HEIGHT = 15.0
 _NODE_PAD_X = 12.0
 _NODE_GAP = 26.0
-_ROW_HEIGHT = 150.0
+_ROW_HEIGHT = 100.0
+_BOLD_FACTOR = 1.1  # node labels are bold, so wider than _CHAR_WIDTH estimates
 _MARGIN = 10.0
 _ROW_MID = 21.0  # where a routing point sits within its row
 
@@ -110,7 +112,7 @@ def _layout_graph(graph: _Graph) -> _Graph:
     _assign_layers(graph)
     nodes = {node.id: node for node in graph.nodes}
     for node in graph.nodes:
-        node.width = _text_width(node.lines) + 2 * _NODE_PAD_X
+        node.width = _text_width(node.lines) * _BOLD_FACTOR + 2 * _NODE_PAD_X
     # Route edges that skip layers through dummy nodes, so they reserve horizontal
     # space and neither they nor their labels run over the nodes in between.
     routes: dict[str, list[_Node]] = dict()
@@ -169,7 +171,18 @@ svg.mbp-flow .mbp-flow-box {
   stroke: currentColor;
   stroke-width: 1;
 }
+svg.mbp-flow .mbp-flow-node text { font-weight: 600; }
 svg.mbp-flow .mbp-flow-source .mbp-flow-box { stroke-dasharray: 4 3; }
+/* Categorical hues (validated for CVD + white surface); identity is never
+   color-alone since every node names its category in text */
+svg.mbp-flow .mbp-flow-cat-init .mbp-flow-box { stroke: #2a78d6; fill: #2a78d6; }
+svg.mbp-flow .mbp-flow-cat-preproc .mbp-flow-box { stroke: #eb6834; fill: #eb6834; }
+svg.mbp-flow .mbp-flow-cat-sensor .mbp-flow-box { stroke: #1baf7a; fill: #1baf7a; }
+svg.mbp-flow .mbp-flow-cat-source .mbp-flow-box { stroke: #eda100; fill: #eda100; }
+svg.mbp-flow [class*=" mbp-flow-cat-"] .mbp-flow-box {
+  fill-opacity: 0.12;
+  stroke-width: 1.2;
+}
 svg.mbp-flow .mbp-flow-line {
   fill: none;
   stroke: currentColor;
@@ -291,15 +304,14 @@ def _svg_text(lines: Sequence[str], *, x: float, y: float, klass: str) -> str:
     return f'<text class="{klass}" text-anchor="middle">{spans}</text>'
 
 
-def _graph_svg(
-    graph: _Graph, *, source_id: str | None = None, svg_id: str = f"{_ID_PREFIX}-svg"
-) -> str:
+def _graph_svg(graph: _Graph, *, svg_id: str = f"{_ID_PREFIX}-svg") -> str:
     """Render a laid-out graph as a single self-contained SVG element."""
     ancestors, ancestor_edges = _reachable(graph, reverse=True)
     descendants, descendant_edges = _reachable(graph, reverse=False)
 
-    # Stagger the labels of edges that fan out of (or into) a common node, otherwise
-    # they all land at the same height and overlap.
+    # Fanned edges get one label per distinct text (on the middlemost edge of each
+    # cluster), staggered in height — every copy of an identical label is redundant
+    # ink and they collide near the shared end, where the curves converge.
     fan: dict[str, int] = dict()
     for edge in graph.edges:
         for key in (f"src-{edge.src}", f"dst-{edge.dst}"):
@@ -311,10 +323,18 @@ def _graph_svg(
     fracs: dict[str, float] = dict()
     for key, group in groups.items():
         far = -1 if key.startswith("src-") else 0  # the end that is not shared
-        # Curves converge at the shared end, so edges that wrap onto a reused level
-        # collide there; only wrap for fans too big to give every edge its own level
-        n_levels = min(len(group), 6)
-        for ii, edge in enumerate(sorted(group, key=lambda e: e.points[far][0])):
+        clusters: dict[tuple[str, ...], list[_Edge]] = dict()
+        for edge in sorted(group, key=lambda e: e.points[far][0]):
+            clusters.setdefault(tuple(edge.lines), []).append(edge)
+        reps = []
+        for cluster in clusters.values():
+            # Routed edges label at a distant routing point, so a direct edge keeps
+            # the cluster's one label visually inside the fan
+            direct = [edge for edge in cluster if len(edge.points) == 2] or cluster
+            reps.append(direct[len(direct) // 2])
+        reps.sort(key=lambda e: e.points[far][0])
+        n_levels = min(len(reps), 6)
+        for ii, edge in enumerate(reps):
             level = ii % n_levels
             fracs[edge.id] = (
                 0.5 if n_levels == 1 else 0.15 + 0.7 * level / (n_levels - 1)
@@ -322,25 +342,30 @@ def _graph_svg(
 
     edge_html: list[str] = list()
     for edge in graph.edges:
-        d, (mx, my) = _edge_path(edge.points, frac=fracs[edge.id])
+        d, (mx, my) = _edge_path(edge.points, frac=fracs.get(edge.id, 0.5))
         width = _text_width(edge.lines) + 10
         height = len(edge.lines) * _LINE_HEIGHT
+        if edge.id in fracs:
+            label = (
+                f'<rect class="mbp-flow-label-bg" rx="3" x="{mx - width / 2:.1f}" '
+                f'y="{my - height / 2:.1f}" width="{width:.1f}" '
+                f'height="{height:.1f}" />'
+                f"{_svg_text(edge.lines, x=mx, y=my, klass='mbp-flow-edge-label')}"
+            )
+        else:
+            label = ""
         edge_html.append(
             f'<g id="{edge.id}" class="mbp-flow-edge">'
             f'<path class="mbp-flow-line" d="{d}" '
             f'marker-end="url(#{_ID_PREFIX}-arrow)" />'
-            f'<rect class="mbp-flow-label-bg" rx="3" x="{mx - width / 2:.1f}" '
-            f'y="{my - height / 2:.1f}" width="{width:.1f}" height="{height:.1f}" />'
-            f"{_svg_text(edge.lines, x=mx, y=my, klass='mbp-flow-edge-label')}"
+            f"{label}"
             f"{_svg_title(edge.paths)}</g>"
         )
 
     node_html: list[str] = list()
     for node in graph.nodes:
         height = _node_height(node)
-        klass = "mbp-flow-node"
-        if node.id == source_id:
-            klass += " mbp-flow-source"
+        klass = f"mbp-flow-node {node.klass}".strip()
         related = {
             "ancestors": ancestors[node.id],
             "descendants": descendants[node.id],
@@ -374,15 +399,9 @@ def _graph_svg(
     )
 
 
-def _graph_html(
-    graph: _Graph,
-    *,
-    source_id: str | None = None,
-    svg_id: str = f"{_ID_PREFIX}-svg",
-) -> str:
+def _graph_html(graph: _Graph, *, svg_id: str = f"{_ID_PREFIX}-svg") -> str:
     """Render a laid-out graph plus its hover-highlighting behavior."""
-    svg = _graph_svg(graph, source_id=source_id, svg_id=svg_id)
     return (
-        f'<div class="mbp-flow-wrap">{svg}</div>'
+        f'<div class="mbp-flow-wrap">{_graph_svg(graph, svg_id=svg_id)}</div>'
         f"<script>{_JS % dict(svg_id=svg_id)}</script>"
     )

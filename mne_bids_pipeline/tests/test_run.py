@@ -304,10 +304,15 @@ def test_run(
         / test_options.get("dataset", dataset)
     )
     report_html_paths = sorted(deriv_path.rglob("sub-*_report.html"))
-    if "preprocessing" in steps:
+    if "preprocessing" not in steps:
+        # FreeSurfer/BEM-only runs may write no report, or an edge-less recording
+        # (e.g. coreg_surfaces consuming its own cached seghead) and no diagram
+        for report_html_path in report_html_paths[:1]:
+            content = report_html_path.read_text("utf-8")
+            assert content.count('<svg id="mbp-flow-svg"') <= 1
+    else:
         assert len(report_html_paths)
-    for report_html_path in report_html_paths[:1]:  # BEM-only runs may have none
-        content = report_html_path.read_text("utf-8")
+        content = report_html_paths[0].read_text("utf-8")
         assert content.count('<svg id="mbp-flow-svg"') == 1
         assert content.count('aria-label="Pipeline flow diagram"') == 1
         assert "mbp-flow-cat-" in content  # step-category CSS included

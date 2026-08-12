@@ -100,12 +100,10 @@ def _write_flow_entry(
         ):
             # A cache hit replays the same computation, so keep when the original
             # run happened and how long it took rather than the cache-check timing
-            entry = dict(  # type: ignore[assignment]
-                entry,
-                duration=old["duration"],
-                finished=old["finished"],
-                cached=old["cached"],
-            )
+            entry = entry.copy()
+            entry["duration"] = old["duration"]
+            entry["finished"] = old["finished"]
+            entry["cached"] = old["cached"]
         entries[key] = entry
         have_roots.update(roots or dict())
         content = dict(version=_FLOW_VERSION, roots=have_roots, entries=entries)

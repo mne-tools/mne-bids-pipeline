@@ -212,8 +212,10 @@ def test_flow_graph() -> None:
         ),
     ]
     # All-cached with no recorded original: say so instead of showing check times
-    entries = [dict(entry, cached=True) for entry in _pipeline_entries()]
-    graph = _build_flow_graph(entries)  # type: ignore[arg-type]
+    entries = _pipeline_entries()
+    for entry in entries:
+        entry["cached"] = True
+    graph = _build_flow_graph(entries)
     node = next(node for node in graph.nodes if "_04_frequency_filter" in node.lines)
     assert node.paths[1] == "cached (original run not recorded)"
 
@@ -436,9 +438,10 @@ def test_flow_recorder(flow_kwargs: dict[str, Any], memory_location: bool) -> No
 
     def _check(cached: bool) -> tuple[float, str]:
         (entry,) = (dict(e) for e in _recorded(flow_kwargs))
-        duration, finished = entry.pop("duration"), entry.pop("finished")
-        assert duration >= 0.0
-        assert finished is not None
+        duration = entry.pop("duration")
+        finished = entry.pop("finished")
+        assert isinstance(duration, float) and duration >= 0.0
+        assert isinstance(finished, str)
         assert entry.pop("cached") is cached
         assert entry == want
         return duration, finished

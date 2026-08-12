@@ -302,7 +302,7 @@ def _load_data(
     _crop_data(cfg, raw=raw, subject=subject)
 
     raw.load_data()
-    if hasattr(raw, "fix_mag_coil_types"):
+    if isinstance(raw, mne.io.Raw):  # fix_mag_coil_types is FIF-only
         raw.fix_mag_coil_types()
 
     return raw

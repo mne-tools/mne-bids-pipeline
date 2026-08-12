@@ -49,17 +49,16 @@ def get_input_fnames_find_empty_room(
     in_files: InFilesT = dict()
     in_files["raw"] = bids_path_in
     _update_for_splits(in_files, "raw", single=True)
-    if hasattr(bids_path_in, "find_matching_sidecar"):
-        in_files["sidecar"] = (
-            bids_path_in.copy()
-            .update(datatype=None, suffix="meg")
-            .find_matching_sidecar(extension=".json")
-        )
+    in_files["sidecar"] = (
+        bids_path_in.copy()
+        .update(datatype=None, suffix="meg")
+        .find_matching_sidecar(extension=".json")
+    )
     try:
         fname = bids_path_in.find_empty_room(use_sidecar_only=True)
     except Exception:
         fname = None
-    if fname is None and hasattr(bids_path_in, "get_empty_room_candidates"):
+    if fname is None:
         for ci, path in enumerate(bids_path_in.get_empty_room_candidates()):
             in_files[f"empty_room_candidate_{ci}"] = path
     return in_files
@@ -87,7 +86,7 @@ def find_empty_room(
         fname = ""
     if fname is None:
         ending = "empty-room files"
-        if len(in_files):  # MNE-BIDS < 0.12 missing get_empty_room_candidates
+        if len(in_files):
             ending = f"{len(in_files)} empty-room file{_pl(in_files)}"
         msg = f"Nearest-date matching {ending}"
         logger.info(**gen_log_kwargs(message=msg))

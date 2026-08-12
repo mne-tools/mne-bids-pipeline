@@ -111,8 +111,6 @@ def get_parallel_backend_name(
 
 
 def get_parallel_backend(exec_params: SimpleNamespace) -> joblib.parallel_backend:
-    import joblib
-
     backend = get_parallel_backend_name(exec_params=exec_params)
     kwargs = {
         "n_jobs": get_n_jobs(

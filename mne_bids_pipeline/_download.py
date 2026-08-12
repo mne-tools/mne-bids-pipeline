@@ -2,7 +2,6 @@
 
 import argparse
 from pathlib import Path
-from warnings import filterwarnings
 
 import mne
 
@@ -11,19 +10,6 @@ from ._config_utils import get_fs_subjects_dir
 from .tests.datasets import DATASET_OPTIONS
 
 DEFAULT_DATA_DIR = Path("~/mne_data").expanduser()
-
-
-# TODO this can be removed when https://github.com/fatiando/pooch/pull/458 is merged and
-# we pin to a version of pooch that includes that commit
-filterwarnings(
-    action="ignore",
-    message=(
-        "Python 3.14 will, by default, filter extracted tar archives and reject files "
-        "or modify their metadata. Use the filter argument to control this behavior."
-    ),
-    category=DeprecationWarning,
-    module="tarfile",
-)
 
 
 def _download_via_openneuro(*, ds_name: str, ds_path: Path) -> None:

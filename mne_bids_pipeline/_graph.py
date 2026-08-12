@@ -3,6 +3,12 @@
 Domain-agnostic: everything here operates on ``_Node``/``_Edge``/``_Graph`` and
 could draw any small DAG. The pipeline-specific graph construction lives in
 ``_flow.py``.
+
+The layout is a from-scratch implementation of the classical Sugiyama framework
+(layering, dummy vertices routing long edges, iterative barycenter crossing
+reduction) per Sugiyama, Tagawa & Toda (1981), IEEE Trans SMC 11(2):109-125,
+https://doi.org/10.1109/TSMC.1981.4308636 — simplified to longest-path layering
+and width-aware center alignment, which suffice at this graph size.
 """
 
 from collections import Counter

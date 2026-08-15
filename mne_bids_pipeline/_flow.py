@@ -151,6 +151,16 @@ _CATEGORIES = {
     "sensor": "sensor",
     "source": "source",
 }
+# Layout bands: stages never interleave in the diagram even where dependencies
+# would allow it (e.g. BEM steps that need only FreeSurfer outputs); freesurfer
+# sits next to source, its only consumer, to keep cross-band edges short
+_GROUP_RANKS = {
+    "init": 0,
+    "preprocessing": 1,
+    "sensor": 2,
+    "freesurfer": 3,
+    "source": 4,
+}
 # Categorical hues (validated for CVD + the report's white surface); identity is
 # never color-alone since every node names its category in text
 _FLOW_CSS = """
@@ -277,7 +287,8 @@ def _build_flow_graph(
                 klass="mbp-flow-source",
             )
         else:
-            category = _CATEGORIES.get(step.partition("/")[0], "")
+            group = step.partition("/")[0]
+            category = _CATEGORIES.get(group, "")
             node = _Node(
                 id=_node_id(step),
                 lines=_step_lines(step),
@@ -286,6 +297,7 @@ def _build_flow_graph(
                     _shorten_paths(sorted(step_paths.get(step, set())), roots),
                 ),
                 klass=f"mbp-flow-cat-{category}" if category else "",
+                rank=_GROUP_RANKS.get(group, 0),
             )
         graph.nodes.append(node)
     for ii, (src, dst) in enumerate(sorted(edge_paths)):

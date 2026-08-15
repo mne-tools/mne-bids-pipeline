@@ -26,6 +26,7 @@ class _Node:
     lines: list[str]
     paths: list[str]
     klass: str = ""  # extra CSS class(es), e.g. a color category
+    rank: int = 0  # layout band; higher ranks sit strictly below lower ones
     layer: int = 0
     x: float = 0.0
     y: float = 0.0
@@ -73,17 +74,30 @@ def _node_height(node: _Node) -> float:
 
 
 def _assign_layers(graph: _Graph) -> None:
-    layers = {node.id: 0 for node in graph.nodes}
-    # Longest-path layering by relaxation; the pass limit also bounds the (never
-    # expected, but possible if a step both reads and writes a shared file) cycle.
-    for _ in range(len(graph.nodes)):
-        changed = False
-        for edge in graph.edges:
-            if layers[edge.dst] < layers[edge.src] + 1:
-                layers[edge.dst] = layers[edge.src] + 1
-                changed = True
-        if not changed:
-            break
+    # Bands (ranks) settle top to bottom, each starting below the previous one, so
+    # e.g. pipeline stages never interleave even when dependencies would allow it;
+    # an edge from a still-unsettled (higher-rank) node is simply not a constraint
+    layers: dict[str, int] = dict()
+    base = 0
+    for rank in sorted({node.rank for node in graph.nodes}):
+        band = {node.id for node in graph.nodes if node.rank == rank}
+        for node_id in band:
+            layers[node_id] = base
+        # Longest-path layering by relaxation; the pass limit also bounds the
+        # (never expected, but possible if a step reads and writes a shared file)
+        # cycle.
+        for _ in range(len(band)):
+            changed = False
+            for edge in graph.edges:
+                src = layers.get(edge.src, None)
+                if edge.dst not in band or src is None:
+                    continue
+                if layers[edge.dst] < src + 1:
+                    layers[edge.dst] = src + 1
+                    changed = True
+            if not changed:
+                break
+        base = max(layers[node_id] for node_id in band) + 1
     for node in graph.nodes:
         node.layer = layers[node.id]
 

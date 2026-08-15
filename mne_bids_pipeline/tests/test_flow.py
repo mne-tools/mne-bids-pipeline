@@ -278,6 +278,31 @@ def test_flow_layout() -> None:
         assert spans[0][0] >= 0 and spans[-1][1] <= graph.width
     assert all(0 < node.y < graph.height for node in graph.nodes)
 
+    # Stages never interleave: steps depending only on FreeSurfer files still land
+    # below every preprocessing/sensor step (banded ranks)
+    entries = _pipeline_entries()
+    entries += [
+        _entry(
+            "freesurfer/_01_recon_all",
+            in_files={"t1": "/bids/sub-01_T1w.nii.gz"},
+            out_files={"white": "/fs/sub-01/surf/lh.white"},
+        ),
+        _entry(
+            "source/_01_make_bem_surfaces",
+            in_files={"white": "/fs/sub-01/surf/lh.white"},
+            out_files={"bem": "/fs/sub-01/bem/inner_skull.surf"},
+        ),
+    ]
+    graph = _layout_graph(_build_flow_graph(entries))
+    layer = {" ".join(node.lines): node.layer for node in graph.nodes}
+    highest = max(
+        value
+        for key, value in layer.items()
+        if key.startswith(("preprocessing", "sensor"))
+    )
+    assert layer["freesurfer _01_recon_all"] > highest
+    assert layer["source _01_make_bem_surfaces"] > layer["freesurfer _01_recon_all"]
+
 
 def test_flow_svg() -> None:
     """Test that the emitted SVG is well-formed and self-consistent."""

@@ -188,25 +188,46 @@ def _layout_graph(graph: _Graph) -> _Graph:
     for edge in graph.edges:
         real_neighbors.setdefault(edge.src, []).append(edge.dst)
         real_neighbors.setdefault(edge.dst, []).append(edge.src)
-    # Long edges route along the closer margin so their chains never compete with
-    # the nodes themselves for the center: values are (order key, desired x)
+    # Long edges route around the side of the content in the layers they traverse,
+    # so their chains never compete with the nodes themselves for the center:
+    # values are (order key, desired x)
     margin: dict[str, tuple[float, float]] = dict()
 
     def _pick_sides() -> None:
         # Recomputed each refinement pass: the endpoints move as steps settle, and
         # a side chosen from stale positions sends a chain on a needless detour.
         # The order key keeps same-side chains in one consistent relative order
-        # across layers, so they run parallel instead of braiding.
+        # across layers, so they run parallel instead of braiding. The desired x
+        # hugs the widest *traversed* layer rather than the graph margin — the
+        # graph is as wide as its widest row, which may be far from the action.
         margin.clear()
+        bounds: dict[int, tuple[float, float]] = dict()
+        for node in graph.nodes:
+            lo, hi = bounds.get(node.layer, (graph.width, 0.0))
+            bounds[node.layer] = (
+                min(lo, node.x - node.width / 2),
+                max(hi, node.x + node.width / 2),
+            )
         for edge in graph.edges:
             if len(routes[edge.id]) < 2:
                 continue
             mid = (pos[edge.src].x + pos[edge.dst].x) / 2
-            for node in routes[edge.id]:
-                if mid <= graph.width / 2:
-                    margin[node.id] = (mid - graph.width, _min_x(node))
-                else:
-                    margin[node.id] = (mid + 2 * graph.width, _max_x(graph.width, node))
+            spanned = [
+                bounds[node.layer] for node in routes[edge.id] if node.layer in bounds
+            ]
+            if mid <= graph.width / 2:
+                hull = min((lo for lo, _ in spanned), default=graph.width / 2)
+                for node in routes[edge.id]:
+                    want = hull - _NODE_GAP - node.width / 2
+                    margin[node.id] = (mid - graph.width, max(want, _min_x(node)))
+            else:
+                hull = max((hi for _, hi in spanned), default=graph.width / 2)
+                for node in routes[edge.id]:
+                    want = hull + _NODE_GAP + node.width / 2
+                    margin[node.id] = (
+                        mid + 2 * graph.width,
+                        min(want, _max_x(graph.width, node)),
+                    )
 
     def _neighbor_mean(node: _Node) -> float:
         source = neighbors if node.dummy else real_neighbors

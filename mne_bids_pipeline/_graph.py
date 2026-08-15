@@ -12,7 +12,7 @@ and width-aware center alignment, which suffice at this graph size.
 """
 
 from collections import Counter
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from xml.sax.saxutils import escape, quoteattr
 
@@ -161,13 +161,80 @@ def _layout_graph(graph: _Graph) -> _Graph:
         for layer in layers
     ]
     graph.width = max(widths, default=0.0) + 2 * _MARGIN
-    for li, layer in enumerate(layers):
-        x = (graph.width - widths[li]) / 2
-        for node in layer:
-            node.x = x + node.width / 2
-            node.y = _MARGIN + li * _ROW_HEIGHT
-            node.y += _ROW_MID if node.dummy else _node_height(node) / 2
-            x += node.width + _NODE_GAP
+
+    def _pack() -> None:
+        for li, layer in enumerate(layers):
+            x = (graph.width - widths[li]) / 2
+            for node in layer:
+                node.x = x + node.width / 2
+                node.y = _MARGIN + li * _ROW_HEIGHT
+                node.y += _ROW_MID if node.dummy else _node_height(node) / 2
+                x += node.width + _NODE_GAP
+
+    _pack()
+    chain_neighbors: dict[str, list[str]] = dict()
+    for chain in chains:
+        for prev_id, next_id in zip(chain[:-1], chain[1:]):
+            chain_neighbors.setdefault(prev_id, []).append(next_id)
+            chain_neighbors.setdefault(next_id, []).append(prev_id)
+    real_neighbors: dict[str, list[str]] = dict()
+    for edge in graph.edges:
+        real_neighbors.setdefault(edge.src, []).append(edge.dst)
+        real_neighbors.setdefault(edge.dst, []).append(edge.src)
+    pos = {node.id: node for node in all_nodes}
+    # Long edges route along the closer margin so their chains never compete with
+    # the nodes themselves for the center; sides are fixed from the initial packing
+    margin_side: dict[str, float] = dict()
+    for edge in graph.edges:
+        if len(routes[edge.id]) < 2:
+            continue
+        mid = (pos[edge.src].x + pos[edge.dst].x) / 2
+        for node in routes[edge.id]:
+            margin_side[node.id] = -1.0 if mid <= graph.width / 2 else 1.0
+
+    def _chain_mean(node: _Node) -> float:
+        linked = (chain_neighbors if node.dummy else real_neighbors).get(node.id)
+        if not linked:
+            return node.x
+        return sum(pos[other].x for other in linked) / len(linked)
+
+    def _order_key(node: _Node) -> float:
+        if node.id in margin_side:
+            return 0.0 if margin_side[node.id] < 0 else graph.width
+        return _chain_mean(node)
+
+    def _desired(node: _Node) -> float:
+        if node.id in margin_side:
+            if margin_side[node.id] < 0:
+                return _MARGIN + node.width / 2
+            return graph.width - _MARGIN - node.width / 2
+        # A lone routing point yields to the steps (stays put, so it never pushes
+        # them off-center) and settles into the leftover slack afterwards
+        if node.dummy:
+            return node.x
+        return _chain_mean(node)
+
+    for _ in range(2):
+        # The ordinal barycenter above ignores geometry (a 30px dummy and a 190px
+        # node count the same), so refine the order by actual positions
+        for layer in layers:
+            layer.sort(key=_order_key)
+        _pack()
+        _straighten_routes(graph, layers, _desired)
+    for layer in layers:
+        for ii, node in enumerate(layer):
+            if not node.dummy or node.id in margin_side:
+                continue
+            lo = _MARGIN + node.width / 2
+            if ii > 0:
+                left = layer[ii - 1]
+                lo = max(lo, left.x + left.width / 2 + _NODE_GAP + node.width / 2)
+            hi = graph.width - _MARGIN - node.width / 2
+            if ii < len(layer) - 1:
+                right = layer[ii + 1]
+                hi = min(hi, right.x - right.width / 2 - _NODE_GAP - node.width / 2)
+            if lo <= hi:
+                node.x = min(max(_chain_mean(node), lo), hi)
     for edge in graph.edges:
         src, dst = nodes[edge.src], nodes[edge.dst]
         edge.points = (
@@ -180,6 +247,39 @@ def _layout_graph(graph: _Graph) -> _Graph:
         + _MARGIN
     )
     return graph
+
+
+def _straighten_routes(
+    graph: _Graph,
+    layers: Sequence[Sequence[_Node]],
+    desired_fn: Callable[[_Node], float],
+) -> None:
+    """Move every node toward its desired x while preserving order and gaps.
+
+    Forward/backward min-separation sweeps let a node push its whole run aside;
+    each layer fits inside graph.width by construction, so the backward pass
+    always finds room and nothing overlaps.
+    """
+    for _ in range(8):
+        for layer in layers:
+            xs = [desired_fn(node) for node in layer]
+            for ii, node in enumerate(layer):
+                lo = _MARGIN + node.width / 2
+                if ii > 0:
+                    left = layer[ii - 1]
+                    sep = left.width / 2 + _NODE_GAP + node.width / 2
+                    lo = max(lo, xs[ii - 1] + sep)
+                xs[ii] = max(xs[ii], lo)
+            for ii in reversed(range(len(layer))):
+                node = layer[ii]
+                hi = graph.width - _MARGIN - node.width / 2
+                if ii < len(layer) - 1:
+                    right = layer[ii + 1]
+                    sep = right.width / 2 + _NODE_GAP + node.width / 2
+                    hi = min(hi, xs[ii + 1] - sep)
+                xs[ii] = min(xs[ii], hi)
+            for node, x in zip(layer, xs):
+                node.x = x
 
 
 # -- SVG ---------------------------------------------------------------------
@@ -346,7 +446,7 @@ def _graph_svg(graph: _Graph, *, extra_css: str = "", label: str = "Graph") -> s
         for ii, edge in enumerate(reps):
             level = ii % n_levels
             fracs[edge.id] = (
-                0.5 if n_levels == 1 else 0.15 + 0.7 * level / (n_levels - 1)
+                0.5 if n_levels == 1 else 0.2 + 0.6 * level / (n_levels - 1)
             )
 
     edge_html: list[str] = list()

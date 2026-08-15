@@ -16,7 +16,7 @@ from mne_bids_pipeline._flow import (
     _report_flow_html,
     _write_flow_entry,
 )
-from mne_bids_pipeline._graph import _graph_html, _layout_graph
+from mne_bids_pipeline._graph import _Graph, _graph_html, _layout_graph, _Node
 from mne_bids_pipeline._logging import _collapse_runs, _shorten_paths
 from mne_bids_pipeline._run import (
     _flow_files,
@@ -27,6 +27,22 @@ from mne_bids_pipeline._run import (
 from mne_bids_pipeline.typing import InFilesPathT, InFilesT, OutFilesT
 
 SVG_NS = "{http://www.w3.org/2000/svg}"
+RUNS = ("01", "02", "03")
+BIDS = "/bids/sub-01_task-av"
+DERIV = "/deriv/sub-01_task-av"
+EPO = f"{DERIV}_epo.fif"
+
+
+def _filt_raw(run: str) -> str:
+    return f"{DERIV}_run-{run}_proc-filt_raw.fif"
+
+
+def _read01(deriv_root: pathlib.Path, session: str | None = None) -> list[FlowEntryT]:
+    return _read_flow(deriv_root=deriv_root, subject="01", session=session)[0]
+
+
+def _find_node(graph: _Graph, line: str) -> _Node:
+    return next(node for node in graph.nodes if line in node.lines)
 
 
 def _entry(
@@ -63,7 +79,7 @@ def _entry(
 def _pipeline_entries() -> list[FlowEntryT]:
     """Get a small but representative recording: 3 runs, a fan-out, a dead end."""
     entries = list()
-    for run in ("01", "02", "03"):
+    for run in RUNS:
         entries.append(
             _entry(
                 "preprocessing/_04_frequency_filter",
@@ -73,27 +89,24 @@ def _pipeline_entries() -> list[FlowEntryT]:
                 duration=2.0,
                 finished=f"2026-08-12 09:0{run[-1]}:00",
                 cached=run == "01",
-                in_files={"raw": f"/bids/sub-01_task-av_run-{run}_meg.fif"},
-                out_files={"raw": f"/deriv/sub-01_task-av_run-{run}_proc-filt_raw.fif"},
+                in_files={"raw": f"{BIDS}_run-{run}_meg.fif"},
+                out_files={"raw": _filt_raw(run)},
             )
         )
     entries.append(
         _entry(
             "preprocessing/_07_make_epochs",
             func="make_epochs",
-            in_files={
-                f"raw_{run}": f"/deriv/sub-01_task-av_run-{run}_proc-filt_raw.fif"
-                for run in ("01", "02", "03")
-            },
-            out_files={"epo": "/deriv/sub-01_task-av_epo.fif"},
+            in_files={f"raw_{run}": _filt_raw(run) for run in RUNS},
+            out_files={"epo": EPO},
         )
     )
     for step in ("sensor/_01_make_evoked", "sensor/_06_make_cov"):
         entries.append(
             _entry(
                 step,
-                in_files={"epo": "/deriv/sub-01_task-av_epo.fif"},
-                out_files={"out": f"/deriv/sub-01_task-av_{step[-3:]}.fif"},
+                in_files={"epo": EPO},
+                out_files={"out": f"{DERIV}_{step[-3:]}.fif"},
             )
         )
     # Produces something nobody reads, so it should not show up at all
@@ -127,6 +140,7 @@ def test_collapse_runs(runs: list[str], want: str) -> None:
 
 def test_flow_storage(tmp_path: pathlib.Path) -> None:
     """Test the write/read roundtrip, roots, and missing/corrupt recordings."""
+    flow_dir = tmp_path / ".pipeline_flow"
     assert _read_flow(deriv_root=tmp_path, subject="01", session=None) == ([], {})
     assert _report_flow_html(deriv_root=tmp_path, subject="01", session=None) is None
     roots = {"bids_root": "/bids"}
@@ -150,8 +164,8 @@ def test_flow_storage(tmp_path: pathlib.Path) -> None:
     assert entries[0] not in got
     # The dataset-level entry lives in its own file but is relevant to every subject
     assert sum(entry["subject"] is None for entry in got) == 1
-    assert (tmp_path / ".pipeline_flow" / "dataset.json").is_file()
-    assert (tmp_path / ".pipeline_flow" / "sub-01.json").is_file()
+    assert (flow_dir / "dataset.json").is_file()
+    assert (flow_dir / "sub-01.json").is_file()
     dataset_only = [entry for entry in got if entry["subject"] is None]
     assert _read_flow(deriv_root=tmp_path, subject="02", session=None)[0] == (
         dataset_only
@@ -159,8 +173,8 @@ def test_flow_storage(tmp_path: pathlib.Path) -> None:
     # Entries of other sessions are filtered out
     other = _entry("sensor/_01_make_evoked", session="t2")
     _write_flow_entry(deriv_root=tmp_path, entry=other)
-    assert other not in _read_flow(deriv_root=tmp_path, subject="01", session="t1")[0]
-    assert other in _read_flow(deriv_root=tmp_path, subject="01", session="t2")[0]
+    assert other not in _read01(tmp_path, "t1")
+    assert other in _read01(tmp_path, "t2")
 
     assert _shorten_paths(
         ["/bids/sub-01_meg.fif", f"{tmp_path}/a.fif", "/elsewhere/b.fif"],
@@ -168,10 +182,8 @@ def test_flow_storage(tmp_path: pathlib.Path) -> None:
     ) == ["<bids_root>/sub-01_meg.fif", "<deriv_root>/a.fif", "/elsewhere/b.fif"]
 
     # A corrupt per-subject file is skipped rather than fatal
-    (tmp_path / ".pipeline_flow" / "sub-01.json").write_text("not json")
-    assert _read_flow(deriv_root=tmp_path, subject="01", session=None)[0] == (
-        dataset_only
-    )
+    (flow_dir / "sub-01.json").write_text("not json")
+    assert _read01(tmp_path) == dataset_only
 
 
 def test_flow_graph() -> None:
@@ -196,27 +208,24 @@ def test_flow_graph() -> None:
     # The full paths are kept for the tooltips
     edge = next(edge for edge in graph.edges if edge.lines[0] == "proc-filt raw")
     assert len(edge.paths) == 3
-    assert edge.paths[0] == "/deriv/sub-01_task-av_run-01_proc-filt_raw.fif"
+    assert edge.paths[0] == _filt_raw("01")
 
     # Node tooltips: title, then timing (the cached=True run-01 call has no recorded
     # original so timing sums the other two), then the outputs
-    node = next(node for node in graph.nodes if "_04_frequency_filter" in node.lines)
+    node = _find_node(graph, "_04_frequency_filter")
     assert node.paths == [
         "Frequency filter",
         "took 4.0 s over 2 calls",
         "completed 2026-08-12 09:03:00",
         "writes:",
-        *(
-            f"/deriv/sub-01_task-av_run-{run}_proc-filt_raw.fif"
-            for run in ("01", "02", "03")
-        ),
+        *(_filt_raw(run) for run in RUNS),
     ]
     # All-cached with no recorded original: say so instead of showing check times
     entries = _pipeline_entries()
     for entry in entries:
         entry["cached"] = True
     graph = _build_flow_graph(entries)
-    node = next(node for node in graph.nodes if "_04_frequency_filter" in node.lines)
+    node = _find_node(graph, "_04_frequency_filter")
     assert node.paths[1] == "cached (original run not recorded)"
 
 
@@ -240,12 +249,7 @@ def test_flow_edge_logic() -> None:
 
     # Edges skipping a layer are routed through the layers in between
     entries = _pipeline_entries()
-    entries.append(
-        _entry(
-            "sensor/_06_make_cov",
-            in_files={"raw": "/deriv/sub-01_task-av_run-01_proc-filt_raw.fif"},
-        )
-    )
+    entries.append(_entry("sensor/_06_make_cov", in_files={"raw": _filt_raw("01")}))
     graph = _layout_graph(_build_flow_graph(entries))
     nodes = {node.id: node for node in graph.nodes}
     long_edge = next(
@@ -340,7 +344,7 @@ def test_flow_svg() -> None:
     assert len(filt.get("data-flow-edges", "").split()) == 4
 
     titles = [el.text or "" for el in svg.findall(f".//{SVG_NS}title")]
-    assert any("/deriv/sub-01_task-av_run-01_proc-filt_raw.fif" in t for t in titles)
+    assert any(_filt_raw("01") in t for t in titles)
 
     classes = [el.get("class", "") for el in node_els]
     assert sum("mbp-flow-cat-preproc" in k for k in classes) == 2
@@ -419,8 +423,7 @@ def flow_kwargs(tmp_path: pathlib.Path) -> dict[str, Any]:
 
 
 def _recorded(flow_kwargs: dict[str, Any]) -> list[FlowEntryT]:
-    deriv_root = flow_kwargs["exec_params"].deriv_root
-    return _read_flow(deriv_root=deriv_root, subject="01", session=None)[0]
+    return _read01(flow_kwargs["exec_params"].deriv_root)
 
 
 @pytest.mark.parametrize("memory_location", (True, False))

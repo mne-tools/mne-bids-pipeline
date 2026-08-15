@@ -58,6 +58,7 @@ _FONT_SIZE = 12.0
 _CHAR_WIDTH = 6.6  # rough advance width of the report's body font at _FONT_SIZE
 _LINE_HEIGHT = 15.0
 _NODE_PAD_X = 12.0
+_NODE_PAD_Y = 12.0
 _NODE_GAP = 26.0
 _ROW_HEIGHT = 100.0
 _BOLD_FACTOR = 1.1  # node labels are bold, so wider than _CHAR_WIDTH estimates
@@ -70,7 +71,19 @@ def _text_width(lines: Sequence[str]) -> float:
 
 
 def _node_height(node: _Node) -> float:
-    return 0.0 if node.dummy else len(node.lines) * _LINE_HEIGHT + 12.0
+    return 0.0 if node.dummy else len(node.lines) * _LINE_HEIGHT + _NODE_PAD_Y
+
+
+def _min_sep(left: _Node, right: _Node) -> float:
+    return left.width / 2 + _NODE_GAP + right.width / 2
+
+
+def _min_x(node: _Node) -> float:
+    return _MARGIN + node.width / 2
+
+
+def _max_x(width: float, node: _Node) -> float:
+    return width - _MARGIN - node.width / 2
 
 
 def _assign_layers(graph: _Graph) -> None:
@@ -103,17 +116,12 @@ def _assign_layers(graph: _Graph) -> None:
 
 
 def _order_layers(
-    nodes: Sequence[_Node], chains: Sequence[Sequence[str]]
+    nodes: Sequence[_Node], neighbors: dict[str, list[str]]
 ) -> list[list[_Node]]:
     n_layers = max((node.layer for node in nodes), default=0) + 1
     layers: list[list[_Node]] = [[] for _ in range(n_layers)]
     for node in nodes:
         layers[node.layer].append(node)
-    neighbors: dict[str, list[str]] = {node.id: [] for node in nodes}
-    for chain in chains:
-        for src, dst in zip(chain[:-1], chain[1:]):
-            neighbors[src].append(dst)
-            neighbors[dst].append(src)
     for _ in range(4):
         index = {
             node.id: ii for layer in layers for ii, node in enumerate(layer)
@@ -121,8 +129,8 @@ def _order_layers(
         for layer in layers:
             layer.sort(
                 key=lambda node: (
-                    sum(index[other] for other in neighbors[node.id])
-                    / max(len(neighbors[node.id]), 1),
+                    sum(index[other] for other in neighbors.get(node.id, []))
+                    / max(len(neighbors.get(node.id, [])), 1),
                     node.id,
                 )
             )
@@ -132,7 +140,7 @@ def _order_layers(
 def _layout_graph(graph: _Graph) -> _Graph:
     """Place nodes on a fixed-height grid of layers."""
     _assign_layers(graph)
-    nodes = {node.id: node for node in graph.nodes}
+    pos = {node.id: node for node in graph.nodes}
     for node in graph.nodes:
         node.width = _text_width(node.lines) * _BOLD_FACTOR + 2 * _NODE_PAD_X
     # Route edges that skip layers through dummy nodes, so they reserve horizontal
@@ -148,14 +156,18 @@ def _layout_graph(graph: _Graph) -> _Graph:
                 width=max(_text_width(edge.lines) + 12, 30.0),
                 dummy=True,
             )
-            for layer in range(nodes[edge.src].layer + 1, nodes[edge.dst].layer)
+            for layer in range(pos[edge.src].layer + 1, pos[edge.dst].layer)
         ]
     all_nodes = graph.nodes + [node for route in routes.values() for node in route]
-    chains = [
-        [edge.src] + [node.id for node in routes[edge.id]] + [edge.dst]
-        for edge in graph.edges
-    ]
-    layers = _order_layers(all_nodes, chains)
+    pos.update((node.id, node) for route in routes.values() for node in route)
+    # Chain adjacency: edge endpoints link through their routing dummies
+    neighbors: dict[str, list[str]] = dict()
+    for edge in graph.edges:
+        chain = [edge.src] + [node.id for node in routes[edge.id]] + [edge.dst]
+        for prev_id, next_id in zip(chain[:-1], chain[1:]):
+            neighbors.setdefault(prev_id, []).append(next_id)
+            neighbors.setdefault(next_id, []).append(prev_id)
+    layers = _order_layers(all_nodes, neighbors)
     widths = [
         sum(node.width for node in layer) + _NODE_GAP * max(len(layer) - 1, 0)
         for layer in layers
@@ -172,59 +184,50 @@ def _layout_graph(graph: _Graph) -> _Graph:
                 x += node.width + _NODE_GAP
 
     _pack()
-    chain_neighbors: dict[str, list[str]] = dict()
-    for chain in chains:
-        for prev_id, next_id in zip(chain[:-1], chain[1:]):
-            chain_neighbors.setdefault(prev_id, []).append(next_id)
-            chain_neighbors.setdefault(next_id, []).append(prev_id)
     real_neighbors: dict[str, list[str]] = dict()
     for edge in graph.edges:
         real_neighbors.setdefault(edge.src, []).append(edge.dst)
         real_neighbors.setdefault(edge.dst, []).append(edge.src)
-    pos = {node.id: node for node in all_nodes}
     # Long edges route along the closer margin so their chains never compete with
-    # the nodes themselves for the center
-    margin_side: dict[str, float] = dict()
-    margin_order: dict[str, float] = dict()
+    # the nodes themselves for the center: values are (order key, desired x)
+    margin: dict[str, tuple[float, float]] = dict()
 
     def _pick_sides() -> None:
         # Recomputed each refinement pass: the endpoints move as steps settle, and
-        # a side chosen from stale positions sends a chain on a needless detour
-        margin_side.clear()
-        margin_order.clear()
+        # a side chosen from stale positions sends a chain on a needless detour.
+        # The order key keeps same-side chains in one consistent relative order
+        # across layers, so they run parallel instead of braiding.
+        margin.clear()
         for edge in graph.edges:
             if len(routes[edge.id]) < 2:
                 continue
             mid = (pos[edge.src].x + pos[edge.dst].x) / 2
             for node in routes[edge.id]:
-                margin_side[node.id] = -1.0 if mid <= graph.width / 2 else 1.0
-                margin_order[node.id] = mid
+                if mid <= graph.width / 2:
+                    margin[node.id] = (mid - graph.width, _min_x(node))
+                else:
+                    margin[node.id] = (mid + 2 * graph.width, _max_x(graph.width, node))
 
-    def _chain_mean(node: _Node) -> float:
-        linked = (chain_neighbors if node.dummy else real_neighbors).get(node.id)
+    def _neighbor_mean(node: _Node) -> float:
+        source = neighbors if node.dummy else real_neighbors
+        linked = source.get(node.id)
         if not linked:
             return node.x
         return sum(pos[other].x for other in linked) / len(linked)
 
     def _order_key(node: _Node) -> float:
-        if node.id in margin_side:
-            # The secondary key keeps same-side chains in one consistent relative
-            # order across layers, so they run parallel instead of braiding
-            if margin_side[node.id] < 0:
-                return -graph.width + margin_order[node.id]
-            return 2 * graph.width + margin_order[node.id]
-        return _chain_mean(node)
+        if node.id in margin:
+            return margin[node.id][0]
+        return _neighbor_mean(node)
 
     def _desired(node: _Node) -> float:
-        if node.id in margin_side:
-            if margin_side[node.id] < 0:
-                return _MARGIN + node.width / 2
-            return graph.width - _MARGIN - node.width / 2
+        if node.id in margin:
+            return margin[node.id][1]
         # A lone routing point yields to the steps (stays put, so it never pushes
         # them off-center) and settles into the leftover slack afterwards
         if node.dummy:
             return node.x
-        return _chain_mean(node)
+        return _neighbor_mean(node)
 
     for _ in range(2):
         # The ordinal barycenter above ignores geometry (a 30px dummy and a 190px
@@ -236,20 +239,18 @@ def _layout_graph(graph: _Graph) -> _Graph:
         _straighten_routes(graph, layers, _desired)
     for layer in layers:
         for ii, node in enumerate(layer):
-            if not node.dummy or node.id in margin_side:
+            if not node.dummy or node.id in margin:
                 continue
-            lo = _MARGIN + node.width / 2
+            lo = _min_x(node)
             if ii > 0:
-                left = layer[ii - 1]
-                lo = max(lo, left.x + left.width / 2 + _NODE_GAP + node.width / 2)
-            hi = graph.width - _MARGIN - node.width / 2
+                lo = max(lo, layer[ii - 1].x + _min_sep(layer[ii - 1], node))
+            hi = _max_x(graph.width, node)
             if ii < len(layer) - 1:
-                right = layer[ii + 1]
-                hi = min(hi, right.x - right.width / 2 - _NODE_GAP - node.width / 2)
+                hi = min(hi, layer[ii + 1].x - _min_sep(node, layer[ii + 1]))
             if lo <= hi:
-                node.x = min(max(_chain_mean(node), lo), hi)
+                node.x = min(max(_neighbor_mean(node), lo), hi)
     for edge in graph.edges:
-        src, dst = nodes[edge.src], nodes[edge.dst]
+        src, dst = pos[edge.src], pos[edge.dst]
         edge.points = (
             [(src.x, src.y + _node_height(src) / 2)]
             + [(node.x, node.y) for node in routes[edge.id]]
@@ -277,19 +278,15 @@ def _straighten_routes(
         for layer in layers:
             xs = [desired_fn(node) for node in layer]
             for ii, node in enumerate(layer):
-                lo = _MARGIN + node.width / 2
+                lo = _min_x(node)
                 if ii > 0:
-                    left = layer[ii - 1]
-                    sep = left.width / 2 + _NODE_GAP + node.width / 2
-                    lo = max(lo, xs[ii - 1] + sep)
+                    lo = max(lo, xs[ii - 1] + _min_sep(layer[ii - 1], node))
                 xs[ii] = max(xs[ii], lo)
             for ii in reversed(range(len(layer))):
                 node = layer[ii]
-                hi = graph.width - _MARGIN - node.width / 2
+                hi = _max_x(graph.width, node)
                 if ii < len(layer) - 1:
-                    right = layer[ii + 1]
-                    sep = right.width / 2 + _NODE_GAP + node.width / 2
-                    hi = min(hi, xs[ii + 1] - sep)
+                    hi = min(hi, xs[ii + 1] - _min_sep(node, layer[ii + 1]))
                 xs[ii] = min(xs[ii], hi)
             for node, x in zip(layer, xs):
                 node.x = x

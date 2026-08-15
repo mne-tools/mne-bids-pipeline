@@ -183,14 +183,22 @@ def _layout_graph(graph: _Graph) -> _Graph:
         real_neighbors.setdefault(edge.dst, []).append(edge.src)
     pos = {node.id: node for node in all_nodes}
     # Long edges route along the closer margin so their chains never compete with
-    # the nodes themselves for the center; sides are fixed from the initial packing
+    # the nodes themselves for the center
     margin_side: dict[str, float] = dict()
-    for edge in graph.edges:
-        if len(routes[edge.id]) < 2:
-            continue
-        mid = (pos[edge.src].x + pos[edge.dst].x) / 2
-        for node in routes[edge.id]:
-            margin_side[node.id] = -1.0 if mid <= graph.width / 2 else 1.0
+    margin_order: dict[str, float] = dict()
+
+    def _pick_sides() -> None:
+        # Recomputed each refinement pass: the endpoints move as steps settle, and
+        # a side chosen from stale positions sends a chain on a needless detour
+        margin_side.clear()
+        margin_order.clear()
+        for edge in graph.edges:
+            if len(routes[edge.id]) < 2:
+                continue
+            mid = (pos[edge.src].x + pos[edge.dst].x) / 2
+            for node in routes[edge.id]:
+                margin_side[node.id] = -1.0 if mid <= graph.width / 2 else 1.0
+                margin_order[node.id] = mid
 
     def _chain_mean(node: _Node) -> float:
         linked = (chain_neighbors if node.dummy else real_neighbors).get(node.id)
@@ -200,7 +208,11 @@ def _layout_graph(graph: _Graph) -> _Graph:
 
     def _order_key(node: _Node) -> float:
         if node.id in margin_side:
-            return 0.0 if margin_side[node.id] < 0 else graph.width
+            # The secondary key keeps same-side chains in one consistent relative
+            # order across layers, so they run parallel instead of braiding
+            if margin_side[node.id] < 0:
+                return -graph.width + margin_order[node.id]
+            return 2 * graph.width + margin_order[node.id]
         return _chain_mean(node)
 
     def _desired(node: _Node) -> float:
@@ -217,6 +229,7 @@ def _layout_graph(graph: _Graph) -> _Graph:
     for _ in range(2):
         # The ordinal barycenter above ignores geometry (a 30px dummy and a 190px
         # node count the same), so refine the order by actual positions
+        _pick_sides()
         for layer in layers:
             layer.sort(key=_order_key)
         _pack()
@@ -299,6 +312,12 @@ svg.mbp-flow .mbp-flow-line {
   stroke: currentColor;
   stroke-width: 1.2;
   opacity: 0.65;
+}
+svg.mbp-flow .mbp-flow-line-casing {
+  fill: none;
+  stroke: var(--bs-body-bg, #ffffff);
+  stroke-width: 5;
+  opacity: 0.5;
 }
 svg.mbp-flow .mbp-flow-arrow { fill: currentColor; opacity: 0.65; }
 svg.mbp-flow .mbp-flow-label-bg { fill: var(--bs-body-bg, #ffffff); stroke: none; }
@@ -450,7 +469,10 @@ def _graph_svg(graph: _Graph, *, extra_css: str = "", label: str = "Graph") -> s
             )
 
     edge_html: list[str] = list()
-    for edge in graph.edges:
+    # Long chains draw first so short edges sit on top; each line carries a
+    # translucent body-background casing that breaks the lines beneath it at
+    # crossings, making the z-order legible
+    for edge in sorted(graph.edges, key=lambda edge: -len(edge.points)):
         d, (mx, my) = _edge_path(edge.points, frac=fracs.get(edge.id, 0.5))
         width = _text_width(edge.lines) + 10
         height = len(edge.lines) * _LINE_HEIGHT
@@ -465,6 +487,7 @@ def _graph_svg(graph: _Graph, *, extra_css: str = "", label: str = "Graph") -> s
             label_html = ""
         edge_html.append(
             f'<g id="{edge.id}" class="mbp-flow-edge">'
+            f'<path class="mbp-flow-line-casing" d="{d}" />'
             f'<path class="mbp-flow-line" d="{d}" '
             f'marker-end="url(#{_ID_PREFIX}-arrow)" />'
             f"{label_html}"

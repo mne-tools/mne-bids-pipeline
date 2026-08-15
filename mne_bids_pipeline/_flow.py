@@ -269,9 +269,13 @@ def _build_flow_graph(
 
     edge_paths: dict[tuple[str, str], set[str]] = dict()
     for entry in entries:
+        # Distant bands get their own copy of the source node (recognizable by its
+        # styling) rather than one edge spanning the whole diagram
+        rank = _GROUP_RANKS.get(entry["step"].partition("/")[0], 0)
+        source_id = _SOURCE_ID if rank < 2 else f"{_SOURCE_ID}@{rank}"
         for path in entry["in_files"].values():
             # Files nobody produced came from outside the pipeline (raw BIDS data).
-            for src in produced_by.get(path, {_SOURCE_ID}):
+            for src in produced_by.get(path, {source_id}):
                 if src == entry["step"]:  # e.g. a reference run feeding later runs
                     continue
                 edge_paths.setdefault((src, entry["step"]), set()).add(path)
@@ -279,12 +283,13 @@ def _build_flow_graph(
     graph = _Graph()
     used_steps = {step for edge in edge_paths for step in edge}
     for step in sorted(used_steps):
-        if step == _SOURCE_ID:
+        if step.startswith(_SOURCE_ID):
             node = _Node(
                 id=_node_id(step),
                 lines=[_SOURCE_LABEL],
                 paths=[f"<{name}> = {path}" for name, path in sorted(roots.items())],
                 klass="mbp-flow-source",
+                rank=int(step.partition("@")[2] or 0),
             )
         else:
             group = step.partition("/")[0]

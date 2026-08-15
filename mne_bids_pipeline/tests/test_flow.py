@@ -302,6 +302,9 @@ def test_flow_layout() -> None:
     )
     assert layer["freesurfer _01_recon_all"] > highest
     assert layer["source _01_make_bem_surfaces"] > layer["freesurfer _01_recon_all"]
+    # Distant bands get their own copy of the BIDS source node (here for the
+    # freesurfer band's T1w input) instead of one edge spanning the diagram
+    assert sum(node.klass == "mbp-flow-source" for node in graph.nodes) == 2
 
 
 def test_flow_svg() -> None:

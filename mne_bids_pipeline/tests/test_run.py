@@ -11,6 +11,7 @@ from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any, TypedDict
 
+import mne
 import pandas as pd
 import pytest
 from h5io import read_hdf5
@@ -20,6 +21,7 @@ from mne_bids_pipeline._config_import import _import_config
 from mne_bids_pipeline._config_utils import _get_ssrt
 from mne_bids_pipeline._download import main as download_main
 from mne_bids_pipeline._main import main
+from mne_bids_pipeline._report import _run_sort_key
 from mne_bids_pipeline.steps.freesurfer import _01_recon_all
 from mne_bids_pipeline.steps.preprocessing._01_data_quality import (
     get_config as get_config_data_quality,
@@ -320,6 +322,21 @@ def test_run(
         # source node's tooltip defines
         assert "&lt;deriv_root&gt; = " in content
         assert "&lt;bids_root&gt;" in content
+        # run sections appear in run order regardless of parallel completion
+        # order (gh-845)
+        report = mne.open_report(report_html_paths[0].with_suffix(".h5"))
+        titles, all_tags, _ = report.get_contents()
+        by_prefix: dict[str, list[str]] = dict()
+        for title, tags in zip(titles, all_tags):
+            for tag in tags:
+                if tag.startswith("run-"):
+                    run = tag.removeprefix("run-")
+                    prefix = title.replace(f"run-{run}", "run-")
+                    by_prefix.setdefault(prefix, []).append(run)
+                    break
+        for prefix, runs in by_prefix.items():
+            keys = [_run_sort_key(run) for run in runs]
+            assert keys == sorted(keys), (prefix, runs)
 
 
 def _make_fake_bids_dataset(

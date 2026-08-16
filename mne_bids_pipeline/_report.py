@@ -604,6 +604,45 @@ div.accordion-body pre.my-0 code {
 """
     if css not in report.include:
         report.add_custom_css(css=css)
+    # Parallelization over runs adds sections in completion order (gh-845)
+    _sort_run_sections(report)
+
+
+def _run_sort_key(run: str) -> tuple[int, int | str]:
+    """Sort numeric run labels numerically, before any non-numeric ones."""
+    try:
+        return (0, int(run))
+    except ValueError:
+        return (1, run)
+
+
+def _sort_run_sections(report: mne.Report) -> None:
+    """Order run-specific sections by run within each section group.
+
+    Sections that differ only by their ``run-*`` tag gather at the position the
+    first of them holds, sorted by run; everything else stays where it is.
+    """
+    anchors: dict[tuple[str, tuple[str, ...]], int] = dict()
+    keys: list[tuple[int, tuple[int, int | str], int]] = list()
+    titles, all_tags, _ = report.get_contents()
+    for idx, (title, tags) in enumerate(zip(titles, all_tags)):
+        for tag in tags:
+            if tag.startswith("run-"):
+                run = tag.removeprefix("run-")
+                break
+        else:
+            keys.append((idx, (0, 0), idx))
+            continue
+        # No need to disambiguate further: replace= targeting means the pipeline
+        # never reuses a title across sections
+        ident = (
+            title.replace(f"run-{run}", "run"),
+            tuple(sorted(tag for tag in tags if not tag.startswith("run-"))),
+        )
+        keys.append((anchors.setdefault(ident, idx), _run_sort_key(run), idx))
+    order = sorted(range(len(keys)), key=keys.__getitem__)
+    if order != list(range(len(order))):
+        report.reorder(order)
 
 
 def _add_flow_diagram(

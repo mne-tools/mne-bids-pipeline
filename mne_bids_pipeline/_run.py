@@ -14,10 +14,8 @@ import traceback
 import warnings
 from collections.abc import Callable, Iterable, Mapping
 from types import SimpleNamespace
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
-import json_tricks
-import pandas as pd
 from filelock import FileLock
 from joblib import Memory
 from mne_bids import BIDSPath
@@ -26,6 +24,9 @@ from ._config_utils import _get_step_title
 from ._flow import FlowEntryT, _write_flow_entry
 from ._logging import _is_testing, gen_log_kwargs, logger
 from .typing import InFilesPathT, InFilesT, OutFilesT
+
+if TYPE_CHECKING:
+    import pandas as pd
 
 
 def failsafe_run(
@@ -39,7 +40,7 @@ def failsafe_run(
         @functools.wraps(func)  # Preserve "identity" of original function
         def __mne_bids_pipeline_failsafe_wrapper__(
             *args: list[Any], **kwargs: dict[str, Any]
-        ) -> pd.Series | None:
+        ) -> "pd.Series | None":
             __mne_bids_pipeline_step__ = pathlib.Path(inspect.getfile(func))  # noqa
             exec_params = kwargs["exec_params"]
             on_error = exec_params.on_error
@@ -110,6 +111,8 @@ def failsafe_run(
                     )
             if not did_run:
                 return None  # no log info to return
+            import pandas as pd
+
             log_info = pd.concat(
                 [
                     pd.Series(kwargs, dtype=object),
@@ -459,10 +462,13 @@ def _ignore_warnings(ignore_warnings: Iterable[str] | str) -> Iterable[None]:
         yield
 
 
-def save_logs(*, config: SimpleNamespace, logs: Iterable[pd.Series | None]) -> None:
+def save_logs(*, config: SimpleNamespace, logs: "Iterable[pd.Series | None]") -> None:
     usable_logs = [log for log in logs if log is not None]
     if not usable_logs:
         return
+    import json_tricks
+    import pandas as pd
+
     all_tasks = "+".join(map(str, config.all_tasks))
     fname = config.deriv_root / f"task-{all_tasks}_log.xlsx"
 

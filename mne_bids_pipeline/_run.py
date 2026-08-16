@@ -2,6 +2,7 @@
 
 import contextlib
 import copy
+import datetime
 import functools
 import hashlib
 import inspect
@@ -11,7 +12,7 @@ import sys
 import time
 import traceback
 import warnings
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Mapping
 from types import SimpleNamespace
 from typing import Any, Literal
 
@@ -21,6 +22,8 @@ from filelock import FileLock
 from joblib import Memory
 from mne_bids import BIDSPath
 
+from ._config_utils import _get_step_title
+from ._flow import FlowEntryT, _write_flow_entry
 from ._logging import _is_testing, gen_log_kwargs, logger
 from .typing import InFilesPathT, InFilesT, OutFilesT
 
@@ -162,11 +165,17 @@ class ConditionalStepMemory:
         self.require_output = require_output
         self.func_name = func_name
         self.sidecars = sidecars
+        self.deriv_root = exec_params.deriv_root
 
     def cache(self, func: Callable[..., Any]) -> Callable[..., Any]:
+        step = _short_step_path(pathlib.Path(inspect.getfile(func)))
+        func_name = func.__name__
+        title = _get_step_title(inspect.getmodule(func))
+
         def __mbp_cached_func_wrapper__(
             *args: list[Any], **kwargs: dict[str, Any]
         ) -> bool:
+            t0 = time.time()
             in_files = out_files = None
             force_run = kwargs.pop("force_run", False)
             these_kwargs = kwargs.copy()
@@ -176,8 +185,27 @@ class ConditionalStepMemory:
             if self.get_input_fnames is not None:
                 in_files = kwargs["in_files"] = self.get_input_fnames(**these_kwargs)
             del these_kwargs
+            # Snapshot now: the worker funcs pop entries off in_files as they go
+            record = functools.partial(
+                _record_flow,
+                deriv_root=self.deriv_root,
+                step=step,
+                func_name=func_name,
+                title=title,
+                kwargs=kwargs,
+                in_files=_flow_files(in_files),
+                t0=t0,
+            )
+            # Steps write to the report before they return, so seed the recording with
+            # the inputs now or the last step to run would be missing from its own
+            # diagram until some later run rewrites the report.
+            prior = record(out_files=None, only_if_new=True)
+            # A completed prior entry means the disk already describes the original
+            # computation, so cache hits below need no rewrite at all
+            prior_done = prior.get("finished") is not None
             if self.memory is None:
-                func(*args, **kwargs)
+                out_files = func(*args, **kwargs)
+                record(out_files=out_files, cached=False)
                 return True
 
             # This is an implementation detail so we don't need a proper error
@@ -279,7 +307,10 @@ class ConditionalStepMemory:
                             bad_out_files = True
                             break
                     else:
-                        msg = f"Computation unnecessary (cached {func.__name__}(…)) …"
+                        msg = (
+                            f"Computation unnecessary (cached "
+                            f"{func.__name__}(…){_ran_when(prior)}) …"
+                        )
                         emoji = "cache"
             # When out_files_expected is not None, we should check if the output files
             # exist and stop if they do (e.g., in bem surface or coreg surface
@@ -293,9 +324,15 @@ class ConditionalStepMemory:
                     msg = "Computation forced despite existing output files …"
                     emoji = "🔂"
                 else:
-                    msg = "Computation unnecessary (output files exist) …"
-                    emoji = "🔍"
                     short_circuit = True
+                    if not prior_done:
+                        # must record before the `del out_files` below
+                        record(out_files=out_files, cached=True)
+                    msg = (
+                        "Computation unnecessary (output files exist"
+                        f"{_ran_when(prior)}) …"
+                    )
+                    emoji = "🔍"
             else:
                 # Ensure memorized_func.check_call_in_cache returned False
                 # as opposed to raised an error (which already sets `msg` above)
@@ -321,6 +358,8 @@ class ConditionalStepMemory:
             else:
                 with _ignore_warnings(self.ignore_warnings):
                     out_files = memorized_func(*args, **kwargs)
+            if not (done and prior_done):  # cache hits with a full record skip the IO
+                record(out_files=out_files, cached=done)
             if self.require_output:
                 assert isinstance(out_files, dict) and len(out_files), (
                     f"Internal error: step must return non-empty out_files dict, got "
@@ -337,6 +376,77 @@ class ConditionalStepMemory:
 
     def clear(self) -> None:
         self.memory.clear()
+
+
+def _ran_when(prior: Mapping[str, Any]) -> str:
+    """Get ", ran <when>" when a call's original computation is on record."""
+    if not prior.get("cached") and prior.get("finished"):
+        return f", ran {prior['finished'][:16]}"
+    return ""
+
+
+def _flow_files(files: Mapping[str, object] | None) -> dict[str, str]:
+    """Normalize an in_files/out_files mapping to plain path strings."""
+    out: dict[str, str] = dict()
+    for key, value in (files or dict()).items():
+        if key == "__unknown_inputs__":
+            continue
+        if isinstance(value, tuple):  # out_files carry (path, hash) pairs
+            value = value[0]
+        if isinstance(value, BIDSPath):
+            value = value.fpath
+        if isinstance(value, str | pathlib.Path):
+            out[key] = str(value)
+    return out
+
+
+def _record_flow(
+    *,
+    deriv_root: pathlib.Path,
+    step: str,
+    func_name: str,
+    title: str | None,
+    kwargs: dict[str, Any],
+    in_files: dict[str, str],
+    t0: float,
+    out_files: Any,
+    cached: bool | None = None,
+    only_if_new: bool = False,
+) -> Mapping[str, Any]:
+    """Record a step call's files; get back the stored entry ({} if it failed)."""
+    try:
+        # cached is None for the pre-run seed entry, which has not completed
+        duration = finished = None
+        if cached is not None:
+            duration = round(time.time() - t0, 3)
+            finished = datetime.datetime.now().isoformat(sep=" ", timespec="seconds")
+        entry: FlowEntryT = {
+            "step": step,
+            "func": func_name,
+            "title": title,
+            "subject": kwargs.get("subject", None),
+            "session": kwargs.get("session", None),
+            "run": kwargs.get("run", None),
+            "task": kwargs.get("task", None),
+            "duration": duration,
+            "finished": finished,
+            "cached": cached,
+            "in_files": in_files,
+            "out_files": _flow_files(out_files),
+        }
+        # Roots let the report show paths as <bids_root>/... instead of absolute
+        roots = {"deriv_root": str(deriv_root)}
+        for name in ("bids_root", "fs_subjects_dir"):
+            value = getattr(kwargs.get("cfg", None), name, None)
+            if value is not None:
+                roots[name] = str(value)
+        return _write_flow_entry(
+            deriv_root=deriv_root, entry=entry, roots=roots, only_if_new=only_if_new
+        )
+    except Exception as exc:
+        msg = f"Could not record pipeline flow information: {exc}"
+        logger.warning(**gen_log_kwargs(message=msg, emoji="⚠️"))
+        return dict()
 
 
 @contextlib.contextmanager

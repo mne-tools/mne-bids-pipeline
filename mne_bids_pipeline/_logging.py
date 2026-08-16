@@ -6,7 +6,7 @@ import inspect
 import logging
 import os
 import sys
-from collections.abc import Generator
+from collections.abc import Generator, Iterable, Sequence
 
 import rich.console
 import rich.theme
@@ -224,6 +224,46 @@ def gen_log_kwargs(
 
 def _linkfile(uri: str) -> str:
     return f"[link=file://{uri}]{uri}[/link]"
+
+
+def _collapse_runs(runs: Iterable[str]) -> str:
+    """Turn a set of run labels into something like ``runs 01–03, 07``."""
+    runs = sorted(set(runs))
+    if not runs:
+        return ""
+    label = "run" if len(runs) == 1 else "runs"
+    try:
+        numbers = sorted(int(run) for run in runs)
+    except ValueError:
+        return f"{label} {', '.join(runs)}"
+    width = max(len(run) for run in runs)
+    groups: list[list[int]] = [[numbers[0]]]
+    for number in numbers[1:]:
+        if number == groups[-1][-1] + 1:
+            groups[-1].append(number)
+        else:
+            groups.append([number])
+    chunks = [
+        f"{group[0]:0{width}d}"
+        if len(group) == 1
+        else f"{group[0]:0{width}d}–{group[-1]:0{width}d}"
+        for group in groups
+    ]
+    return f"{label} {', '.join(chunks)}"
+
+
+def _shorten_paths(paths: Sequence[str], roots: dict[str, str]) -> list[str]:
+    """Rewrite absolute paths as ``<root_name>/...`` for readability."""
+    subs = sorted(roots.items(), key=lambda kv: -len(kv[1]))  # deriv may be in bids
+    out: list[str] = list()
+    for path in paths:
+        for name, root in subs:
+            root = root.rstrip("/")
+            if path == root or path.startswith(f"{root}/"):
+                path = f"<{name}>{path[len(root) :]}"
+                break
+        out.append(path)
+    return out
 
 
 def _is_testing() -> bool:

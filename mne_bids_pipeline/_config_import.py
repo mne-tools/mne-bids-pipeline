@@ -13,7 +13,6 @@ from inspect import signature
 from types import SimpleNamespace
 from typing import Any
 
-import matplotlib
 import mne
 import numpy as np
 from mne_bids import get_entity_vals
@@ -274,6 +273,8 @@ def _update_with_user_config(
             logger.info(**gen_log_kwargs(message=msg, **log_kwargs))
         config.on_error = "debug"
     else:
+        import matplotlib
+
         matplotlib.use("Agg")  # do not open any window  # noqa
     if config.on_error == "debug":
         if config.n_jobs != 1:

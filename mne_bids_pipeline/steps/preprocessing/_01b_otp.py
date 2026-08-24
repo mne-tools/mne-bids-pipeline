@@ -1,19 +1,22 @@
-import mne
-import numpy as np
+from types import SimpleNamespace
+
 from mne.preprocessing import oversampled_temporal_projection
-from mne_bids import BIDSPath, read_raw_bids
+
 from mne_bids_pipeline._config_utils import _get_ssrt
-from mne_bids_pipeline._run import _prep_out_files
 from mne_bids_pipeline._import_data import (
-    _bads_path,
-    _get_mf_reference_path,
     _get_run_rest_noise_path,
-    _import_data_kwargs,
     _read_raw_msg,
     import_er_data,
     import_experimental_data,
 )
-from mne_bids_pipeline._01a_data_quality import get_input_fname_data_quality
+from mne_bids_pipeline._logging import gen_log_kwargs, logger
+from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
+from mne_bids_pipeline._report import _add_raw, _open_report
+from mne_bids_pipeline._run import _prep_out_files, failsafe_run, save_logs
+from mne_bids_pipeline.steps.preprocessing._01a_data_quality import (
+    get_input_fnames_data_quality,
+)
+from mne_bids_pipeline.typing import InFilesT, OutFilesT
 
 
 def get_input_fnames_otp(
@@ -34,7 +37,7 @@ def get_input_fnames_otp(
         kind="orig",
         mf_reference_run=cfg.mf_reference_run,
         mf_reference_task=cfg.mf_reference_task,
-        add_bads=(kind == "orig"),
+        add_bads=True,
     )
 
 
@@ -43,18 +46,19 @@ def get_input_fnames_otp(
     sidecars=True,
 )
 def apply_otp(
-        *,
-        cfg: SimpleNamespace,
-        exec_params: SimpleNamespace,
-        subject: str,
-        session: str | None,
-        run: str | None,
-        task: str | None,
-        in_files: InFilesT,
-)-> OutFilesT:
+    *,
+    cfg: SimpleNamespace,
+    exec_params: SimpleNamespace,
+    subject: str,
+    session: str | None,
+    run: str | None,
+    task: str | None,
+    in_files: InFilesT,
+) -> OutFilesT:
     in_key = f"raw_task-{task}_run-{run}"
     bids_path_in = in_files.pop(in_key)
-    bids_path_bads_in = in_files.pop(f"{in_key}-bads")
+    bids_path_ref_in = in_files.pop("raw_ref_run")
+    bids_path_bads = in_files.pop("bads_tsv")
     msg, run_type = _read_raw_msg(bids_path_in=bids_path_in, run=run, task=task)
     logger.info(**gen_log_kwargs(message=msg))
 
@@ -63,9 +67,9 @@ def apply_otp(
             cfg=cfg,
             exec_params=exec_params,
             bids_path_er_in=bids_path_in,
-            bids_path_er_bads_in=None,
             bids_path_ref_in=bids_path_ref_in,
-            bids_path_ref_bads_in=None,
+            bids_path_er_bads_in=bids_path_bads,
+            bids_path_ref_bads_in=bids_path_bads,
             prepare_maxwell_filter=False,
         )
     else:
@@ -74,7 +78,7 @@ def apply_otp(
             cfg=cfg,
             exec_params=exec_params,
             bids_path_in=bids_path_in,
-            bids_path_bads_in=None,
+            bids_path_bads_in=bids_path_bads,
             data_is_rest=data_is_rest,
         )
 
@@ -93,7 +97,11 @@ def apply_otp(
     )
 
     raw.load_data()
-    raw = oversampled_temporal_projection(raw, duration=cfg.otp_duration, picks=None,)
+    raw = oversampled_temporal_projection(
+        raw,
+        duration=cfg.otp_duration,
+        picks=None,
+    )
 
     out_files[in_key].fpath.parent.mkdir(exist_ok=True, parents=True)
 
@@ -134,7 +142,7 @@ def get_config(
     session: str | None,
 ) -> SimpleNamespace:
     # picks, duration
-    cfg = SinmpleNamespace(
+    cfg = SimpleNamespace(
         duration=config.otp_duration,
     )
     return cfg
@@ -162,4 +170,3 @@ def main(*, config: SimpleNamespace) -> None:
         )
 
     save_logs(config=config, logs=logs)
-

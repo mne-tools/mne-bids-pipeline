@@ -42,7 +42,7 @@ def get_input_fnames_otp(
 
 
 @failsafe_run(
-    get_input_fnames=get_input_fnames_data_quality,
+    get_input_fnames=get_input_fnames_otp,
     sidecars=True,
 )
 def apply_otp(
@@ -149,7 +149,7 @@ def get_config(
 
 
 def main(*, config: SimpleNamespace) -> None:
-    """Run assess_data_quality."""
+    """Run oversampled temporal projection."""
     ssrt = _get_ssrt(config=config)
     with get_parallel_backend(config.exec_params):
         parallel, run_func = parallel_func(

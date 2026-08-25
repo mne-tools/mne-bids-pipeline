@@ -620,7 +620,7 @@ preprocess the data.
 """
 
 
-otp_duration: float = 10.00
+otp_duration: Literal["min"] | float = 10.00
 """
 Window duration in seconds. Can also be "min" to use the shortest possible window duration. 
 

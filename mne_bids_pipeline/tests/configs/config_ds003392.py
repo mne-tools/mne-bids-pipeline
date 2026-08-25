@@ -11,6 +11,9 @@ ignore_warnings = [
 subjects = ["01"]
 
 task = "localizer"
+# use oversampled temporal projection to clean sensor noise
+use_otp_denoising = True
+otp_duration = "min"
 # usually a good idea to use True, but we know no bads are detected for this dataset
 find_flat_channels_meg = False
 find_noisy_channels_meg = False

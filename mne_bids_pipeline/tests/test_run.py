@@ -21,10 +21,10 @@ from mne_bids_pipeline._config_utils import _get_ssrt
 from mne_bids_pipeline._download import main as download_main
 from mne_bids_pipeline._main import main
 from mne_bids_pipeline.steps.freesurfer import _01_recon_all
-from mne_bids_pipeline.steps.preprocessing._01_data_quality import (
+from mne_bids_pipeline.steps.preprocessing._01a_data_quality import (
     get_config as get_config_data_quality,
 )
-from mne_bids_pipeline.steps.preprocessing._01_data_quality import (
+from mne_bids_pipeline.steps.preprocessing._01a_data_quality import (
     get_input_fnames_data_quality,
 )
 

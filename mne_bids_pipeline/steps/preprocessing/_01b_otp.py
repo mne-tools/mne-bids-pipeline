@@ -126,7 +126,7 @@ def apply_otp(
             raw=raw,
         )
 
-    #assert len(in_files) == 0, in_files.keys()
+    # assert len(in_files) == 0, in_files.keys()
     return _prep_out_files(exec_params=exec_params, out_files=out_files)
 
 

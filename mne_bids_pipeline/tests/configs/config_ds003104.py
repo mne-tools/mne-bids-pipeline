@@ -13,4 +13,3 @@ ch_types = ["meg"]
 # use oversampled temporal projection to clean sensor noise
 use_otp_denoising = True
 otp_duration = "min"
-

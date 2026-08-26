@@ -13,9 +13,6 @@ from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
 from mne_bids_pipeline._report import _add_raw, _open_report
 from mne_bids_pipeline._run import _prep_out_files, failsafe_run, save_logs
-from mne_bids_pipeline.steps.preprocessing._01a_data_quality import (
-    get_input_fnames_data_quality,
-)
 from mne_bids_pipeline.typing import InFilesT, OutFilesT
 
 

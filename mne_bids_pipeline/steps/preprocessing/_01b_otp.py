@@ -14,9 +14,6 @@ from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
 from mne_bids_pipeline._report import _add_raw, _open_report
 from mne_bids_pipeline._run import _prep_out_files, failsafe_run, save_logs
-from mne_bids_pipeline.steps.preprocessing._01a_data_quality import (
-    get_input_fnames_data_quality,
-)
 from mne_bids_pipeline.typing import InFilesT, OutFilesT
 
 
@@ -40,7 +37,7 @@ def get_input_fnames_otp(
         mf_reference_task=cfg.mf_reference_task,
         add_bads=True,
     )
-    #in_files["bads_tsv"] = _get_allbads_path(cfg=cfg, subject=subject, session=session)
+    # in_files["bads_tsv"] = _get_allbads_path(cfg=cfg, subject=subject, session=session)
     return in_files
 
 
@@ -144,7 +141,7 @@ def get_config(
         duration=config.otp_duration,
         plot_psd_for_runs=config.plot_psd_for_runs,
         _raw_split_size=config._raw_split_size,
-        **_import_data_kwargs(config=config, subject=subject, session=session)
+        **_import_data_kwargs(config=config, subject=subject, session=session),
     )
     return cfg
 

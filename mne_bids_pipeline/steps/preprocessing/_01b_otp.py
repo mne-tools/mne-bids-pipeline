@@ -5,6 +5,7 @@ from mne.preprocessing import oversampled_temporal_projection
 from mne_bids_pipeline._config_utils import _get_ssrt
 from mne_bids_pipeline._import_data import (
     _get_run_rest_noise_path,
+    _import_data_kwargs,
     _read_raw_msg,
     import_er_data,
     import_experimental_data,
@@ -13,6 +14,9 @@ from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
 from mne_bids_pipeline._report import _add_raw, _open_report
 from mne_bids_pipeline._run import _prep_out_files, failsafe_run, save_logs
+from mne_bids_pipeline.steps.preprocessing._01a_data_quality import (
+    get_input_fnames_data_quality,
+)
 from mne_bids_pipeline.typing import InFilesT, OutFilesT
 
 
@@ -25,7 +29,7 @@ def get_input_fnames_otp(
     task: str | None,
 ) -> InFilesT:
     """Get paths of files required by filter_data function."""
-    return _get_run_rest_noise_path(
+    in_files = _get_run_rest_noise_path(
         cfg=cfg,
         subject=subject,
         session=session,
@@ -36,6 +40,8 @@ def get_input_fnames_otp(
         mf_reference_task=cfg.mf_reference_task,
         add_bads=True,
     )
+    #in_files["bads_tsv"] = _get_allbads_path(cfg=cfg, subject=subject, session=session)
+    return in_files
 
 
 @failsafe_run(
@@ -54,19 +60,14 @@ def apply_otp(
 ) -> OutFilesT:
     in_key = f"raw_task-{task}_run-{run}"
     bids_path_in = in_files.pop(in_key)
-    bids_path_ref_in = in_files.pop("raw_ref_run")
-    bids_path_bads = in_files.pop("bads_tsv")
     msg, run_type = _read_raw_msg(bids_path_in=bids_path_in, run=run, task=task)
     logger.info(**gen_log_kwargs(message=msg))
-
     if run is None and task == "noise":
         raw = import_er_data(
             cfg=cfg,
             exec_params=exec_params,
             bids_path_er_in=bids_path_in,
-            bids_path_ref_in=bids_path_ref_in,
-            bids_path_er_bads_in=bids_path_bads,
-            bids_path_ref_bads_in=bids_path_bads,
+            bids_path_er_bads_in=None,
             prepare_maxwell_filter=False,
         )
     else:
@@ -75,7 +76,7 @@ def apply_otp(
             cfg=cfg,
             exec_params=exec_params,
             bids_path_in=bids_path_in,
-            bids_path_bads_in=bids_path_bads,
+            bids_path_bads_in=None,
             data_is_rest=data_is_rest,
         )
 
@@ -96,7 +97,7 @@ def apply_otp(
     raw.load_data()
     raw = oversampled_temporal_projection(
         raw,
-        duration=cfg.otp_duration,
+        duration=cfg.duration,
         picks=None,
     )
 
@@ -141,6 +142,8 @@ def get_config(
     # picks, duration
     cfg = SimpleNamespace(
         duration=config.otp_duration,
+        _raw_split_size=config._raw_split_size,
+        **_import_data_kwargs(config=config, subject=subject, session=session)
     )
     return cfg
 

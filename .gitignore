@@ -22,3 +22,4 @@ coverage.xml
 /.claude/
 junit-results.xml
 .cache/
+.idea/

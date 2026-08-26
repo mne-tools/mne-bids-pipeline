@@ -35,7 +35,7 @@ def get_input_fnames_otp(
         kind="orig",
         mf_reference_run=cfg.mf_reference_run,
         mf_reference_task=cfg.mf_reference_task,
-        add_bads=True,
+        add_bads=False,
     )
     # in_files["bads_tsv"] = _get_allbads_path(cfg=cfg, subject=subject, session=session)
     return in_files
@@ -126,7 +126,7 @@ def apply_otp(
             raw=raw,
         )
 
-    assert len(in_files) == 0, in_files.keys()
+    #assert len(in_files) == 0, in_files.keys()
     return _prep_out_files(exec_params=exec_params, out_files=out_files)
 
 

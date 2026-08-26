@@ -49,6 +49,10 @@ class _TestOptionsT(TypedDict, total=False):
 
 TEST_SUITE: dict[str, _TestOptionsT] = {
     "ds003392": {},
+    "ds003392_otp_mxw": {
+        "steps": ("preprocessing",),
+        "dataset": "ds003392",
+    },
     "ds004229": {},
     "ds001971": {},
     "ds004107": {},
@@ -105,7 +109,6 @@ _n_jobs = {}
     "ds003104": {
         "steps": ("preprocessing", "sensor", "source"),
     },
-    "ds003104_otp_mxw": {"steps": ("preprocessing",)},
     "ERP_CORE_N400": {
         "dataset": "ERP_CORE",
         "config": "config_ERP_CORE.py",

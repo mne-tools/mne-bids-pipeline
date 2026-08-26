@@ -65,6 +65,8 @@ def apply_otp(
             exec_params=exec_params,
             bids_path_er_in=bids_path_in,
             bids_path_er_bads_in=None,
+            bids_path_ref_in=None,
+            bids_path_ref_bads_in=None,
             prepare_maxwell_filter=False,
         )
     else:

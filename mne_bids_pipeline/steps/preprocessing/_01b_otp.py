@@ -142,6 +142,7 @@ def get_config(
     # picks, duration
     cfg = SimpleNamespace(
         duration=config.otp_duration,
+        plot_psd_for_runs=config.plot_psd_for_runs,
         _raw_split_size=config._raw_split_size,
         **_import_data_kwargs(config=config, subject=subject, session=session)
     )

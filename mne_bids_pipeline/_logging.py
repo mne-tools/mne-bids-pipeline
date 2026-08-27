@@ -7,11 +7,13 @@ import logging
 import os
 import sys
 from collections.abc import Generator, Iterable, Sequence
-
-import rich.console
-import rich.theme
+from typing import TYPE_CHECKING
 
 from .typing import LogKwargsT
+
+if TYPE_CHECKING:
+    # rich is ~10 ms to import and is only needed once something is logged
+    import rich.console
 
 
 class _MBPLogger:
@@ -22,7 +24,10 @@ class _MBPLogger:
     # Do lazy instantiation of _console so that pytest's output capture
     # mechanics don't get messed up
     @property
-    def _console(self) -> rich.console.Console:
+    def _console(self) -> "rich.console.Console":
+        import rich.console
+        import rich.theme
+
         if isinstance(self.__console, rich.console.Console):
             return self.__console
 

@@ -551,7 +551,9 @@ def run_maxwell_filter(
     else:
         if cfg.otp:
             # instruct read_raw_bids to ignore lack of events files in deriv directory
-            exec_params.read_raw_bids_verbose="error"  # should be able to remove after MNE-BIDS 0.20.0
+            exec_params.read_raw_bids_verbose = (
+                "error"  # should be able to remove after MNE-BIDS 0.20.0
+            )
         raw = import_er_data(
             cfg=cfg,
             exec_params=exec_params,

@@ -1,7 +1,7 @@
+import warnings
 from collections.abc import Iterable
 from types import SimpleNamespace
 from typing import Any, Literal
-import warnings
 
 import mne
 import numpy as np
@@ -525,7 +525,11 @@ def import_er_data(
     raw_er
         The imported data.
     """
-    raw_er = _load_data(cfg=cfg, exec_params=exec_params, bids_path=bids_path_er_in,)
+    raw_er = _load_data(
+        cfg=cfg,
+        exec_params=exec_params,
+        bids_path=bids_path_er_in,
+    )
     session = bids_path_er_in.session
 
     _drop_channels_func(cfg, raw=raw_er, subject="emptyroom", session=session)

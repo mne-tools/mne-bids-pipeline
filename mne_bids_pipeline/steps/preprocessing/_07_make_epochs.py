@@ -8,9 +8,9 @@ To save space, the epoch data can be decimated.
 """
 
 import inspect
+import warnings
 from types import SimpleNamespace
 from typing import Any
-import warnings
 
 import mne
 from mne_bids import BIDSPath
@@ -98,7 +98,7 @@ def run_epochs(
     # Generate a unique event name -> event code mapping that can be used
     # across all runs.
     if not cfg.task_is_rest:
-            event_name_to_code_map = annotations_to_events(raw_paths=raw_fnames)
+        event_name_to_code_map = annotations_to_events(raw_paths=raw_fnames)
 
     # Store the rank & corresponding info of the run with the smallest rank.
     # We'll later manually inject this info into concatenated epochs.

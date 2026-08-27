@@ -48,9 +48,18 @@ jobs:
               git remote set-url origin "$CIRCLE_REPOSITORY_URL"
             fi
       - checkout
+      # Cloned here rather than in setup_bash.sh below so the install script exists
+      # before restore_cache needs to hash it into the key
+      - run:
+          name: Clone mne-tools
+          command: |
+            git clone --depth 1 https://github.com/mne-tools/mne-tools.git ~/mne-tools
+      # Keyed on the install script, so publishing a new bundle invalidates this
+      # automatically. Deliberately no prefix fallback: a partial hit would restore a
+      # stale tree, and the script skips the download when the directory exists.
       - restore_cache:
           keys:
-            - minimal-cmds-0
+            - minimal-cmds-{{ checksum "/home/circleci/mne-tools/tools/get_minimal_commands.sh" }}
       # pip's HTTP/wheel cache. The prefix-matching fallback key means a change to
       # pyproject.toml reuses the previous cache rather than starting from scratch.
       - restore_cache:
@@ -59,7 +68,7 @@ jobs:
             - pip-cache-0-
       - bash_env
       - save_cache:
-          key: minimal-cmds-0
+          key: minimal-cmds-{{ checksum "/home/circleci/mne-tools/tools/get_minimal_commands.sh" }}
           paths:
             - ~/minimal_cmds
       - run:
@@ -73,8 +82,7 @@ jobs:
       - run:
           name: Check Qt
           command: |
-            wget -q https://raw.githubusercontent.com/mne-tools/mne-tools/main/tools/check_qt_import.sh
-            bash check_qt_import.sh PySide6
+            bash ~/mne-tools/tools/check_qt_import.sh PySide6
       # Look at what we have and fail early if there is some library conflict
       - run:
           name: Check installation
@@ -86,6 +94,7 @@ jobs:
             - project
             - mne_data
             - minimal_cmds
+            - mne-tools
             - .pyenv
 
   cache_ds000117:

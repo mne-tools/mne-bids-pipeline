@@ -182,6 +182,8 @@ def get_input_fnames_esss(
     )
     in_files.update(_get_mf_reference_path(cfg=cfg, subject=subject, session=session))
     in_files["bads_tsv"] = _get_allbads_path(cfg=cfg, subject=subject, session=session)
+    if cfg.otp:
+        in_files.update(proc="otp")
     return in_files
 
 
@@ -305,6 +307,7 @@ def get_config_esss(
     cfg = SimpleNamespace(
         mf_esss=config.mf_esss,
         mf_esss_reject=config.mf_esss_reject,
+        otp=config.use_otp_denoising,
         **_import_data_kwargs(config=config, subject=subject, session=session),
     )
     return cfg
@@ -322,10 +325,11 @@ def get_input_fnames_maxwell_filter(
     task: str | None,
 ) -> InFilesT:
     """Get paths of files required by maxwell_filter function."""
+    use_kind = "otp" if cfg.otp else "orig"
     in_files = _get_run_rest_noise_path(
         run=run,
         task=task,
-        kind="orig",
+        kind=use_kind,
         mf_reference_run=cfg.mf_reference_run,
         mf_reference_task=cfg.mf_reference_task,
         cfg=cfg,
@@ -334,6 +338,8 @@ def get_input_fnames_maxwell_filter(
     )
     in_key = f"raw_task-{task}_run-{run}"
     assert in_key in in_files
+    if cfg.otp:
+        in_files[in_key].update(processing="otp")
     # head positions
     if cfg.mf_mc:
         if run is None and task == "noise":
@@ -528,17 +534,24 @@ def run_maxwell_filter(
     logger.info(**gen_log_kwargs(message=f"{apply_msg} {recording_type} data"))
     er_data = run is None and task == "noise"
     if not er_data:
+        # the following logic changes the value of data_is_rest based on the values of run and task
         data_is_rest = run is None and task == "rest"
-        raw = import_experimental_data(
-            cfg=cfg,
-            exec_params=exec_params,
-            bids_path_in=bids_path_in,
-            bids_path_bads_in=bids_path_bads,
-            data_is_rest=data_is_rest,
-        )
+        if cfg.otp:
+            raw = mne.io.read_raw_fif(bids_path_in, allow_maxshield=True)
+        else:
+            raw = import_experimental_data(
+                cfg=cfg,
+                exec_params=exec_params,
+                bids_path_in=bids_path_in,
+                bids_path_bads_in=bids_path_bads,
+                data_is_rest=data_is_rest,
+            )
         fr = raw.info["dev_head_t"]["trans"]
         where = "original head position"
     else:
+        if cfg.otp:
+            # instruct read_raw_bids to ignore lack of events files in deriv directory
+            exec_params.read_raw_bids_verbose="error"  # should be able to remove after MNE-BIDS 0.20.0
         raw = import_er_data(
             cfg=cfg,
             exec_params=exec_params,
@@ -734,6 +747,7 @@ def get_config_maxwell_filter(
         mf_extra_kws=config.mf_extra_kws,
         plot_psd_for_runs=config.plot_psd_for_runs,
         _raw_split_size=config._raw_split_size,
+        otp=config.use_otp_denoising,
         **_mf_cal_kwargs(config=config, subject=subject, session=session),
         **_import_data_kwargs(config=config, subject=subject, session=session),
     )

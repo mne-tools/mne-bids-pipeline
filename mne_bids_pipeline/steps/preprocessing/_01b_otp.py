@@ -140,6 +140,7 @@ def get_config(
 ) -> SimpleNamespace:
     # picks, duration
     cfg = SimpleNamespace(
+        otp=config.use_otp_denoising,
         duration=config.otp_duration,
         plot_psd_for_runs=config.plot_psd_for_runs,
         _raw_split_size=config._raw_split_size,
@@ -150,6 +151,10 @@ def get_config(
 
 def main(*, config: SimpleNamespace) -> None:
     """Run oversampled temporal projection."""
+    if not config.use_otp_denoising:
+        logger.info(**gen_log_kwargs(message="SKIP"))
+        return
+
     ssrt = _get_ssrt(config=config)
     with get_parallel_backend(config.exec_params):
         parallel, run_func = parallel_func(

@@ -53,6 +53,10 @@ TEST_SUITE: dict[str, _TestOptionsT] = {
         "steps": ("preprocessing",),
         "dataset": "ds003392",
     },
+    "ds003392_otp_ff": {
+        "steps": ("preprocessing",),
+        "dataset": "ds003392",
+    },
     "ds004229": {},
     "ds001971": {},
     "ds004107": {},

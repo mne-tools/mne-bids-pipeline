@@ -1,6 +1,7 @@
 from collections.abc import Iterable
 from types import SimpleNamespace
 from typing import Any, Literal
+import warnings
 
 import mne
 import numpy as np
@@ -211,11 +212,15 @@ def annotations_to_events(*, raw_paths: list[BIDSPath]) -> dict[str, int]:
     """
     event_names: list[str] = []
     for raw_fname in raw_paths:
-        raw = mne.io.read_raw_fif(raw_fname)
-        _, event_id = mne.events_from_annotations(raw=raw)
-        for event_name in event_id.keys():
-            if event_name not in event_names:
-                event_names.append(event_name)
+        with warnings.catch_warnings(record=True):
+            warnings.filterwarnings(
+                "ignore", ".*Internal Active Shielding", category=RuntimeWarning
+            )
+            raw = mne.io.read_raw_fif(raw_fname, allow_maxshield=True)
+            _, event_id = mne.events_from_annotations(raw=raw)
+            for event_name in event_id.keys():
+                if event_name not in event_names:
+                    event_names.append(event_name)
 
     event_names = sorted(event_names)
     event_name_to_code_map = {
@@ -520,7 +525,7 @@ def import_er_data(
     raw_er
         The imported data.
     """
-    raw_er = _load_data(cfg=cfg, exec_params=exec_params, bids_path=bids_path_er_in)
+    raw_er = _load_data(cfg=cfg, exec_params=exec_params, bids_path=bids_path_er_in,)
     session = bids_path_er_in.session
 
     _drop_channels_func(cfg, raw=raw_er, subject="emptyroom", session=session)
@@ -621,7 +626,7 @@ def _get_bids_path_in(
         check=False,
     )
     if kind != "orig":
-        assert kind in ("sss", "filt"), kind
+        assert kind in ("otp", "sss", "filt"), kind
         path_kwargs["root"] = cfg.deriv_root
         path_kwargs["suffix"] = "raw"
         path_kwargs["extension"] = ".fif"
@@ -704,7 +709,7 @@ def _get_noise_path(
     if not (cfg.process_empty_room and get_datatype(config=cfg) == "meg"):
         return dict()
     if kind != "orig":
-        assert kind in ("sss", "filt")
+        assert kind in ("otp", "sss", "filt")
         raw_fname = _get_bids_path_in(
             cfg=cfg,
             subject=subject,

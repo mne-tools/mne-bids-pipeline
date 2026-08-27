@@ -53,7 +53,8 @@ def get_input_fnames_frequency_filter(
     task: str | None,
 ) -> InFilesT:
     """Get paths of files required by filter_data function."""
-    kind: RunKindT = "sss" if cfg.use_maxwell_filter else "orig"
+    otp_used = "otp" if cfg.otp else "orig"
+    kind: RunKindT = "sss" if cfg.use_maxwell_filter else otp_used
     return _get_run_rest_noise_path(
         cfg=cfg,
         subject=subject,
@@ -209,14 +210,15 @@ def filter_data(
     out_files = dict()
     in_key = f"raw_task-{task}_run-{run}"
     bids_path_in = in_files.pop(in_key)
-    if bids_path_in.processing == "sss":
+    if bids_path_in.processing == "sss" or bids_path_in.processing == "otp":
         bids_path_bads_in = None
     else:
         bids_path_bads_in = in_files.pop(f"{in_key}-bads")
     msg, run_type = _read_raw_msg(bids_path_in=bids_path_in, run=run, task=task)
     logger.info(**gen_log_kwargs(message=msg))
-    if cfg.use_maxwell_filter:
-        raw = mne.io.read_raw_fif(bids_path_in)
+    if cfg.use_maxwell_filter or cfg.otp:
+        allow_ms = "True" if cfg.otp else "False"
+        raw = mne.io.read_raw_fif(bids_path_in, allow_maxshield=allow_ms)
     elif run is None and task == "noise":
         bids_path_ref_in = in_files.pop("raw_ref_run", None)
         if bids_path_ref_in is not None and bids_path_in.processing != "sss":
@@ -380,6 +382,7 @@ def get_config(
         bandpass_extra_kws=config.bandpass_extra_kws,
         plot_psd_for_runs=config.plot_psd_for_runs,
         _raw_split_size=config._raw_split_size,
+        otp=config.use_otp_denoising,
         **_import_data_kwargs(config=config, subject=subject, session=session),
     )
     return cfg

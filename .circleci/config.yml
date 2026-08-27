@@ -51,11 +51,25 @@ jobs:
       - restore_cache:
           keys:
             - minimal-cmds-0
+      # pip's HTTP/wheel cache. The prefix-matching fallback key means a change to
+      # pyproject.toml reuses the previous cache rather than starting from scratch.
+      - restore_cache:
+          keys:
+            - pip-cache-0-{{ checksum "pyproject.toml" }}
+            - pip-cache-0-
       - bash_env
+      - save_cache:
+          key: minimal-cmds-0
+          paths:
+            - ~/minimal_cmds
       - run:
           name: Get Python running
           command: |
             ./.circleci/install_deps.sh
+      - save_cache:
+          key: pip-cache-0-{{ checksum "pyproject.toml" }}
+          paths:
+            - ~/.cache/pip
       - run:
           name: Check Qt
           command: |
@@ -66,10 +80,6 @@ jobs:
           name: Check installation
           command: |
             ./.circleci/check_installation.sh
-      - save_cache:
-          key: minimal-cmds-0
-          paths:
-            - ~/minimal_cmds
       - persist_to_workspace:
           root: ~/
           paths:

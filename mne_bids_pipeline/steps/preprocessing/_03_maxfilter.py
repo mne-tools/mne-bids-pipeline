@@ -65,6 +65,8 @@ def get_input_fnames_all_bads(
 ) -> dict[str, BIDSPath]:
     """Get paths of files required by compute_all_bads function."""
     in_files: dict[str, BIDSPath] = dict()
+    # use_kind = "otp" if cfg.otp else "orig"
+    use_kind = "orig"
     for run, task in cfg.runs_tasks:
         key = f"raw_task-{task}_run-{run}-bads"
         in_files[key] = _get_run_path(
@@ -74,7 +76,7 @@ def get_input_fnames_all_bads(
             run=run,
             task=task,
             add_bads=True,
-            kind="orig",
+            kind=use_kind,
         )[key]
     return in_files
 
@@ -85,13 +87,17 @@ def _get_allbads_path(
     subject: str,
     session: str | None,
 ) -> BIDSPath:
+    # use_kind = "otp" if cfg.otp else "orig"
+    # use_proc = "otp" if cfg.otp else None
+    use_kind = "orig"
+    use_proc = None
     path = _get_bids_path_in(
         cfg=cfg,
         subject=subject,
         session=session,
         run=None,
         task=None,
-        kind="orig",
+        kind=use_kind,
     )
     path.update(
         suffix="allbads",
@@ -99,6 +105,7 @@ def _get_allbads_path(
         root=cfg.deriv_root,
         split=None,
         check=False,
+        processing=use_proc,
     )
     return path
 
@@ -156,6 +163,7 @@ def get_config_all_bads(
             session=session,
             which=("runs", "noise", "rest"),
         ),
+        otp=config.use_otp_denoising,
         **_import_data_kwargs(config=config, subject=subject, session=session),
     )
     return cfg
@@ -170,20 +178,27 @@ def get_input_fnames_esss(
     subject: str,
     session: str | None,
 ) -> InFilesT:
+    use_kind = "otp" if cfg.otp else "orig"
     in_files = _get_run_rest_noise_path(
         run=None,
         task="noise",
-        kind="orig",
+        kind=use_kind,
         mf_reference_run=cfg.mf_reference_run,
         mf_reference_task=cfg.mf_reference_task,
         cfg=cfg,
         subject=subject,
         session=session,
     )
-    in_files.update(_get_mf_reference_path(cfg=cfg, subject=subject, session=session))
+
+    in_files.update(
+        _get_mf_reference_path(cfg=cfg, subject=subject, session=session, kind=use_kind)
+    )
     in_files["bads_tsv"] = _get_allbads_path(cfg=cfg, subject=subject, session=session)
     if cfg.otp:
-        in_files.update(proc="otp")
+        for key in in_files.keys():
+            if key != "bads_tsv":
+                in_files[key].update(processing="otp")
+
     return in_files
 
 
@@ -206,6 +221,11 @@ def compute_esss_proj(
     bids_path_in = in_files.pop(in_key)
     bids_path_ref_in = in_files.pop("raw_ref_run")
     bids_path_bads = in_files.pop("bads_tsv")
+    if cfg.otp:
+        # instruct read_raw_bids to ignore lack of events files in deriv directory
+        exec_params.read_raw_bids_verbose = (
+            "error"  # should be able to remove after MNE-BIDS 0.20.0
+        )
     raw_noise = import_er_data(
         cfg=cfg,
         exec_params=exec_params,
@@ -390,7 +410,9 @@ def get_input_fnames_maxwell_filter(
         )
 
     # reference run (used for `destination`)
-    in_files.update(_get_mf_reference_path(cfg=cfg, subject=subject, session=session))
+    in_files.update(
+        _get_mf_reference_path(cfg=cfg, subject=subject, session=session, kind=use_kind)
+    )
 
     is_rest_noise = run is None and task in ("noise", "rest")
     if is_rest_noise:
@@ -477,6 +499,8 @@ def run_maxwell_filter(
     logger.info(**gen_log_kwargs(message=msg))
 
     bids_path_ref_in = in_files.pop("raw_ref_run")
+    if cfg.otp:
+        exec_params.read_raw_bids_verbose = "error"
     raw = read_raw_bids(
         bids_path=bids_path_ref_in,
         extra_params=_get_reader_extra_params(cfg=cfg, bids_path=bids_path_ref_in),
@@ -534,18 +558,20 @@ def run_maxwell_filter(
     logger.info(**gen_log_kwargs(message=f"{apply_msg} {recording_type} data"))
     er_data = run is None and task == "noise"
     if not er_data:
-        # the following logic changes the value of data_is_rest based on the values of run and task
+        # here the value of data_is_rest is set based on the values of run and task
         data_is_rest = run is None and task == "rest"
         if cfg.otp:
-            raw = mne.io.read_raw_fif(bids_path_in, allow_maxshield=True)
-        else:
-            raw = import_experimental_data(
-                cfg=cfg,
-                exec_params=exec_params,
-                bids_path_in=bids_path_in,
-                bids_path_bads_in=bids_path_bads,
-                data_is_rest=data_is_rest,
+            # instruct read_raw_bids to ignore lack of events files in deriv directory
+            exec_params.read_raw_bids_verbose = (
+                "error"  # should be able to remove after MNE-BIDS 0.20.0
             )
+        raw = import_experimental_data(
+            cfg=cfg,
+            exec_params=exec_params,
+            bids_path_in=bids_path_in,
+            bids_path_bads_in=bids_path_bads,
+            data_is_rest=data_is_rest,
+        )
         fr = raw.info["dev_head_t"]["trans"]
         where = "original head position"
     else:
@@ -600,7 +626,6 @@ def run_maxwell_filter(
         f" external order: {mf_kws['ext_order']})"
     )
     logger.info(**gen_log_kwargs(message=msg))
-
     raw_sss = mne.preprocessing.maxwell_filter(raw, **mf_kws)
     del raw
     gc.collect()

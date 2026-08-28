@@ -63,7 +63,7 @@ class LogKwargsT(TypedDict):
 
 
 RunTypeT = Literal["experimental", "empty-room", "resting-state"]
-RunKindT = Literal["orig", "sss", "filt"]
+RunKindT = Literal["orig", "otp", "sss", "filt"]
 
 
 def assert_float_array_like(val: Any) -> FloatArrayT:

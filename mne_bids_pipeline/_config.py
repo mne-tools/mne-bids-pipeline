@@ -608,21 +608,22 @@ https://mne.tools/stable/generated/mne.preprocessing.find_bad_channels_maxwell
 use_otp_denoising: bool = False
 """
 Whether or not to use [Oversampled Temporal Projection][mne.preprocessing.otp] to
-preprocess the data. 
+preprocess the data.
 
 !!! warning
-    If the data will be processed using Maxwell filtering, OTP must be applied first and the application of OTP will 
-    alter the correlation for tSSS (0.99 or higher). Flat and noisy channels should be marked as bad or 
-    else the noise will be spread to all channels because of OTP. 
-    Bad channels need to be set through BIDS channels.tsv and / or via the
-    `find_flat_channels_meg` and `find_noisy_channels_meg` options above
+    If the data will be processed using Maxwell filtering, OTP must be applied first and
+    the application of OTP will alter the correlation for tSSS (0.99 or higher). Flat
+    and noisy channels should be marked as bad or else the noise will be spread to all
+    channels because of OTP. Bad channels need to be marked in the raw files or set
+    through BIDS channels.tsv via the automatic bad channel detection functions
     before applying OTP.
 """
 
 
 otp_duration: Literal["min"] | float = 10.00
 """
-Window duration in seconds. Can also be "min" to use the shortest possible window duration. 
+Window duration in seconds. Can also be "min" to use the shortest possible window
+duration.
 
 ???+ example "Example"
     ```python

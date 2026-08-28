@@ -1,5 +1,6 @@
 from types import SimpleNamespace
 
+import pandas as pd
 from mne.preprocessing import oversampled_temporal_projection
 
 from mne_bids_pipeline._config_utils import _get_ssrt
@@ -35,9 +36,8 @@ def get_input_fnames_otp(
         kind="orig",
         mf_reference_run=cfg.mf_reference_run,
         mf_reference_task=cfg.mf_reference_task,
-        add_bads=False,
+        add_bads=True,
     )
-    # in_files["bads_tsv"] = _get_allbads_path(cfg=cfg, subject=subject, session=session)
     return in_files
 
 
@@ -56,6 +56,7 @@ def apply_otp(
     in_files: InFilesT,
 ) -> OutFilesT:
     in_key = f"raw_task-{task}_run-{run}"
+    bids_path_bads_in = in_files.pop(f"{in_key}-bads")
     bids_path_in = in_files.pop(in_key)
     msg, run_type = _read_raw_msg(bids_path_in=bids_path_in, run=run, task=task)
     logger.info(**gen_log_kwargs(message=msg))
@@ -101,6 +102,20 @@ def apply_otp(
     )
 
     out_files[in_key].fpath.parent.mkdir(exist_ok=True, parents=True)
+
+    # reset bads list in the raw file to match orig bads
+    # otherwise eSSS will error
+    otp_bads = raw.info["bads"]
+    bads_tsv = pd.read_csv(bids_path_bads_in.fpath, sep="\t", header=0)
+    bads = list(bads_tsv["name"])
+    raw.info["bads"] = bads
+    otp_fix = len(bads) - len(otp_bads)
+    msg = (
+        f"Oversampled temporal projection reconstructed {otp_fix} bad channels;"
+        f"all original bads are preserved in the raw.info bads list of the"
+        f" OTP-processed raw file."
+    )
+    logger.info(**gen_log_kwargs(message=msg))
 
     raw.save(
         out_files[in_key],

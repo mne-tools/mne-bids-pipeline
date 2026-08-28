@@ -798,6 +798,7 @@ def _get_mf_reference_path(
     subject: str,
     session: str | None,
     add_bads: bool = False,
+    kind: RunKindT = "orig",
 ) -> InFilesT:
     return _get_run_path(
         cfg=cfg,
@@ -805,7 +806,7 @@ def _get_mf_reference_path(
         session=session,
         run=cfg.mf_reference_run,
         task=cfg.mf_reference_task,
-        kind="orig",
+        kind=kind,
         add_bads=add_bads,
         key="raw_ref_run",
     )

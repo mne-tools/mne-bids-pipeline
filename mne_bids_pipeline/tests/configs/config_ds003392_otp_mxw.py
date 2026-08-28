@@ -1,8 +1,8 @@
 """ds003392: hMT+ Localizer.
 
 See [OpenNeuro](https://openneuro.org/datasets/ds003392) for more information.
-This config tests implementation of oversampled temporal projection followed by maxwell filtering
-and subsequent preprocessing steps.
+This config tests implementation of oversampled temporal projection followed by maxwell
+filtering and subsequent preprocessing steps.
 """
 
 bids_root = "~/mne_data/ds003392"
@@ -23,6 +23,7 @@ find_noisy_channels_meg = True
 use_maxwell_filter = True
 mf_extra_kws = {"bad_condition": "warning"}
 ch_types = ["meg"]
+mf_esss = 1
 
 mf_cal_missing = "warn"
 mf_ctc_missing = "warn"

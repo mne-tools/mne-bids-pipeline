@@ -1,8 +1,8 @@
 """ds003392: hMT+ Localizer.
 
 See [OpenNeuro](https://openneuro.org/datasets/ds003392) for more information.
-This config tests implementation of oversampled temporal projection, skipping maxwell filtering,
-followed by frequency filtering and subsequent preprocessing steps.
+This config tests implementation of oversampled temporal projection, skipping maxwell
+filtering, followed by frequency filtering and subsequent preprocessing steps.
 """
 
 bids_root = "~/mne_data/ds003392"
@@ -20,7 +20,8 @@ otp_duration = 10.0
 # for OTP testing purposes, set bad channel detection to True
 find_flat_channels_meg = True
 find_noisy_channels_meg = True
-# Don't use maxwell filtering so we can test appropriate deriv passing from OTP to frequency filter
+# Don't use maxwell filtering so we can test appropriate deriv passing from OTP to
+# frequency filter
 use_maxwell_filter = False
 ch_types = ["meg"]
 

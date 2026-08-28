@@ -112,7 +112,7 @@ def apply_otp(
     otp_fix = len(bads) - len(otp_bads)
     msg = (
         f"Oversampled temporal projection reconstructed {otp_fix} bad channels;"
-        f"all original bads are preserved in the raw.info bads list of the"
+        f" all original bads are preserved in the raw.info bads list of the"
         f" OTP-processed raw file."
     )
     logger.info(**gen_log_kwargs(message=msg))
@@ -155,7 +155,6 @@ def get_config(
 ) -> SimpleNamespace:
     # picks, duration
     cfg = SimpleNamespace(
-        otp=config.use_otp_denoising,
         duration=config.otp_duration,
         plot_psd_for_runs=config.plot_psd_for_runs,
         _raw_split_size=config._raw_split_size,

@@ -2,7 +2,7 @@ site_name: MNE-BIDS-Pipeline
 repo_url: https://github.com/mne-tools/mne-bids-pipeline
 edit_uri: edit/main/docs/source/
 # Keep this in sync with pyproject.toml and index.md
-site_description: The MNE-BIDS-Pipeline is a full-flegded processing pipeline for your MEG and EEG data.
+site_description: The MNE-BIDS-Pipeline is a full-fledged processing pipeline for your MEG and EEG data.
 site_author: MNE-BIDS-Pipeline authors
 docs_dir: ./source
 site_dir: ./site
@@ -82,6 +82,7 @@ nav:
         - Preprocessing:
             - settings/preprocessing/breaks.md
             - settings/preprocessing/autobads.md
+            - settings/preprocessing/otp.md
             - settings/preprocessing/maxfilter.md
             - Filtering & resampling:
                 - settings/preprocessing/filter.md

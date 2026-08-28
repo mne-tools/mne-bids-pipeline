@@ -750,7 +750,7 @@ jobs:
           paths:
             - mne_data/derivatives/mne-bids-pipeline/ds003104/*/*/*.html
 
-  test_ds003392:
+  test_ds003392_base:
     <<: *imageconfig
     steps:
       - attach_workspace:
@@ -760,8 +760,8 @@ jobs:
           keys:
             - data-cache-ds003392-3
       - run:
-          name: test ds003392
-          command: $RUN_TESTS ds003392
+          name: test ds003392_base
+          command: $RUN_TESTS ds003392_base
       - *codecov_upload
       - store_test_results:
           path: ./test-results
@@ -769,14 +769,70 @@ jobs:
           path: ./test-results
           destination: test-results
       - store_artifacts:
-          path: /home/circleci/reports/ds003392
-          destination: reports/ds003392
+          path: /home/circleci/reports/ds003392_base
+          destination: reports/ds003392_base
       - persist_to_workspace:
           root: ~/
           paths:
-            - mne_data/derivatives/mne-bids-pipeline/ds003392/*/*/*.html
-            - mne_data/derivatives/mne-bids-pipeline/ds003392/*/*/*.json
-            - mne_data/derivatives/mne-bids-pipeline/ds003392/*/*/*.tsv
+            - mne_data/derivatives/mne-bids-pipeline/ds003392_base/*/*/*.html
+            - mne_data/derivatives/mne-bids-pipeline/ds003392_base/*/*/*.json
+            - mne_data/derivatives/mne-bids-pipeline/ds003392_base/*/*/*.tsv
+
+  test_ds003392_otp_ff:
+    <<: *imageconfig
+    steps:
+      - attach_workspace:
+          at: ~/
+      - bash_env
+      - restore_cache:
+          keys:
+            - data-cache-ds003392-3
+      - run:
+          name: test ds003392_otp_ff
+          command: $RUN_TESTS ds003392_otp_ff
+      - *codecov_upload
+      - store_test_results:
+          path: ./test-results
+      - store_artifacts:
+          path: ./test-results
+          destination: test-results
+      - store_artifacts:
+          path: /home/circleci/reports/ds003392_otp_ff
+          destination: reports/ds003392_otp_ff
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - mne_data/derivatives/mne-bids-pipeline/ds003392_otp_ff/*/*/*.html
+            - mne_data/derivatives/mne-bids-pipeline/ds003392_otp_ff/*/*/*.json
+            - mne_data/derivatives/mne-bids-pipeline/ds003392_otp_ff/*/*/*.tsv
+
+  test_ds003392_otp_mxw:
+    <<: *imageconfig
+    steps:
+      - attach_workspace:
+          at: ~/
+      - bash_env
+      - restore_cache:
+          keys:
+            - data-cache-ds003392-3
+      - run:
+          name: test ds003392_otp_mxw
+          command: $RUN_TESTS ds003392_otp_mxw
+      - *codecov_upload
+      - store_test_results:
+          path: ./test-results
+      - store_artifacts:
+          path: ./test-results
+          destination: test-results
+      - store_artifacts:
+          path: /home/circleci/reports/ds003392_otp_mxw
+          destination: reports/ds003392_otp_mxw
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - mne_data/derivatives/mne-bids-pipeline/ds003392_otp_mxw/*/*/*.html
+            - mne_data/derivatives/mne-bids-pipeline/ds003392_otp_mxw/*/*/*.json
+            - mne_data/derivatives/mne-bids-pipeline/ds003392_otp_mxw/*/*/*.tsv
 
   test_ds004229:
     <<: *imageconfig
@@ -1296,7 +1352,15 @@ workflows:
           requires:
             - setup_env
           <<: *filter_tags
-      - test_ds003392:
+      - test_ds003392_base:
+          requires:
+            - cache_ds003392
+          <<: *filter_tags
+      - test_ds003392_otp_ff:
+          requires:
+            - cache_ds003392
+          <<: *filter_tags
+      - test_ds003392_otp_mxw:
           requires:
             - cache_ds003392
           <<: *filter_tags
@@ -1385,7 +1449,9 @@ workflows:
             - test_ds000248_FLASH_BEM
             - test_ds001810
             - test_ds003104
-            - test_ds003392
+            - test_ds003392_base
+            - test_ds003392_otp_ff
+            - test_ds003392_otp_mxw
             - test_ds004229
             - test_eeg_matchingpennies
             - test_MNE-funloc-data

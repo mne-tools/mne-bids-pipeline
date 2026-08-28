@@ -50,7 +50,9 @@ class _TestOptionsT(TypedDict, total=False):
 
 
 TEST_SUITE: dict[str, _TestOptionsT] = {
-    "ds003392_base": {},
+    "ds003392_base": {
+        "dataset": "ds003392",
+    },
     "ds003392_otp_mxw": {
         "steps": ("preprocessing",),
         "dataset": "ds003392",

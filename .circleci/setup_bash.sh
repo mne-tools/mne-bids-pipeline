@@ -35,12 +35,16 @@ fi
 echo "export RUN_TESTS=\".circleci/run_dataset_and_copy_files.sh\"" | tee -a "$BASH_ENV"
 echo "export DOWNLOAD_DATA=\"coverage run -m mne_bids_pipeline._download\"" | tee -a "$BASH_ENV"
 
-# Similar CircleCI setup to mne-python (Xvfb, minimal commands, env vars)
-wget -q https://raw.githubusercontent.com/mne-tools/mne-tools/main/tools/setup_xvfb.sh
-bash setup_xvfb.sh
+# Similar CircleCI setup to mne-python (Xvfb, minimal commands, env vars). Cloned
+# rather than fetched script-by-script so that config.yml can hash
+# get_minimal_commands.sh into the cache key; the clone is persisted to the
+# workspace, so only setup_env actually does it.
+if [ ! -d "$HOME/mne-tools" ]; then
+    git clone --depth 1 https://github.com/mne-tools/mne-tools.git "$HOME/mne-tools"
+fi
+bash "$HOME/mne-tools/tools/setup_xvfb.sh"
 sudo apt install -qq tcsh libxft2
-wget -q https://raw.githubusercontent.com/mne-tools/mne-tools/main/tools/get_minimal_commands.sh
-source get_minimal_commands.sh
+source "$HOME/mne-tools/tools/get_minimal_commands.sh"
 mkdir -p ~/mne_data
 echo "set -e" | tee -a "$BASH_ENV"
 echo 'export OPENBLAS_NUM_THREADS=2' | tee -a "$BASH_ENV"

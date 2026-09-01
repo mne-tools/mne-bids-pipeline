@@ -139,10 +139,9 @@ assign_re = re.compile(
     "(?:"  #       then the rest of the line can be (in a non-capturing group):
     ".+ = .+"  #      1. a standard assignment
     "|"  #            2. or
-    r"Literal\["  #   3. the start of a multiline type annotation like "a: Literal["
+    r"\w+\["  #       3. the start of a multiline subscripted type annotation
+    #                    like "a: Literal[", "a: Annotated[", or "a: dict["
     "|"  #            4. or
-    r"Annotated\["  # 5. the start of a multiline annotated type like "a: Annotated["
-    "|"  #            6. or
     r"\("  #          7. the start of a multiline 3.9+ type annotation like "a: ("
     ")"  #        Then the end of our group
     "$",  #       and immediately the end of the line.

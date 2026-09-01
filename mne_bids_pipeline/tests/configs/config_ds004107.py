@@ -24,3 +24,5 @@ crop_runs = (0, 120)  # to speed up computations
 spatial_filter = "ssp"
 l_freq = 1.0
 h_freq = 40.0
+
+report_image_format = dict(raster="png")

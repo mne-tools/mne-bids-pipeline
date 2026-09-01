@@ -300,6 +300,8 @@ class ConditionalStepMemory:
                             emoji = "✖️"
                             bad_out_files = True
                             break
+                        if this_hash == "exists":  # existence-only, see _prep_out_files
+                            continue
                         got_hash = hash_(key, fname, kind="out")[1]
                         if this_hash != got_hash:
                             msg = (
@@ -588,6 +590,7 @@ def _prep_out_files(
     exec_params: SimpleNamespace,
     out_files: InFilesT,
     check_relative: pathlib.Path | None = None,
+    exist_only: tuple[str, ...] = (),
 ) -> OutFilesT:
     for key, fname in out_files.items():
         assert isinstance(fname, BIDSPath), (
@@ -599,6 +602,7 @@ def _prep_out_files(
         exec_params=exec_params,
         out_files=out_files,
         check_relative=check_relative,
+        exist_only=exist_only,
     )
 
 
@@ -607,6 +611,7 @@ def _prep_out_files_path(
     exec_params: SimpleNamespace,
     out_files: InFilesPathT,
     check_relative: pathlib.Path | None = None,
+    exist_only: tuple[str, ...] = (),
 ) -> OutFilesT:
     if check_relative is None:
         check_relative = exec_params.deriv_root
@@ -620,12 +625,16 @@ def _prep_out_files_path(
                 f"Output BIDSPath not relative to expected root {check_relative}:"
                 f"\n{fname}"
             )
-        out_files[key] = _path_to_str_hash(
-            key,
-            fname,
-            method=exec_params.memory_file_method,
-            kind="out",
-        )
+        if key in exist_only:
+            # freely rewritten by later steps (e.g. reports): only require existence
+            out_files[key] = (str(fname), "exists")
+        else:
+            out_files[key] = _path_to_str_hash(
+                key,
+                fname,
+                method=exec_params.memory_file_method,
+                kind="out",
+            )
     return out_files
 
 

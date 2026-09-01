@@ -30,3 +30,5 @@ dask_worker_memory_limit = "3G" if sys.platform == "darwin" else "2G"
 dask_temp_dir = "./.dask-worker-space"
 dask_open_dashboard = True
 n_jobs = 2
+
+report_image_format = dict(raster="png")

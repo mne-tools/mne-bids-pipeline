@@ -12,3 +12,5 @@ ch_types = ["meg"]
 bem_mri_images = "T1"
 recreate_bem = True
 freesurfer_verbose = True  # Prevent the CI from canceling the job prematurely
+
+report_image_format = dict(raster="png")

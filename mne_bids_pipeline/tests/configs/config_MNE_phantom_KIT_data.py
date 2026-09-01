@@ -24,3 +24,5 @@ conditions = ["dip01", "dip13", "dip25", "dip37", "dip49"]
 
 # Decoding
 decode = True  # should be very good performance
+
+report_image_format = dict(raster="png")

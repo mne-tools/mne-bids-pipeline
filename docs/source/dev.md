@@ -7,6 +7,8 @@
 - Added [`ignore_warnings`][mne_bids_pipeline._config.ignore_warnings] config option to allow users to specify warnings to ignore when calling `read_raw_bids` (#1224 by @larsoner)
 - Added tracking of the current step in the terminal title (#1266 by @larsoner)
 - Added a "Pipeline flow" section to the reports with an auto-generated diagram of the steps that ran for a subject and the files they passed to one another (#1291 by @larsoner)
+- Added [`report_image_format`][mne_bids_pipeline._config.report_image_format] config option to control the encoding of images embedded in reports, e.g. `dict(raster="png")` to trade larger reports for faster processing (#1300 by @larsoner)
+- Report HDF5 and HTML files are no longer rewritten when a step did not modify the report (requires MNE-Python ≥ 1.13; older versions keep the previous always-save behavior) (#1300 by @larsoner)
 
 ### :warning: Behavior changes
 
@@ -18,6 +20,7 @@
 
 ### :bug: Bug fixes
 
+- Fixed spurious recomputation of the `init` steps on every run: the subject report was declared as a cached output but is legitimately rewritten by later steps, so its modification time always mismatched (#1300 by @larsoner)
 - Fixed report section ordering: run-specific sections now always appear in run order, even when parallelization across runs finishes them out of order (#1293 by @larsoner)
 - Handle contrasts with too few epochs for cross-validation by saving NaN scores, excluding invalid subject-level results from group statistics, and reporting the effective sample size (#1265 by @viranovskaya)
 - Raise an informative error if [`rest_epochs_duration`][mne_bids_pipeline._config.rest_epochs_duration] is not set for resting-state data and document the parameter (#1272 by @viranovskaya)

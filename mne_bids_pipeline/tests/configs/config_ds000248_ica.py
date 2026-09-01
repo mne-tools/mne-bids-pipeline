@@ -25,3 +25,5 @@ ica_n_components = 0.8
 ica_max_iterations = 500
 
 interactive = False
+
+report_image_format = dict(raster="png")

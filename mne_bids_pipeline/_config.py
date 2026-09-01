@@ -2531,6 +2531,24 @@ in the report. If `None`, it defaults to the current default in MNE-Python.
     ```
 """
 
+report_image_format: dict[
+    Literal["raster", "vector"], Literal["webp", "png", "svg"]
+] = dict(raster="webp", vector="svg")
+"""
+The formats used to store images embedded in the reports. The `"raster"` entry applies
+to inherently pixel-based content (topographic map sliders, ICA properties, epochs
+images, and similar) and can be `"webp"` or `"png"` — WebP produces the smallest
+reports, but is considerably slower to encode than PNG, which can make a difference on
+report-heavy runs. The `"vector"` entry applies to line-art figures and can
+additionally be `"svg"`. Missing keys keep their default values.
+
+???+ example "Example"
+    Trade larger reports for faster processing:
+    ```python
+    report_image_format = dict(raster="png")
+    ```
+"""
+
 report_add_epochs_image_kwargs: dict[str, Any] | None = None
 """
 Specifies the limits for the color scales of the epochs_image in the report.

@@ -965,6 +965,7 @@ def _bids_kwargs(*, config: SimpleNamespace) -> dict[str, str | None]:
         bids_root=config.bids_root,
         deriv_root=config.deriv_root,
         all_tasks=config.all_tasks,  # we compute this once and store it for brevity
+        report_image_format=config.report_image_format,  # _open_report needs it
     )
 
 

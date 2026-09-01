@@ -79,3 +79,5 @@ decode = False
 
 # Noise estimation
 noise_cov = "emptyroom"
+
+report_image_format = dict(raster="png")

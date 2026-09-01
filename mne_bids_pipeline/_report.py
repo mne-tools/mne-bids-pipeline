@@ -85,26 +85,33 @@ def _open_report(
                 "Perhaps you need to delete it? Got error:\n\n"
                 f"{indent(traceback.format_exc(), '    ')}"
             ) from None
+        # a report created before a config change would otherwise keep its old format
+        report.image_format = cfg.report_image_format["raster"]
         try:
             yield report
         finally:
-            try:
-                _finalize(
-                    cfg=cfg,
-                    report=report,
-                    exec_params=exec_params,
-                    subject=subject,
-                    session=session,
-                    run=run,
-                    task=task,
-                )
-            except Exception as exc:
-                logger.warning(f"Failed: {exc}")
-            fname_report_html = fname_report.with_suffix(".html")
-            msg = f"Saving {name}: {_linkfile(fname_report_html)}"
-            logger.info(**gen_log_kwargs(message=msg), sanitize=False)
-            report.save(fname_report, overwrite=True)
-            report.save(fname_report_html, overwrite=True, open_browser=False)
+            # MNE < 1.13 has no unsaved_changes, so fall back to always saving there
+            if getattr(report, "unsaved_changes", True):
+                try:
+                    _finalize(
+                        cfg=cfg,
+                        report=report,
+                        exec_params=exec_params,
+                        subject=subject,
+                        session=session,
+                        run=run,
+                        task=task,
+                    )
+                except Exception as exc:
+                    logger.warning(f"Failed: {exc}")
+                fname_report_html = fname_report.with_suffix(".html")
+                msg = f"Saving {name}: {_linkfile(fname_report_html)}"
+                logger.info(**gen_log_kwargs(message=msg), sanitize=False)
+                report.save(fname_report, overwrite=True)
+                report.save(fname_report_html, overwrite=True, open_browser=False)
+            else:
+                msg = f"Not saving unmodified {name}"
+                logger.debug(**gen_log_kwargs(message=msg))
 
 
 # def plot_full_epochs_decoding_scores(
@@ -525,7 +532,12 @@ def _gen_empty_report(
     if session is not None:
         title += f", ses-{session}"
 
-    report = mne.Report(title=title, raw_psd=True, verbose=False)
+    report = mne.Report(
+        title=title,
+        raw_psd=True,
+        image_format=cfg.report_image_format["raster"],
+        verbose=False,
+    )
     return report
 
 

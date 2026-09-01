@@ -55,7 +55,13 @@ if [ ! -d "$HOME/python_env" ]; then
 fi
 echo "source ~/python_env/bin/activate" | tee -a "$BASH_ENV"
 echo "set -e" | tee -a "$BASH_ENV"
-echo 'export OPENBLAS_NUM_THREADS=2' | tee -a "$BASH_ENV"
+# Deliberately no OPENBLAS_NUM_THREADS pin. It was needed under the docker executor,
+# where BLAS saw the host's core count rather than the 2-4 vCPUs we were allotted; on
+# the Linux VM executor nproc is the real vCPU count, so the defaults are correct.
+# Setting any *_NUM_THREADS var also makes mne's _limit_blas_threads() bail out
+# (it reads that as an explicit user preference), suppressing its min(3, n_cpus) cap
+# around maxwell_filter/compute_covariance/ICA. Workers are handled separately:
+# _parallel.py passes inner_max_num_threads=1 to the loky backend.
 echo 'shopt -s globstar' | tee -a "$BASH_ENV"  # Enable recursive globbing via **
 echo 'export MNE_DATA=$HOME/mne_data' | tee -a "$BASH_ENV"
 echo 'export DISPLAY=:99' | tee -a "$BASH_ENV"

@@ -841,7 +841,9 @@ jobs:
 
   test_MNE-funloc-data:
     <<: *imageconfig
-    resource_class: medium.gen3  # 8 GiB for head position estimation; n_jobs=1 today
+    # 16 GiB: peaks at ~5 GB per worker and n_jobs=2, so 8 GiB OOM-kills a
+    # loky worker during tSSS on the empty-room data
+    resource_class: large.gen3
     steps:
       - attach_workspace:
           at: ~/

@@ -9,3 +9,5 @@ subjects_dir = f"{bids_root}/derivatives/freesurfer/subjects"
 
 conditions = ["somato_event1"]
 ch_types = ["meg"]
+
+report_image_format = dict(raster="png")

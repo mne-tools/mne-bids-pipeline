@@ -47,3 +47,5 @@ cov_rank = dict(tol_kind="relative", tol=1e-4)
 
 # contrasts
 # contrasts = [("auditory", "visual")]
+
+report_image_format = dict(raster="png")

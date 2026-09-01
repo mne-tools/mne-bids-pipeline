@@ -296,6 +296,16 @@ def _check_config(config: SimpleNamespace, config_path: PathLike | None) -> None
     # Eventually all of these could be pydantic-validated, but for now we'll
     # just change the ones that are easy
 
+    # fill in missing keys; per-key value constraints are beyond the dict annotation
+    config.report_image_format = (
+        dict(raster="webp", vector="svg") | config.report_image_format
+    )
+    if config.report_image_format["raster"] == "svg":
+        raise ConfigError(
+            'report_image_format["raster"] cannot be "svg"; pixel-based report '
+            'content (sliders, topographic maps, ...) requires "webp" or "png".'
+        )
+
     config.bids_root.resolve(strict=True)
     if config.bids_root == config.deriv_root:
         raise ValueError(
@@ -573,6 +583,7 @@ def _default_factory(key: str, val: Any) -> Any:
             "channel noise": 0.3,
             "other": 0.3,
         },  # ica_class_thresholds
+        {"raster": "webp", "vector": "svg"},  # report_image_format
     ]
 
     def default_factory() -> Any:

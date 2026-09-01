@@ -138,7 +138,7 @@ def run_head_pos(
         report.add_figure(
             fig=fig,
             title=f"cHPI SNR{prefix}",
-            image_format="svg",
+            image_format=cfg.report_image_format["vector"],
             section=section,
             tags=tags,
             replace=True,
@@ -148,7 +148,7 @@ def run_head_pos(
         report.add_figure(
             fig=fig,
             title=f"Head positions{prefix}",
-            image_format="svg",
+            image_format=cfg.report_image_format["vector"],
             section=section,
             tags=tags,
             replace=True,

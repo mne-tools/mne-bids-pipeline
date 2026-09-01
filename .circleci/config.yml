@@ -469,7 +469,7 @@ jobs:
 
   test_ds004107:
     <<: *imageconfig
-    resource_class: large.gen3  # memory
+    resource_class: medium.gen3  # 8 GiB for memory; n_jobs=1 so 2 cores is enough
     steps:
       - attach_workspace:
           at: ~/
@@ -785,7 +785,7 @@ jobs:
 
   test_ds004229:
     <<: *imageconfig
-    resource_class: large.gen3  # head position estimation
+    resource_class: medium.gen3  # 8 GiB for zapline memory; n_jobs=1 so 2 cores is enough
     steps:
       - attach_workspace:
           at: ~/
@@ -814,7 +814,7 @@ jobs:
 
   test_eeg_matchingpennies:
     <<: *imageconfig
-    resource_class: large.gen3  # memory for zapline
+    resource_class: medium.gen3  # n_jobs=1 (single subject)
     steps:
       - attach_workspace:
           at: ~/
@@ -841,7 +841,7 @@ jobs:
 
   test_MNE-funloc-data:
     <<: *imageconfig
-    resource_class: large.gen3
+    resource_class: medium.gen3  # 8 GiB for head position estimation; n_jobs=1 today
     steps:
       - attach_workspace:
           at: ~/

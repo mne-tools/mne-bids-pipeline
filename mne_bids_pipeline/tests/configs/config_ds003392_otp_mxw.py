@@ -7,8 +7,8 @@ filtering and subsequent preprocessing steps.
 
 # from mne.transforms import translation
 
-bids_root = "~/mne_data/ds003392"
-deriv_root = "~/mne_data/derivatives/mne-bids-pipeline/ds003392"
+bids_root = "~/mne_data/ds003392_otp_mxw"
+deriv_root = "~/mne_data/derivatives/mne-bids-pipeline/ds003392_otp_mxw"
 ignore_warnings = [
     "Internal Active Shielding data",  # until MNE-BIDS releases a fix for ERM finding
 ]

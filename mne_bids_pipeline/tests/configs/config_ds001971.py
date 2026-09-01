@@ -47,5 +47,3 @@ decoding_csp_times = [-0.19, 0.0, 0.2, 0.4]
 
 # Just to test that MD5 works
 memory_file_method = "hash"
-
-report_image_format = dict(raster="png")

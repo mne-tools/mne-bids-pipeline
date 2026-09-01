@@ -54,3 +54,6 @@ def mri_t1_path_generator(bids_path: mne_bids.BIDSPath) -> mne_bids.BIDSPath:
     """Return the path to a T1 image."""
     # don't really do any modifications – just for testing!
     return bids_path
+
+
+report_image_format = dict(raster="png")

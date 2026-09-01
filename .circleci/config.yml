@@ -6,9 +6,14 @@ orbs:
   codecov: codecov/codecov@6.0.0
 
 # Aliases to reuse
+# gen3 resource classes are Linux VM only (they do not exist for the docker
+# executor) and are valid only with the `current` image tag. medium.gen3 has
+# 8 GiB -- the same memory the docker `large` class gave us -- at 7 credits/min
+# rather than 20. Jobs that need more override this with large.gen3 (16 GiB).
 _imageconfig: &imageconfig
-  docker:
-    - image: cimg/python:3.14.5
+  machine:
+    image: ubuntu-2604:current
+  resource_class: medium.gen3
 
 _codecov_upload: &codecov_upload
   codecov/upload:
@@ -95,7 +100,7 @@ jobs:
             - mne_data
             - minimal_cmds
             - mne-tools
-            - .pyenv
+            - python_env
 
   cache_ds000117:
     <<: *imageconfig
@@ -464,7 +469,7 @@ jobs:
 
   test_ds004107:
     <<: *imageconfig
-    resource_class: large  # memory
+    resource_class: large.gen3  # memory
     steps:
       - attach_workspace:
           at: ~/
@@ -699,7 +704,7 @@ jobs:
 
   test_ds001810:
     <<: *imageconfig
-    resource_class: large
+    resource_class: large.gen3
     steps:
       - attach_workspace:
           at: ~/
@@ -780,7 +785,7 @@ jobs:
 
   test_ds004229:
     <<: *imageconfig
-    resource_class: large  # head position estimation
+    resource_class: large.gen3  # head position estimation
     steps:
       - attach_workspace:
           at: ~/
@@ -809,7 +814,7 @@ jobs:
 
   test_eeg_matchingpennies:
     <<: *imageconfig
-    resource_class: large  # memory for zapline
+    resource_class: large.gen3  # memory for zapline
     steps:
       - attach_workspace:
           at: ~/
@@ -836,7 +841,7 @@ jobs:
 
   test_MNE-funloc-data:
     <<: *imageconfig
-    resource_class: large
+    resource_class: large.gen3
     steps:
       - attach_workspace:
           at: ~/
@@ -889,7 +894,7 @@ jobs:
 
   test_ERP_CORE_N400:
     <<: *imageconfig
-    resource_class: large
+    resource_class: large.gen3
     steps:
       - attach_workspace:
           at: ~/
@@ -925,7 +930,7 @@ jobs:
 
   test_ERP_CORE_ERN:
     <<: *imageconfig
-    resource_class: large
+    resource_class: large.gen3
     steps:
       - attach_workspace:
           at: ~/
@@ -955,7 +960,7 @@ jobs:
 
   test_ERP_CORE_LRP:
     <<: *imageconfig
-    resource_class: large
+    resource_class: large.gen3
     steps:
       - attach_workspace:
           at: ~/
@@ -985,7 +990,7 @@ jobs:
 
   test_ERP_CORE_MMN:
     <<: *imageconfig
-    resource_class: large
+    resource_class: large.gen3
     steps:
       - attach_workspace:
           at: ~/
@@ -1015,7 +1020,7 @@ jobs:
 
   test_ERP_CORE_N2pc:
     <<: *imageconfig
-    resource_class: large
+    resource_class: large.gen3
     steps:
       - attach_workspace:
           at: ~/
@@ -1045,7 +1050,7 @@ jobs:
 
   test_ERP_CORE_N170:
     <<: *imageconfig
-    resource_class: large
+    resource_class: large.gen3
     steps:
       - attach_workspace:
           at: ~/
@@ -1075,7 +1080,7 @@ jobs:
 
   test_ERP_CORE_P3:
     <<: *imageconfig
-    resource_class: large
+    resource_class: large.gen3
     steps:
       - attach_workspace:
           at: ~/

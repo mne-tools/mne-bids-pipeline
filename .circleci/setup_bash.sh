@@ -43,9 +43,17 @@ if [ ! -d "$HOME/mne-tools" ]; then
     git clone --depth 1 https://github.com/mne-tools/mne-tools.git "$HOME/mne-tools"
 fi
 bash "$HOME/mne-tools/tools/setup_xvfb.sh"
-sudo apt install -qq tcsh libxft2
+sudo apt install -qq tcsh libxft2 python3-venv
 source "$HOME/mne-tools/tools/get_minimal_commands.sh"
 mkdir -p ~/mne_data
+# On the Linux VM executor the system python is externally managed (PEP 668), so
+# install into a venv like mne-python's tools/circleci_bash_env.sh does. Only
+# setup_env creates it; every other job gets it back via attach_workspace (which
+# runs before this script), so the guard keeps those jobs from clobbering it.
+if [ ! -d "$HOME/python_env" ]; then
+    python3 -m venv "$HOME/python_env"
+fi
+echo "source ~/python_env/bin/activate" | tee -a "$BASH_ENV"
 echo "set -e" | tee -a "$BASH_ENV"
 echo 'export OPENBLAS_NUM_THREADS=2' | tee -a "$BASH_ENV"
 echo 'shopt -s globstar' | tee -a "$BASH_ENV"  # Enable recursive globbing via **

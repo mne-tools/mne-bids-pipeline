@@ -24,6 +24,10 @@ find_noisy_channels_meg = True
 # frequency filter
 use_maxwell_filter = False
 ch_types = ["meg"]
+# Still pass Maxwell option for denoising step
+mf_extra_kws = {"bad_condition": "warning"}
+mf_cal_missing = "warn"
+mf_ctc_missing = "warn"
 
 l_freq = 1.0
 h_freq = 40.0

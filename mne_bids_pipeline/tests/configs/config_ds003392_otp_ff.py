@@ -5,7 +5,7 @@ This config tests implementation of oversampled temporal projection, skipping ma
 filtering, followed by frequency filtering and subsequent preprocessing steps.
 """
 
-bids_root = "~/mne_data/ds003392_otp_ff"
+bids_root = "~/mne_data/ds003392"
 deriv_root = "~/mne_data/derivatives/mne-bids-pipeline/ds003392_otp_ff"
 ignore_warnings = [
     "Internal Active Shielding data",  # until MNE-BIDS releases a fix for ERM finding

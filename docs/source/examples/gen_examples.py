@@ -242,9 +242,9 @@ for test_dataset_name, test_dataset_options in ds_iter:
             f"    openneuro-py download \\\n"
             f"                 --dataset={options['openneuro']} \\\n"
         )
-        for tag in options["tag"]:  # should only have 1
-            assert len(options["tag"]) == 0
-            download_str += f"                 --tag={tag}"
+        if options["tag"]:  # should only have 1
+            assert len(options["tag"]) == 5  # version spec string
+            download_str += f"                 --tag={options['tag']}"
             if options["include"] or options["exclude"]:
                 download_str += " \\\n"
         for count, include in enumerate(options["include"], start=1):

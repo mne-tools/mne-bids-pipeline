@@ -1,5 +1,7 @@
 """Parallelization."""
 
+import functools
+import warnings
 from collections.abc import Callable
 from types import SimpleNamespace
 from typing import Any, Literal
@@ -110,7 +112,19 @@ def get_parallel_backend_name(
     return backend
 
 
+@functools.cache
+def _filter_loky_warnings() -> None:
+    # loky warns from its executor manager thread; escalation (e.g. -W error) kills
+    # the thread and wedges the pool at 0% CPU forever, so pin these to "always"
+    warnings.filterwarnings(
+        "always",
+        message="A worker (stopped|was restarted) while some jobs were given",
+        category=UserWarning,
+    )
+
+
 def get_parallel_backend(exec_params: SimpleNamespace) -> joblib.parallel_backend:
+    _filter_loky_warnings()
     backend = get_parallel_backend_name(exec_params=exec_params)
     kwargs = {
         "n_jobs": get_n_jobs(

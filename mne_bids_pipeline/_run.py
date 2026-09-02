@@ -22,6 +22,7 @@ from mne_bids import BIDSPath
 
 from ._config_utils import _get_step_title
 from ._flow import FlowEntryT, _write_flow_entry
+from ._io import _LOCK_TIMEOUT
 from ._logging import _is_testing, gen_log_kwargs, logger
 from .typing import InFilesPathT, InFilesT, OutFilesT
 
@@ -481,7 +482,7 @@ def save_logs(*, config: SimpleNamespace, logs: "Iterable[pd.Series | None]") ->
     df = pd.DataFrame(usable_logs)
     del logs
 
-    with FileLock(fname.with_suffix(fname.suffix + ".lock")):
+    with FileLock(f"{fname}.lock", timeout=_LOCK_TIMEOUT):
         append = fname.exists()
         writer = pd.ExcelWriter(
             fname,

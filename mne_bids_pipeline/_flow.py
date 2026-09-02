@@ -14,7 +14,7 @@ from filelock import FileLock
 from mne_bids import get_entities_from_fname
 
 from ._graph import _ID_PREFIX, _Edge, _Graph, _graph_html, _layout_graph, _Node
-from ._io import _read_json, _write_json
+from ._io import _LOCK_TIMEOUT, _read_json, _write_json
 from ._logging import _collapse_runs, _shorten_paths
 from .typing import TypedDict
 
@@ -83,7 +83,7 @@ def _write_flow_entry(
     fname.parent.mkdir(parents=True, exist_ok=True)
     # Steps parallelize over runs within a subject, so concurrent worker processes
     # read-modify-write the same file; the lock prevents lost/torn updates
-    with FileLock(f"{fname}.lock"):
+    with FileLock(f"{fname}.lock", timeout=_LOCK_TIMEOUT):
         content = _parse_flow_file(fname)
         entries: dict[str, FlowEntryT] = content.get("entries", dict())
         have_roots: dict[str, str] = content.get("roots", dict())
@@ -131,7 +131,7 @@ def _read_flow(
     for fname in _flow_fnames(deriv_root=deriv_root, subject=subject):
         if not fname.is_file():  # also avoids creating lock files on pure reads
             continue
-        with FileLock(f"{fname}.lock"):
+        with FileLock(f"{fname}.lock", timeout=_LOCK_TIMEOUT):
             content = _parse_flow_file(fname)
         for entry in content.get("entries", dict()).values():
             if entry["session"] in (None, session):

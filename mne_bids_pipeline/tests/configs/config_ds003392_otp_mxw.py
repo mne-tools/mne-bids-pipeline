@@ -1,4 +1,4 @@
-"""ds003392: hMT+ Localizer.
+"""ds003392: hMT+ Localizer (OTP + Maxwell filter).
 
 See [OpenNeuro](https://openneuro.org/datasets/ds003392) for more information.
 This config tests implementation of oversampled temporal projection followed by maxwell

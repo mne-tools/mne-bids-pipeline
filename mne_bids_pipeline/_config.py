@@ -607,8 +607,8 @@ https://mne.tools/stable/generated/mne.preprocessing.find_bad_channels_maxwell
 
 use_otp_denoising: bool = False
 """
-Whether or not to use [Oversampled Temporal Projection][mne.preprocessing.otp] to
-preprocess the data.
+Whether or not to use [Oversampled Temporal Projection]
+[mne.preprocessing.oversampled_temporal_projection] to preprocess the data.
 
 !!! warning
     If the data will be processed using Maxwell filtering, OTP must be applied first and

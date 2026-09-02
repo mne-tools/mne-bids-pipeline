@@ -1,3 +1,5 @@
+"""Apply oversampled temporal projection."""
+
 from types import SimpleNamespace
 
 import pandas as pd

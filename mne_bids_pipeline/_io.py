@@ -6,6 +6,11 @@ from mne_bids import BIDSPath
 
 from .typing import PathLike
 
+# Every FileLock gets this: long enough for a big report write on a slow (e.g.
+# networked) filesystem, finite so that a lock we will never get raises Timeout
+# naming the file rather than hanging the run forever
+_LOCK_TIMEOUT = 600.0
+
 
 def _write_json(
     fname: PathLike | BIDSPath,

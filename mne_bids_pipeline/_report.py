@@ -25,6 +25,7 @@ from scipy.io import loadmat
 from ._config_utils import _get_task_contrasts
 from ._decoding import _handle_csp_args
 from ._flow import _report_flow_html
+from ._io import _LOCK_TIMEOUT
 from ._logging import _linkfile, gen_log_kwargs, logger
 from .typing import FloatArrayT
 
@@ -67,7 +68,7 @@ def _open_report(
     fname_report = fname_report.fpath
     assert fname_report.suffix == ".h5", fname_report.suffix
     # prevent parallel file access
-    with FileLock(f"{fname_report}.lock"), _agg_backend():
+    with FileLock(f"{fname_report}.lock", timeout=_LOCK_TIMEOUT), _agg_backend():
         if not fname_report.is_file():
             msg = f"Initializing {name} HDF5 file"
             logger.info(**gen_log_kwargs(message=msg))

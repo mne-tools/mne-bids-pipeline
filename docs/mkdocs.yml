@@ -110,7 +110,9 @@ nav:
 
     - Examples:
         - examples/examples.md
-        - examples/ds003392.md
+        - examples/ds003392_base.md
+        - examples/ds003392_otp_ff.md
+        - examples/ds003392_otp_mxw.md
         - examples/ds004229.md
         - examples/ds000246.md
         - examples/ds000247.md

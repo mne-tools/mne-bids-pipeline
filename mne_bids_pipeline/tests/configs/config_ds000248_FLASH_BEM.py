@@ -12,4 +12,4 @@ ch_types = ["meg"]
 bem_mri_images = "FLASH"
 recreate_bem = True
 
-report_image_format = dict(raster="png")
+report_image_format = dict(raster="webp-lossy")

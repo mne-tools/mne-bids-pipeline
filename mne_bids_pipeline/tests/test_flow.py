@@ -1,11 +1,13 @@
 """Test the pipeline flow diagram."""
 
+import json
 import pathlib
 import shutil
 import xml.etree.ElementTree as ET
 from types import SimpleNamespace
 from typing import Any
 
+import json_tricks
 import pytest
 from mne_bids import BIDSPath
 
@@ -180,6 +182,13 @@ def test_flow_storage(tmp_path: pathlib.Path) -> None:
         ["/bids/sub-01_meg.fif", f"{tmp_path}/a.fif", "/elsewhere/b.fif"],
         dict(roots, deriv_root=str(tmp_path)),
     ) == ["<bids_root>/sub-01_meg.fif", "<deriv_root>/a.fif", "/elsewhere/b.fif"]
+
+    # Recordings written by the old json_tricks writer are plain JSON, so a deriv
+    # tree from before the switch to stdlib json still reads back unchanged
+    fname = flow_dir / "sub-01.json"
+    want = _read01(tmp_path)
+    fname.write_text(json_tricks.dumps(json.loads(fname.read_text()), indent=1))
+    assert _read01(tmp_path) == want
 
     # A corrupt per-subject file is skipped rather than fatal
     (flow_dir / "sub-01.json").write_text("not json")

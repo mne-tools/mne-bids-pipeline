@@ -40,7 +40,7 @@ def detect_bad_components(
     cfg: SimpleNamespace,
     which: Literal["eog", "ecg"],
     epochs: mne.BaseEpochs | None,
-    ica: mne.preprocessing.ICA,
+    ica: "mne.preprocessing.ICA",
     ch_names: list[str] | None,
     subject: str,
     session: str | None,
@@ -416,7 +416,7 @@ _ICALABEL_CLASSES = [
 def _run_icalabel(
     *,
     cfg: SimpleNamespace,
-    ica: mne.preprocessing.ICA,
+    ica: "mne.preprocessing.ICA",
     epochs: mne.BaseEpochs,
     mne_exclude: list[int],
     subject: str,
@@ -492,8 +492,8 @@ def _run_icalabel(
 
 def _add_report_icalabel(
     *,
-    report: mne.Report,
-    ica: mne.preprocessing.ICA,
+    report: "mne.Report",
+    ica: "mne.preprocessing.ICA",
     icalabel_report: list[tuple[str, float, bool]],
     icalabel_df: pd.DataFrame,
     tags: tuple[str, ...],

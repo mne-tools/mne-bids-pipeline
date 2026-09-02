@@ -65,7 +65,6 @@ def get_input_fnames_all_bads(
 ) -> dict[str, BIDSPath]:
     """Get paths of files required by compute_all_bads function."""
     in_files: dict[str, BIDSPath] = dict()
-    # use_kind = "otp" if cfg.otp else "orig"
     use_kind = "orig"
     for run, task in cfg.runs_tasks:
         key = f"raw_task-{task}_run-{run}-bads"
@@ -87,8 +86,6 @@ def _get_allbads_path(
     subject: str,
     session: str | None,
 ) -> BIDSPath:
-    # use_kind = "otp" if cfg.otp else "orig"
-    # use_proc = "otp" if cfg.otp else None
     use_kind = "orig"
     use_proc = None
     path = _get_bids_path_in(

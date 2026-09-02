@@ -210,15 +210,14 @@ def filter_data(
     out_files = dict()
     in_key = f"raw_task-{task}_run-{run}"
     bids_path_in = in_files.pop(in_key)
-    if bids_path_in.processing == "sss" or bids_path_in.processing == "otp":
+    if bids_path_in.processing in ("sss", "otp"):
         bids_path_bads_in = None
     else:
         bids_path_bads_in = in_files.pop(f"{in_key}-bads")
     msg, run_type = _read_raw_msg(bids_path_in=bids_path_in, run=run, task=task)
     logger.info(**gen_log_kwargs(message=msg))
     if cfg.use_maxwell_filter or cfg.otp:
-        allow_ms = "True" if cfg.otp else "False"
-        raw = mne.io.read_raw_fif(bids_path_in, allow_maxshield=allow_ms)
+        raw = mne.io.read_raw_fif(bids_path_in, allow_maxshield=cfg.otp)
     elif run is None and task == "noise":
         bids_path_ref_in = in_files.pop("raw_ref_run", None)
         if bids_path_ref_in is not None and bids_path_in.processing != "sss":

@@ -5,7 +5,7 @@ This config tests implementation of oversampled temporal projection followed by 
 filtering and subsequent preprocessing steps.
 """
 
-# from mne.transforms import translation
+from mne.transforms import translation
 
 bids_root = "~/mne_data/ds003392"
 deriv_root = "~/mne_data/derivatives/mne-bids-pipeline/ds003392_otp_mxw"
@@ -26,8 +26,8 @@ use_maxwell_filter = True
 mf_extra_kws = {"bad_condition": "warning"}
 ch_types = ["meg"]
 mf_esss = 1
-# translation args should be x, y, z as int
-# mf_destination = translation(z=0.04)
+# translation args should be x, y, z as scaler (int or float ok)
+mf_destination = translation(z=0.04)
 
 mf_cal_missing = "warn"
 mf_ctc_missing = "warn"

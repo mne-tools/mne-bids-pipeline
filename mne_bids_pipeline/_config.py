@@ -611,12 +611,15 @@ Whether or not to use [Oversampled Temporal Projection]
 [mne.preprocessing.oversampled_temporal_projection] to preprocess the data.
 
 !!! warning
-    If the data will be processed using Maxwell filtering, OTP must be applied first and
-    the application of OTP will alter the correlation for tSSS (0.99 or higher). Flat
-    and noisy channels should be marked as bad or else the noise will be spread to all
-    channels because of OTP. Bad channels need to be marked in the raw files or set
-    through BIDS channels.tsv via the automatic bad channel detection functions
-    before applying OTP.
+    If the data will be processed using Maxwell filtering, OTP must be applied first,
+    and the user must set the correlation limit for tSSS ([`mf_st_correlation`]
+    [mne_bids_pipeline._config.mf_st_correlation]) to 0.99 or higher. Flat and noisy
+    channels should be marked as bad prior to applying OTP or else the noise will be
+    spread to all channels because of OTP. Setting automatic bad channel detection to
+    True ([`find_flat_channels_meg`][mne_bids_pipeline._config.find_flat_channels_meg]
+    and [`find_noisy_channels_meg`][mne_bids_pipeline._config.find_noisy_channels_meg])
+    will mark bad channels prior to OTP, or alternately bad channels can be marked
+    manually in the BIDS `channels.tsv` file.
 """
 
 

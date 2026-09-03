@@ -9,6 +9,7 @@
 - Added a "Pipeline flow" section to the reports with an auto-generated diagram of the steps that ran for a subject and the files they passed to one another (#1291 by @larsoner)
 - Added [`report_image_format`][mne_bids_pipeline._config.report_image_format] config option to control the encoding of images embedded in reports, e.g. `dict(raster="png")` to trade larger reports for faster processing (#1300 by @larsoner)
 - Report HDF5 and HTML files are no longer rewritten when a step did not modify the report (requires MNE-Python ≥ 1.13; older versions keep the previous always-save behavior) (#1300 by @larsoner)
+- [`report_image_format`][mne_bids_pipeline._config.report_image_format] now accepts `dict(raster="webp-lossy")`, which encodes about as fast as PNG while producing reports roughly 3× smaller (requires MNE-Python ≥ 1.13) (#1304 by @larsoner)
 
 ### :warning: Behavior changes
 
@@ -38,3 +39,5 @@
 
 - Pinned Python version for development to 3.13. (#1243 by @hoechenberger)
 - Improved the accounting of options used in each step (#1268 by @larsoner)
+- The CSP decoding step now band-pass filters the epochs once per passband instead of once per table row, cutting its runtime roughly in half with identical results (#1304 by @larsoner)
+- The pipeline flow recordings are now read and written with the standard-library `json` module rather than `json_tricks` (about 8× faster for their plain-JSON schema) and memoized per process, so a step no longer re-parses the whole recording on each of its calls (#1305 by @larsoner)

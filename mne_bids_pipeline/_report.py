@@ -5,29 +5,31 @@ from functools import lru_cache
 from io import StringIO
 from textwrap import indent
 from types import SimpleNamespace
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
-import matplotlib.axes
-import matplotlib.figure
-import matplotlib.image
-import matplotlib.transforms
 import mne
 import numpy as np
-import pandas as pd
 from filelock import FileLock
-from mne.io import BaseRaw
-from mne.report.report import _df_bootstrap_table
 from mne.utils import _pl
 from mne_bids import BIDSPath
 from mne_bids.stats import count_events
-from scipy.io import loadmat
 
 from ._config_utils import _get_task_contrasts
-from ._decoding import _handle_csp_args
 from ._flow import _report_flow_html
 from ._io import _LOCK_TIMEOUT
 from ._logging import _linkfile, gen_log_kwargs, logger
 from .typing import FloatArrayT
+
+# This module is imported by every run (via steps/init), but matplotlib, pandas,
+# sklearn (._decoding) and mne.report.report only matter once a step actually adds
+# something to a report, so keep them out of module scope -- including out of the
+# annotations, which are evaluated eagerly
+if TYPE_CHECKING:
+    import matplotlib.axes
+    import matplotlib.figure
+    import matplotlib.image
+    import pandas as pd
+    from mne.io import BaseRaw
 
 
 def _report_path(
@@ -62,7 +64,7 @@ def _open_report(
     task: str | None = None,
     fname_report: BIDSPath | None = None,
     name: str = "report",
-) -> Generator[mne.Report, None, None]:
+) -> "Generator[mne.Report, None, None]":
     if fname_report is None:
         fname_report = _report_path(cfg=cfg, subject=subject, session=session)
     fname_report = fname_report.fpath
@@ -155,9 +157,10 @@ def _plot_full_epochs_decoding_scores(
     scores: list[FloatArrayT],
     metric: str,
     kind: Literal["single-subject", "grand-average"] = "single-subject",
-) -> tuple[matplotlib.figure.Figure, str, pd.DataFrame]:
+) -> "tuple[matplotlib.figure.Figure, str, pd.DataFrame]":
     """Plot cross-validation results from full-epochs decoding."""
     import matplotlib.pyplot as plt  # nested import to help joblib
+    import pandas as pd
     import seaborn as sns
 
     if metric == "roc_auc":
@@ -283,7 +286,7 @@ def _plot_time_by_time_decoding_scores(
     metric: str,
     time_generalization: bool,
     decim: int,
-) -> matplotlib.figure.Figure:
+) -> "matplotlib.figure.Figure":
     """Plot cross-validation results from time-by-time decoding."""
     import matplotlib.pyplot as plt  # nested import to help joblib
 
@@ -323,7 +326,7 @@ def _plot_time_by_time_decoding_scores(
 
 
 def _label_time_by_time(
-    ax: matplotlib.axes.Axes,
+    ax: "matplotlib.axes.Axes",
     *,
     decim: int,
     xlabel: str | None = None,
@@ -340,7 +343,7 @@ def _label_time_by_time(
 
 def _plot_time_by_time_decoding_scores_gavg(
     *, cfg: SimpleNamespace, decoding_data: dict[str, Any]
-) -> matplotlib.figure.Figure:
+) -> "matplotlib.figure.Figure":
     """Plot the grand-averaged decoding scores."""
     import matplotlib.pyplot as plt  # nested import to help joblib
 
@@ -431,7 +434,7 @@ def _plot_time_by_time_decoding_scores_gavg(
 
 def plot_time_by_time_decoding_t_values(
     decoding_data: dict[str, Any],
-) -> matplotlib.figure.Figure:
+) -> "matplotlib.figure.Figure":
     """Plot the t-values used to form clusters for the permutation test."""
     import matplotlib.pyplot as plt  # nested import to help joblib
 
@@ -477,7 +480,7 @@ def _plot_decoding_time_generalization(
     decoding_data: dict[str, Any],
     metric: str,
     kind: Literal["single-subject", "grand-average"],
-) -> matplotlib.figure.Figure:
+) -> "matplotlib.figure.Figure":
     """Plot time generalization matrix."""
     import matplotlib.pyplot as plt  # nested import to help joblib
 
@@ -528,7 +531,7 @@ def _plot_decoding_time_generalization(
 
 def _gen_empty_report(
     *, cfg: SimpleNamespace, subject: str, session: str | None
-) -> mne.Report:
+) -> "mne.Report":
     title = f"sub-{subject}"
     if session is not None:
         title += f", ses-{session}"
@@ -552,8 +555,10 @@ def add_event_counts(
     subject: str | None,
     session: str | None,
     task: str | None,
-    report: mne.Report,
+    report: "mne.Report",
 ) -> None:
+    from mne.report.report import _df_bootstrap_table
+
     try:
         df_events = count_events(BIDSPath(root=cfg.bids_root, session=session))
     except ValueError:
@@ -574,7 +579,7 @@ def add_event_counts(
 
 def _finalize(
     *,
-    report: mne.Report,
+    report: "mne.Report",
     exec_params: SimpleNamespace,
     # passed so logging magic can occur:
     cfg: SimpleNamespace,
@@ -629,7 +634,7 @@ def _run_sort_key(run: str) -> tuple[int, int | str]:
         return (1, run)
 
 
-def _sort_run_sections(report: mne.Report) -> None:
+def _sort_run_sections(report: "mne.Report") -> None:
     """Order run-specific sections by run within each section group.
 
     Sections that differ only by their ``run-*`` tag gather at the position the
@@ -660,7 +665,7 @@ def _sort_run_sections(report: mne.Report) -> None:
 
 def _add_flow_diagram(
     *,
-    report: mne.Report,
+    report: "mne.Report",
     exec_params: SimpleNamespace,
     subject: str,
     session: str | None,
@@ -752,7 +757,7 @@ def _get_prefix_tags(
 
 def _imshow_tf(
     vals: FloatArrayT,
-    ax: matplotlib.axes.Axes,
+    ax: "matplotlib.axes.Axes",
     *,
     tmin: FloatArrayT,
     tmax: FloatArrayT,
@@ -763,7 +768,7 @@ def _imshow_tf(
     cmap: str = "RdBu_r",
     mask: FloatArrayT | None = None,
     cmap_masked: Any | None = None,
-) -> matplotlib.image.AxesImage:
+) -> "matplotlib.image.AxesImage":
     """Plot CSP TF decoding scores."""
     # XXX Add support for more metrics
     assert len(vals) == len(tmin) == len(tmax) == len(fmin) == len(fmax)
@@ -792,14 +797,19 @@ def add_csp_grand_average(
     subject: str,
     session: str | None,
     task: str | None,
-    report: mne.Report,
+    report: "mne.Report",
     cond_1: str,
     cond_2: str,
     fname_csp_freq_results: BIDSPath,
-    fname_csp_cluster_results: pd.DataFrame | None,
+    fname_csp_cluster_results: "pd.DataFrame | None",
 ) -> None:
     """Add CSP decoding results to the grand average report."""
     import matplotlib.pyplot as plt  # nested import to help joblib
+    import matplotlib.transforms
+    import pandas as pd
+    from scipy.io import loadmat
+
+    from ._decoding import _handle_csp_args
 
     # First, plot decoding scores across frequency bins (entire epochs).
     section = f"Decoding: CSP, N = {len(cfg.subjects)}"
@@ -1046,9 +1056,9 @@ def _agg_backend() -> Generator[None, None, None]:
 def _add_raw(
     *,
     cfg: SimpleNamespace,
-    report: mne.report.Report,
+    report: "mne.report.Report",
     bids_path_in: BIDSPath,
-    raw: BaseRaw,
+    raw: "BaseRaw",
     title_prefix: str,
     tags: tuple[str, ...] = (),
     extra_html: str | None = None,
@@ -1084,7 +1094,7 @@ def _add_raw(
 def _render_bem(
     *,
     cfg: SimpleNamespace,
-    report: mne.report.Report,
+    report: "mne.report.Report",
     subject: str,
     session: str | None,
 ) -> None:

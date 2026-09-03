@@ -303,8 +303,17 @@ def _check_config(config: SimpleNamespace, config_path: PathLike | None) -> None
     if config.report_image_format["raster"] == "svg":
         raise ConfigError(
             'report_image_format["raster"] cannot be "svg"; pixel-based report '
-            'content (sliders, topographic maps, ...) requires "webp" or "png".'
+            'content (sliders, topographic maps, ...) requires "webp", '
+            '"webp-lossy", or "png".'
         )
+    if "webp-lossy" in config.report_image_format.values():
+        from mne.report.report import _ALLOWED_IMAGE_FORMATS  # slow import, defer
+
+        # fail here rather than partway through the first report-writing step
+        if "webp-lossy" not in _ALLOWED_IMAGE_FORMATS:
+            raise ConfigError(
+                'report_image_format value "webp-lossy" requires MNE-Python >= 1.13.'
+            )
 
     config.bids_root.resolve(strict=True)
     if config.bids_root == config.deriv_root:

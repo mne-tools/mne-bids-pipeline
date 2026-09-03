@@ -3,19 +3,26 @@
 import pathlib
 import sys
 from collections.abc import Hashable, Sequence
-from typing import Annotated, Any, Literal, TypeAlias, TypeVar
+from typing import TYPE_CHECKING, Annotated, Any, Literal, TypeAlias, TypeVar
 
 if sys.version_info < (3, 12):
     from typing_extensions import TypedDict
 else:
     from typing import TypedDict
 
-import mne
 import numpy as np
 from mne_bids import BIDSPath
 from numpy.typing import ArrayLike
 from pydantic import AfterValidator, Field, PlainValidator
 from pydantic_core import PydanticCustomError
+
+# mne.channels costs ~120 ms to import (it pulls mne.transforms), and pydantic never
+# looks at the annotated type of DigMontageType below: PlainValidator replaces its
+# schema outright, so `Any` at runtime validates identically
+if TYPE_CHECKING:
+    from mne.channels import DigMontage
+else:
+    DigMontage = Any
 
 PathLike = str | pathlib.Path
 
@@ -80,14 +87,16 @@ FloatArrayLike = Annotated[
 ]
 
 
-def assert_dig_montage(val: mne.channels.DigMontage) -> mne.channels.DigMontage:
+def assert_dig_montage(val: "DigMontage") -> "DigMontage":
     """Assert that the input is a DigMontage."""
-    assert isinstance(val, mne.channels.DigMontage)
+    from mne.channels import DigMontage
+
+    assert isinstance(val, DigMontage)
     return val
 
 
 DigMontageType = Annotated[
-    mne.channels.DigMontage,
+    DigMontage,
     PlainValidator(assert_dig_montage),
 ]
 

@@ -89,7 +89,10 @@ def init_subject_dirs(
             session=session,
         ):
             pass
-    return _prep_out_files(exec_params=exec_params, out_files=out_files)
+    # later steps rewrite the report, so its mtime must not gate this step's cache
+    return _prep_out_files(
+        exec_params=exec_params, out_files=out_files, exist_only=("report",)
+    )
 
 
 def get_config_init_dataset(

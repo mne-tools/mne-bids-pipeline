@@ -366,3 +366,5 @@ elif task == "P3":
     cluster_permutation_p_threshold = 0.2  # Only for testing!
 else:
     raise RuntimeError(f"Task {task} not currently supported")
+
+report_image_format = dict(raster="png")

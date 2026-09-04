@@ -12,6 +12,7 @@ subjects_dir = bids_root / "derivatives" / "freesurfer" / "subjects"
 task = "funloc"
 ch_types = ["meg", "eeg"]
 data_type = "meg"
+n_jobs = 2  # sub-01 and sub-02 (sub-emptyroom is not processed)
 
 # filter
 l_freq = None
@@ -46,3 +47,5 @@ cov_rank = dict(tol_kind="relative", tol=1e-4)
 
 # contrasts
 # contrasts = [("auditory", "visual")]
+
+report_image_format = dict(raster="png")

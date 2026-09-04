@@ -55,3 +55,5 @@ decoding_csp_freqs = {
 
 # Noise estimation
 noise_cov = "emptyroom"
+
+report_image_format = dict(raster="png")

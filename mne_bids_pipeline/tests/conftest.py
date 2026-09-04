@@ -52,9 +52,10 @@ def pytest_configure(config: pytest.Config) -> None:
     ignore:The behavior of DataFrame concatenation with empty.*:FutureWarning
     # joblib on Windows sometimes
     ignore:Persisting input arguments took.*:UserWarning
-    # loky raises this in its manager thread, where an error kills the thread
-    # and deadlocks the pool, so it must stay a warning
-    always:A worker was restarted while some jobs were given.*:UserWarning
+    # loky raises these in its manager thread, where an error kills the thread
+    # and deadlocks the pool, so they must stay warnings (both spellings: the
+    # "restarted" one is newer, released joblib only has "stopped")
+    always:A worker (stopped|was restarted) while some jobs were given.*:UserWarning
     # matplotlib needs to update
     ignore:Conversion of an array with ndim.*:DeprecationWarning
     # scipy

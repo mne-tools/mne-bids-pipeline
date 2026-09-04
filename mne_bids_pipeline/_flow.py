@@ -5,6 +5,7 @@ recordings into the step dependency graph and its labels. The generic layout and
 SVG rendering live in ``_graph.py``.
 """
 
+import json
 import pathlib
 import re
 from collections.abc import Sequence
@@ -14,7 +15,7 @@ from filelock import FileLock
 from mne_bids import get_entities_from_fname
 
 from ._graph import _ID_PREFIX, _Edge, _Graph, _graph_html, _layout_graph, _Node
-from ._io import _read_json, _write_json
+from ._io import _LOCK_TIMEOUT
 from ._logging import _collapse_runs, _shorten_paths
 from .typing import TypedDict
 
@@ -60,15 +61,36 @@ def _flow_entry_key(entry: FlowEntryT) -> str:
     return "|".join(str(entry[key] or "") for key in keys)  # type: ignore[literal-required]
 
 
+# The schema above is plain JSON, so stdlib json (~8x faster than json_tricks here,
+# and json_tricks' output for it is plain JSON too, so old files still parse) plus a
+# per-process memo of the last parse. The memo is safe across workers: every read and
+# write happens under the file's lock, each process has its own memo, and any write
+# moves (st_mtime_ns, st_size).
+_FLOW_MEMO: dict[pathlib.Path, tuple[tuple[int, int], dict[str, Any]]] = dict()
+
+
+def _flow_key(fname: pathlib.Path) -> tuple[int, int]:
+    stat = fname.stat()
+    return (stat.st_mtime_ns, stat.st_size)
+
+
 def _parse_flow_file(fname: pathlib.Path) -> dict[str, Any]:
     """Parse one recording file; the caller holds the lock when it matters."""
     if not fname.is_file():
         return dict()
+    key = _flow_key(fname)
+    memo = _FLOW_MEMO.get(fname, None)
+    if memo is not None and memo[0] == key:
+        return memo[1]
     try:
-        content = _read_json(fname)
+        with open(fname, encoding="utf-8") as fid:
+            content = json.load(fid)
     except ValueError:  # includes JSONDecodeError
         return dict()
-    return content if content.get("version", None) == _FLOW_VERSION else dict()
+    if content.get("version", None) != _FLOW_VERSION:
+        return dict()
+    _FLOW_MEMO[fname] = (key, content)
+    return content
 
 
 def _write_flow_entry(
@@ -83,10 +105,11 @@ def _write_flow_entry(
     fname.parent.mkdir(parents=True, exist_ok=True)
     # Steps parallelize over runs within a subject, so concurrent worker processes
     # read-modify-write the same file; the lock prevents lost/torn updates
-    with FileLock(f"{fname}.lock"):
+    with FileLock(f"{fname}.lock", timeout=_LOCK_TIMEOUT):
         content = _parse_flow_file(fname)
-        entries: dict[str, FlowEntryT] = content.get("entries", dict())
-        have_roots: dict[str, str] = content.get("roots", dict())
+        # copies: the parse can hand back the memoized content, don't mutate it
+        entries: dict[str, FlowEntryT] = dict(content.get("entries", dict()))
+        have_roots: dict[str, str] = dict(content.get("roots", dict()))
         key = _flow_entry_key(entry)
         old = entries.get(key, None)
         if only_if_new and old is not None:
@@ -107,7 +130,9 @@ def _write_flow_entry(
         entries[key] = entry
         have_roots.update(roots or dict())
         content = dict(version=_FLOW_VERSION, roots=have_roots, entries=entries)
-        _write_json(fname, content, indent=1)
+        with open(fname, "w", encoding="utf-8") as fid:
+            json.dump(content, fid, indent=1)
+        _FLOW_MEMO[fname] = (_flow_key(fname), content)  # what the next read will see
     return entry
 
 
@@ -131,7 +156,7 @@ def _read_flow(
     for fname in _flow_fnames(deriv_root=deriv_root, subject=subject):
         if not fname.is_file():  # also avoids creating lock files on pure reads
             continue
-        with FileLock(f"{fname}.lock"):
+        with FileLock(f"{fname}.lock", timeout=_LOCK_TIMEOUT):
             content = _parse_flow_file(fname)
         for entry in content.get("entries", dict()).values():
             if entry["session"] in (None, session):

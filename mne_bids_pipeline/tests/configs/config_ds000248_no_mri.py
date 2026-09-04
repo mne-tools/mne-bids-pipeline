@@ -16,3 +16,5 @@ process_raw_clean = False
 
 use_template_mri = "fsaverage"
 adjust_coreg = True
+
+report_image_format = dict(raster="webp-lossy")

@@ -42,3 +42,5 @@ dask_open_dashboard = True
 log_level = "info"
 
 n_jobs = 1
+
+report_image_format = dict(raster="png")

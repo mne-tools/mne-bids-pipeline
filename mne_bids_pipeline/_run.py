@@ -22,6 +22,7 @@ from mne_bids import BIDSPath
 
 from ._config_utils import _get_step_title
 from ._flow import FlowEntryT, _write_flow_entry
+from ._io import _LOCK_TIMEOUT
 from ._logging import _is_testing, gen_log_kwargs, logger
 from .typing import InFilesPathT, InFilesT, OutFilesT
 
@@ -136,6 +137,19 @@ def hash_file_path(path: pathlib.Path) -> str:
     return md5_hashed
 
 
+# A step is decorated once but called once per (subject, session, run), and rebuilding
+# these per call costs ~0.2 ms and re-does joblib's func_code introspection every time
+@functools.cache
+def _get_memory(location: pathlib.Path, verbose: int) -> Memory:
+    return Memory(location, verbose=verbose)
+
+
+@functools.cache
+def _get_memorized_func(memory: Memory, func: Callable[..., Any]) -> Any:
+    # exec_params has no effect on the output, so it must not affect the hash
+    return memory.cache(func, ignore=["exec_params"])
+
+
 class ConditionalStepMemory:
     def __init__(
         self,
@@ -156,11 +170,9 @@ class ConditionalStepMemory:
             use_location = pathlib.Path(memory_location)
         # Actually make the Memory object only if necessary
         if use_location is not None and get_input_fnames is not None:
-            self.memory = Memory(use_location, verbose=exec_params.memory_verbose)
+            self.memory = _get_memory(use_location, exec_params.memory_verbose)
         else:
             self.memory = None
-        # Ignore these as they have no effect on the output
-        self.ignore = ["exec_params"]
         self.get_input_fnames = get_input_fnames
         self.get_output_fnames = get_output_fnames
         self.memory_file_method = exec_params.memory_file_method
@@ -260,10 +272,10 @@ class ConditionalStepMemory:
             kwargs["cfg"].hashes = hashes
             del in_files  # will be modified by func call
 
-            # Someday we could modify the joblib API to combine this with the
-            # call (https://github.com/joblib/joblib/issues/1342), but our hash
-            # should be plenty fast so let's not bother for now.
-            memorized_func = self.memory.cache(func, ignore=self.ignore)
+            # The cache-hit path below reuses the result of the one call it makes, so
+            # only check_call_in_cache still hashes the arguments a second time; folding
+            # that in needs https://github.com/joblib/joblib/issues/1342.
+            memorized_func = _get_memorized_func(self.memory, func)
             msg: str | None = None
             emoji: str | None = None
             short_circuit = False
@@ -273,6 +285,7 @@ class ConditionalStepMemory:
             run = kwargs.get("run", None)  # noqa
             task = kwargs.get("task", None)  # noqa
             bad_out_files = False
+            cached_out_files = None  # the loaded cache entry, when it checks out
             logger_call = logger.info
             try:
                 done = memorized_func.check_call_in_cache(*args, **kwargs)
@@ -300,6 +313,8 @@ class ConditionalStepMemory:
                             emoji = "✖️"
                             bad_out_files = True
                             break
+                        if this_hash == "exists":  # existence-only, see _prep_out_files
+                            continue
                         got_hash = hash_(key, fname, kind="out")[1]
                         if this_hash != got_hash:
                             msg = (
@@ -310,6 +325,7 @@ class ConditionalStepMemory:
                             bad_out_files = True
                             break
                     else:
+                        cached_out_files = out_files_hashes
                         msg = (
                             f"Computation unnecessary (cached "
                             f"{func.__name__}(…){_ran_when(prior)}) …"
@@ -358,6 +374,8 @@ class ConditionalStepMemory:
                 done = False
                 with _ignore_warnings(self.ignore_warnings):
                     out_files, _ = memorized_func.call(*args, **kwargs)
+            elif cached_out_files is not None:
+                out_files = cached_out_files  # same call, already hashed and loaded
             else:
                 with _ignore_warnings(self.ignore_warnings):
                     out_files = memorized_func(*args, **kwargs)
@@ -479,7 +497,7 @@ def save_logs(*, config: SimpleNamespace, logs: "Iterable[pd.Series | None]") ->
     df = pd.DataFrame(usable_logs)
     del logs
 
-    with FileLock(fname.with_suffix(fname.suffix + ".lock")):
+    with FileLock(f"{fname}.lock", timeout=_LOCK_TIMEOUT):
         append = fname.exists()
         writer = pd.ExcelWriter(
             fname,
@@ -588,6 +606,7 @@ def _prep_out_files(
     exec_params: SimpleNamespace,
     out_files: InFilesT,
     check_relative: pathlib.Path | None = None,
+    exist_only: tuple[str, ...] = (),
 ) -> OutFilesT:
     for key, fname in out_files.items():
         assert isinstance(fname, BIDSPath), (
@@ -599,6 +618,7 @@ def _prep_out_files(
         exec_params=exec_params,
         out_files=out_files,
         check_relative=check_relative,
+        exist_only=exist_only,
     )
 
 
@@ -607,6 +627,7 @@ def _prep_out_files_path(
     exec_params: SimpleNamespace,
     out_files: InFilesPathT,
     check_relative: pathlib.Path | None = None,
+    exist_only: tuple[str, ...] = (),
 ) -> OutFilesT:
     if check_relative is None:
         check_relative = exec_params.deriv_root
@@ -620,12 +641,16 @@ def _prep_out_files_path(
                 f"Output BIDSPath not relative to expected root {check_relative}:"
                 f"\n{fname}"
             )
-        out_files[key] = _path_to_str_hash(
-            key,
-            fname,
-            method=exec_params.memory_file_method,
-            kind="out",
-        )
+        if key in exist_only:
+            # freely rewritten by later steps (e.g. reports): only require existence
+            out_files[key] = (str(fname), "exists")
+        else:
+            out_files[key] = _path_to_str_hash(
+                key,
+                fname,
+                method=exec_params.memory_file_method,
+                kind="out",
+            )
     return out_files
 
 

@@ -36,3 +36,5 @@ time_frequency_freq_min = 1.0
 time_frequency_freq_max = 30.0
 time_frequency_cycles = np.arange(time_frequency_freq_min, time_frequency_freq_max) / 4
 time_frequency_subtract_evoked = True
+
+report_image_format = dict(raster="png")

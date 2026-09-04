@@ -20,7 +20,6 @@ from typing import Any, Literal
 
 import mne
 import numpy as np
-from meegkit import dss
 from mne.io.pick import _picks_to_idx
 from mne.preprocessing import EOGRegression
 
@@ -82,6 +81,7 @@ def zapline(
     """Use Zapline to remove line frequencies."""
     if fline is None:
         return
+    from meegkit import dss  # nested: pulls pyriemann and pyplot, Zapline-only
 
     msg = f"Zapline filtering data at with {fline=} Hz."
     logger.info(**gen_log_kwargs(message=msg))

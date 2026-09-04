@@ -67,3 +67,5 @@ epochs_custom_metadata = {
         }
     ),
 }  # number of rows are hand-set
+
+report_image_format = dict(raster="png")

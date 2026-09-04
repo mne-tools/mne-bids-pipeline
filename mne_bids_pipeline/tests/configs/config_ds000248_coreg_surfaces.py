@@ -13,3 +13,5 @@ conditions = ["Auditory"]
 ch_types = ["meg"]
 
 recreate_scalp_surface = True
+
+report_image_format = dict(raster="png")

@@ -16,7 +16,12 @@ from mne_bids_pipeline._import_data import (
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
 from mne_bids_pipeline._report import _add_raw, _open_report
-from mne_bids_pipeline._run import _prep_out_files, failsafe_run, save_logs
+from mne_bids_pipeline._run import (
+    _prep_out_files,
+    _update_for_splits,
+    failsafe_run,
+    save_logs,
+)
 from mne_bids_pipeline.typing import InFilesT, OutFilesT
 
 
@@ -126,6 +131,8 @@ def apply_otp(
         split_size=cfg._raw_split_size,
     )
 
+    _update_for_splits(out_files, in_key)
+
     with _open_report(
         cfg=cfg,
         exec_params=exec_params,
@@ -145,7 +152,6 @@ def apply_otp(
             raw=raw,
         )
 
-    # assert len(in_files) == 0, in_files.keys()
     return _prep_out_files(exec_params=exec_params, out_files=out_files)
 
 

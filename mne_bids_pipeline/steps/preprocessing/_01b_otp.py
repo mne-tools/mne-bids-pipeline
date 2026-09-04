@@ -101,6 +101,12 @@ def apply_otp(
         check=False,
     )
 
+    msg = (
+        f"Beginning oversampled temporal projection for {bids_path_in.basename};"
+        f" this may take a while!"
+    )
+    logger.info(**gen_log_kwargs(message=msg))
+
     raw.load_data()
     raw = oversampled_temporal_projection(
         raw,

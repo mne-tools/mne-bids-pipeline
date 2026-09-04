@@ -274,7 +274,7 @@ def test_datasets_in_doc() -> None:
 
     # Some have been split into multiple test runs, so trim down to the same
     # set as caches
-    for key in ("ERP_CORE", "ds000248"):
+    for key in ("ERP_CORE", "ds000248", "ds003392"):
         tests = set(
             job if not job.startswith(key) else job[: len(key)] for job in tests
         )

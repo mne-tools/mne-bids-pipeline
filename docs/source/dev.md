@@ -7,6 +7,7 @@
 - Added [`ignore_warnings`][mne_bids_pipeline._config.ignore_warnings] config option to allow users to specify warnings to ignore when calling `read_raw_bids` (#1224 by @larsoner)
 - Added tracking of the current step in the terminal title (#1266 by @larsoner)
 - Added a "Pipeline flow" section to the reports with an auto-generated diagram of the steps that ran for a subject and the files they passed to one another (#1291 by @larsoner)
+- Added a new denoising technique, oversampled temporal projection, to the preprocessing steps (#1297 by @nordme and @sylvchev)
 - Added [`report_image_format`][mne_bids_pipeline._config.report_image_format] config option to control the encoding of images embedded in reports, e.g. `dict(raster="png")` to trade larger reports for faster processing (#1300 by @larsoner)
 - Report HDF5 and HTML files are no longer rewritten when a step did not modify the report (requires MNE-Python ≥ 1.13; older versions keep the previous always-save behavior) (#1300 by @larsoner)
 - [`report_image_format`][mne_bids_pipeline._config.report_image_format] now accepts `dict(raster="webp-lossy")`, which encodes about as fast as PNG while producing reports roughly 3× smaller (requires MNE-Python ≥ 1.13) (#1304 by @larsoner)

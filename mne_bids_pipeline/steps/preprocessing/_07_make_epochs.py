@@ -8,6 +8,7 @@ To save space, the epoch data can be decimated.
 """
 
 import inspect
+import warnings
 from types import SimpleNamespace
 from typing import Any
 
@@ -121,7 +122,11 @@ def run_epochs(
     for idx, (run, raw_fname) in enumerate(zip(cfg.runs_for_task, raw_fnames)):
         msg = f"Loading filtered raw data from {raw_fname.basename}"
         logger.info(**gen_log_kwargs(message=msg))
-        raw = mne.io.read_raw_fif(raw_fname).load_data()
+        with warnings.catch_warnings(record=True):
+            warnings.filterwarnings(
+                "ignore", ".*Internal Active Shielding", category=RuntimeWarning
+            )
+            raw = mne.io.read_raw_fif(raw_fname, allow_maxshield=True).load_data()
 
         # Only keep the subset of the mapping that applies to the current run
         if cfg.task_is_rest:
@@ -340,8 +345,12 @@ def _get_events(
     for run in cfg.runs_for_task:
         this_raw_fname = raw_fname.copy().update(run=run)
         this_raw_fname = _update_for_splits(this_raw_fname, None, single=True)
-        raw_filt = mne.io.read_raw_fif(this_raw_fname)
-        raws_filt.append(raw_filt)
+        with warnings.catch_warnings(record=True):
+            warnings.filterwarnings(
+                "ignore", ".*Internal Active Shielding", category=RuntimeWarning
+            )
+            raw_filt = mne.io.read_raw_fif(this_raw_fname, allow_maxshield=True)
+            raws_filt.append(raw_filt)
         del this_raw_fname
 
     # Concatenate the filtered raws and extract the events.

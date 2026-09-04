@@ -1,22 +1,33 @@
-"""ds003392: hMT+ Localizer.
+"""ds003392: hMT+ Localizer (OTP + Maxwell filter).
 
 See [OpenNeuro](https://openneuro.org/datasets/ds003392) for more information.
+This config tests implementation of oversampled temporal projection followed by maxwell
+filtering and subsequent preprocessing steps.
 """
 
+from mne.transforms import translation
+
 bids_root = "~/mne_data/ds003392"
-deriv_root = "~/mne_data/derivatives/mne-bids-pipeline/ds003392"
+deriv_root = "~/mne_data/derivatives/mne-bids-pipeline/ds003392_otp_mxw"
 ignore_warnings = [
     "Internal Active Shielding data",  # until MNE-BIDS releases a fix for ERM finding
 ]
 subjects = ["01"]
 
 task = "localizer"
-# usually a good idea to use True, but we know no bads are detected for this dataset
-find_flat_channels_meg = False
-find_noisy_channels_meg = False
+
+# use oversampled temporal projection to clean sensor noise
+use_otp_denoising = True
+otp_duration = 10.0
+# for OTP testing purposes, set to True
+find_flat_channels_meg = True
+find_noisy_channels_meg = True
 use_maxwell_filter = True
 mf_extra_kws = {"bad_condition": "warning"}
 ch_types = ["meg"]
+mf_esss = 1
+# translation args should be x, y, z as scaler (int or float ok)
+mf_destination = translation(z=0.04)
 
 mf_cal_missing = "warn"
 mf_ctc_missing = "warn"
@@ -24,9 +35,9 @@ mf_ctc_missing = "warn"
 l_freq = 1.0
 h_freq = 40.0
 raw_resample_sfreq = 250
-crop_runs = (0, 180)
+crop_runs = (0, 20)
 
-# Artifact correction.
+# Artifact correction
 spatial_filter = "ica"
 process_raw_clean = False
 ica_algorithm = "picard-extended_infomax"
@@ -41,19 +52,3 @@ baseline = (None, 0)
 
 # Conditions / events to consider when epoching
 conditions = ["coherent", "incoherent"]
-
-# Decoding
-decode = True
-decoding_time_generalization = True
-decoding_time_generalization_decim = 4
-contrasts = [("incoherent", "coherent")]
-decoding_csp = True
-decoding_csp_times = []
-decoding_csp_freqs = {
-    "alpha": (8, 12),
-}
-
-# Noise estimation
-noise_cov = "emptyroom"
-
-report_image_format = dict(raster="png")

@@ -197,7 +197,7 @@ def test_datasets_in_doc() -> None:
     # Rather than going circle_yaml['workflows']['commit']['jobs'] and
     # make sure everything is consistent there (too much work), let's at least
     # check that we get the correct number using `.count`.
-    counts = dict(ERP_CORE=7, ds000248=6)
+    counts = dict(ERP_CORE=7, ds000248=6, ds003392=3)
     counts_noartifact = dict(ds000248=1)  # 1 is actually a test, not for docs
     for name in sorted(caches):
         get = f"Get {name}"
@@ -274,7 +274,7 @@ def test_datasets_in_doc() -> None:
 
     # Some have been split into multiple test runs, so trim down to the same
     # set as caches
-    for key in ("ERP_CORE", "ds000248"):
+    for key in ("ERP_CORE", "ds000248", "ds003392"):
         tests = set(
             job if not job.startswith(key) else job[: len(key)] for job in tests
         )

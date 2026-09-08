@@ -109,6 +109,8 @@ def _import_config(
         "dask_temp_dir",
         "dask_worker_memory_limit",
         "dask_open_dashboard",
+        "dask_cluster",
+        "dask_worker_startup_timeout",
         # Interaction
         "on_error",
         "interactive",

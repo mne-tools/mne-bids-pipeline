@@ -27,6 +27,7 @@ components from a total of 6 experimental tasks:
 """
 
 import argparse
+import os
 import sys
 
 import mne
@@ -105,6 +106,23 @@ on_rename_missing_events = "ignore"
 parallel_backend = "dask"
 dask_worker_memory_limit = "2.5G"
 n_jobs = 4
+
+# In CI we farm the workers out through a real SLURM scheduler (see the
+# test_ERP_CORE_N400 CircleCI job); this is also how you would run on an HPC system.
+# Without the env var set, Dask starts local workers as usual.
+if os.getenv("MNE_BIDS_PIPELINE_TEST_DASK_CLUSTER", "") == "slurm":
+    dask_worker_startup_timeout = 60.0  # CI's slurmd grants in seconds; fail fast
+
+    def dask_cluster():
+        """Submit each Dask worker as a 1-core SLURM job."""
+        from dask_jobqueue import SLURMCluster
+
+        cluster = SLURMCluster(
+            cores=1, processes=1, memory="2.5GB", walltime="02:00:00"
+        )
+        cluster.scale(jobs=4)
+        return cluster
+
 
 if task == "N400":
     dask_open_dashboard = True

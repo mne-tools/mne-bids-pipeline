@@ -4,6 +4,7 @@
 
 import contextlib
 import logging
+import os
 import shutil
 import sys
 from collections import defaultdict
@@ -25,8 +26,10 @@ root = Path(mne_bids_pipeline.__file__).parent.resolve(strict=True)
 logger = logging.getLogger()
 
 
-def _bool_to_icon(x: bool | Iterable[Any]) -> str:
-    if x:
+def _bool_to_icon(x: bool | str | Iterable[Any]) -> str:
+    if isinstance(x, str):  # e.g. Dask: "Local" or "SLURM"
+        return x
+    elif x:
         return "✅"
     else:
         return "❌"
@@ -53,6 +56,8 @@ def _gen_demonstrated_funcs(example_config_path: Path) -> dict[str, bool]:
     if example_config_path.stem == "config_ERP_CORE":
         tasks[:] = ["N400", "ERN", "LRP", "MMN", "N2pc", "N170", "P3"]
     for task in tasks:
+        # activate config_ERP_CORE.py's SLURM gate so the table can show it
+        os.environ["MNE_BIDS_PIPELINE_TEST_DASK_CLUSTER"] = "slurm"
         with _task_context(task), _log_context(logging.ERROR):
             config = _import_config(
                 config_path=example_config_path,
@@ -85,6 +90,13 @@ def _gen_demonstrated_funcs(example_config_path: Path) -> dict[str, bool]:
         funcs["Time-frequency analysis"] = config.time_frequency_conditions
         funcs["BEM surface creation"] = config.recreate_bem
         funcs["Template MRI"] = config.use_template_mri
+        key = "Dask"
+        ep = config.exec_params
+        if ep.parallel_backend == "dask" and ep.n_jobs > 1:
+            this_dask: bool | str = "SLURM" if ep.dask_cluster is not None else "Local"
+        else:
+            this_dask = False
+        funcs[key] = funcs[key] or this_dask
     return funcs
 
 

@@ -270,6 +270,15 @@ def test_run(
         print()
         main()
 
+    # e.g. MNE_BIDS_PIPELINE_TEST_DASK_CLUSTER=slurm makes config_ERP_CORE.py farm
+    # workers out through dask-jobqueue (needs a live scheduler, see the SLURM CI job)
+    if os.getenv("MNE_BIDS_PIPELINE_TEST_DASK_CLUSTER", ""):
+        # guard against silently falling back to a local cluster
+        from mne_bids_pipeline import _parallel
+
+        assert _parallel.dask_client is not None
+        assert type(_parallel.dask_client.cluster).__name__ == "SLURMCluster"
+
     # post-run checks for correctness
     config_data = config_path.read_text("utf-8")
 

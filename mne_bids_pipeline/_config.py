@@ -2648,6 +2648,40 @@ dask_worker_memory_limit: str = "10G"
 The maximum amount of RAM per Dask worker.
 """
 
+dask_worker_startup_timeout: float = 3600
+"""
+How long to wait (in seconds) for workers to come up before giving up, e.g. while
+[`dask_cluster`][mne_bids_pipeline._config.dask_cluster] jobs sit in the batch queue.
+Only used when `dask_cluster` is set.
+"""
+
+dask_cluster: str | Callable[[], Any] | None = None
+"""
+Attach to an external Dask cluster instead of starting workers locally, e.g., on an
+HPC system via [dask-jobqueue](https://jobqueue.dask.org). Either the address of a
+running scheduler (e.g., `"tcp://10.0.0.1:8786"`), or a callable that returns a
+[Dask cluster object](https://distributed.dask.org/en/stable/api.html#cluster) (or
+anything accepted by `distributed.Client`):
+
+```python
+def dask_cluster():
+    from dask_jobqueue import SLURMCluster
+
+    cluster = SLURMCluster(queue="cpu", cores=8, memory="32GB", walltime="02:00:00")
+    cluster.scale(jobs=4)  # or cluster.adapt(maximum_jobs=8)
+    return cluster
+```
+
+If the callable returns a cluster with no workers requested, the pipeline calls
+`cluster.scale(n_jobs)`. Compute nodes must share the filesystem holding
+[`bids_root`][mne_bids_pipeline._config.bids_root] and
+[`deriv_root`][mne_bids_pipeline._config.deriv_root] and have the same Python
+environment. Ignored if `parallel_backend` is not `'dask'`;
+[`dask_worker_memory_limit`][mne_bids_pipeline._config.dask_worker_memory_limit] and
+[`dask_temp_dir`][mne_bids_pipeline._config.dask_temp_dir] are then also ignored
+(configure these on the cluster instead).
+"""
+
 # %%
 # # Logging
 #

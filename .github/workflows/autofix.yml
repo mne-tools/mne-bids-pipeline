@@ -35,7 +35,9 @@ jobs:
       - run: uv sync --upgrade
         if: github.event_name != 'pull_request'
       - run: uv lock
-      - run: uv run lefthook run pre-commit --all-files
+      - run: uv run prek auto-update
+        if: github.event_name != 'pull_request'
+      - run: uv run prek run --all-files
       - uses: autofix-ci/action@c5b2d67aa2274e7b5a18224e8171550871fc7e4a
         if: github.event_name == 'pull_request' && (failure() || success())
       - name: Create PR
@@ -51,7 +53,7 @@ jobs:
           git config --global user.name "mne[bot]"
           BRANCH=uv/$(date '+%Y%m%d')
           git checkout -b $BRANCH
-          git commit -am "mne[bot]: Update uv.lock"
+          git commit -am "mne[bot]: Update uv.lock and pre-commit hooks"
           git push origin $BRANCH
-          PR_NUM=$(gh pr create --base main --head $BRANCH --title "Upgrade uv deps" --body "Created by credit [GitHub action](https://github.com/mne-tools/mne-bids-pipeline/actions/runs/${{ github.run_id }}).")
+          PR_NUM=$(gh pr create --base main --head $BRANCH --title "Upgrade uv deps and pre-commit hooks" --body "Created by credit [GitHub action](https://github.com/mne-tools/mne-bids-pipeline/actions/runs/${{ github.run_id }}).")
           echo "Opened https://github.com/mne-tools/mne-python/pull/${PR_NUM}" >> $GITHUB_STEP_SUMMARY

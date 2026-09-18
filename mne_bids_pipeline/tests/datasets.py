@@ -79,6 +79,7 @@ DATASET_OPTIONS: dict[str, DATASET_OPTIONS_T] = {
     },
     "ds000117": {
         "openneuro": "ds000117",
+        "tag": "1.1.0",  # 2.0.0 restructured (no derivatives, new ER sessions)
         "include": [
             "sub-01/ses-meg/meg/sub-01_ses-meg_task-facerecognition_run-01_*",
             "sub-01/ses-meg/meg/sub-01_ses-meg_task-facerecognition_run-02_*",

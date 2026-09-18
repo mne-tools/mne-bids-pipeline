@@ -27,12 +27,12 @@ class DATASET_OPTIONS_T(TypedDict, total=False):
 DATASET_OPTIONS: dict[str, DATASET_OPTIONS_T] = {
     "ERP_CORE": {
         # original dataset: "osf": "9f5w7"
-        "web": "https://osf.io/download/3zk6n?version=2",
+        "web": "https://github.com/mne-tools/mne-data/releases/download/erp-core-bids-2/ERP_CORE.zip",  # noqa: E501
         "hash": "sha256:ddc94a7c9ba1922637f2770592dd51c019d341bf6bc8558e663e1979a4cb002f",  # noqa: E501
         "fsaverage": False,  # avoid autodetection via config import (which fails)
     },
     "eeg_matchingpennies": {
-        "web": "https://osf.io/download/8rbfk?version=1",
+        "web": "https://github.com/mne-tools/mne-data/releases/download/matchingpennies-1/eeg_matchingpennies.zip",  # noqa: E501
         "hash": "sha256:06bfbe52c50b9343b6b8d2a5de3dd33e66ad9303f7f6bfbe6868c3c7c375fafd",  # noqa: E501
     },
     "ds003104": {  # Anonymized "somato" dataset.
@@ -135,7 +135,7 @@ DATASET_OPTIONS: dict[str, DATASET_OPTIONS_T] = {
         "mne": "phantom_kit",
     },
     "MNE-funloc-data": {
-        "web": "https://osf.io/download/upj3h?version=1",
+        "web": "https://github.com/mne-tools/mne-data/releases/download/funloc-1/MNE-funloc-data.tar.gz",  # noqa: E501
         "hash": "sha256:67dbd38f7207db5c93c540d9c7c92ec2ac09ee1bd1b5d5e5cdd8866c08ec4858",  # noqa: E501
         "processor": "untar",
         "fsaverage": True,

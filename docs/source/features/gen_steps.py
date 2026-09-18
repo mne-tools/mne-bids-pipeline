@@ -77,7 +77,9 @@ char_start = ord("A")
 # (and rare) enough to do.
 manual_order = {
     "Preprocessing": (
-        ("01", "02"),
+        ("01a", "01b"),
+        ("01a", "02"),
+        ("01b", "02"),
         ("02", "03"),
         ("03", "04"),
         ("04", "05"),

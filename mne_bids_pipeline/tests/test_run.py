@@ -23,10 +23,10 @@ from mne_bids_pipeline._download import main as download_main
 from mne_bids_pipeline._main import main
 from mne_bids_pipeline._report import _run_sort_key
 from mne_bids_pipeline.steps.freesurfer import _01_recon_all
-from mne_bids_pipeline.steps.preprocessing._01_data_quality import (
+from mne_bids_pipeline.steps.preprocessing._01a_data_quality import (
     get_config as get_config_data_quality,
 )
-from mne_bids_pipeline.steps.preprocessing._01_data_quality import (
+from mne_bids_pipeline.steps.preprocessing._01a_data_quality import (
     get_input_fnames_data_quality,
 )
 
@@ -50,7 +50,13 @@ class _TestOptionsT(TypedDict, total=False):
 
 
 TEST_SUITE: dict[str, _TestOptionsT] = {
-    "ds003392": {},
+    "ds003392_base": {},
+    "ds003392_otp_mxw": {
+        "steps": ("preprocessing",),
+    },
+    "ds003392_otp_ff": {
+        "steps": ("preprocessing",),
+    },
     "ds004229": {},
     "ds001971": {},
     "ds004107": {},

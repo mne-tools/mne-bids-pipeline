@@ -43,15 +43,17 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, windows-latest]
-        dataset: [ds001971, ds003392]  # one uses "hash", the other "mtime"
+        dataset: [ds001971, ds003392_base]  # one uses "hash", the other "mtime"
         python: ["3.12"]
         include:
           - os: ubuntu-latest
             dataset: ds001971
             python: "3.11"
           - os: ubuntu-latest
-            dataset: ds003392
+            dataset: ds003392_base
             python: "3.13"
+          - os: ubuntu-latest
+            dataset: ds003392_otp
     env:
       MNE_BIDS_PIPELINE_LEGACY_WINDOWS: "false"
       PYTHONIOENCODING: 'utf8'  # for Windows

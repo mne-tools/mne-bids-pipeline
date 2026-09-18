@@ -14,7 +14,7 @@ To save space, the raw data can be resampled.
 If config.interactive = True plots raw data and power spectral density.
 """  # noqa: E501
 
-from collections.abc import Iterable
+from collections.abc import Sequence
 from types import SimpleNamespace
 from typing import Any, Literal
 
@@ -86,7 +86,9 @@ def zapline(
     logger.info(**gen_log_kwargs(message=msg))
     sfreq = raw.info["sfreq"]
     picks = mne.pick_types(raw.info, meg=True, eeg=True)
-    data = raw.get_data(picks).T  # transpose to (n_samples, n_channels)
+    data = raw.get_data(picks)
+    assert isinstance(data, np.ndarray)
+    data = data.T  # transpose to (n_samples, n_channels)
     func = dss.dss_line_iter if iter_ else dss.dss_line
     out, _ = func(data, fline, sfreq)
     raw._data[picks] = out.T  # type: ignore
@@ -100,9 +102,9 @@ def notch_filter(
     session: str | None,
     run: str,
     task: str | None,
-    freqs: float | Iterable[float] | None,
-    trans_bandwidth: float | Literal["auto"],
-    notch_widths: float | Iterable[float] | None,
+    freqs: float | Sequence[float] | None,
+    trans_bandwidth: float,
+    notch_widths: float | Sequence[float] | None,
     run_type: RunTypeT,
     picks: IntArrayT | None,
     notch_extra_kws: dict[str, Any],
@@ -121,9 +123,9 @@ def notch_filter(
         return
 
     raw.notch_filter(
-        freqs=freqs,
+        freqs=None if freqs is None else np.atleast_1d(freqs),
         trans_bandwidth=trans_bandwidth,
-        notch_widths=notch_widths,
+        notch_widths=None if notch_widths is None else np.atleast_1d(notch_widths),
         n_jobs=1,
         picks=picks,
         **notch_extra_kws,
@@ -323,7 +325,7 @@ def filter_data(
     # derivatives/mne-bids-pipeline/sub-emptyroom/ses-20230412/meg
     out_files[in_key].fpath.parent.mkdir(exist_ok=True, parents=True)
     raw.save(
-        out_files[in_key],
+        out_files[in_key].fpath,
         overwrite=True,
         split_naming="bids",
         split_size=cfg._raw_split_size,

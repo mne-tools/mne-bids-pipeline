@@ -175,7 +175,7 @@ def one_subject_decoding(
     logger.info(**gen_log_kwargs(msg))
 
     bids_path = in_files["epochs"].copy().update(processing=None, split=None)
-    epochs = mne.read_epochs(in_files.pop("epochs"))
+    epochs = mne.read_epochs(in_files.pop("epochs").fpath)
     _restrict_analyze_channels(epochs, cfg)
     pick_idx = mne.pick_types(
         epochs.info, meg=True, eeg=True, ref_meg=False, exclude="bads"

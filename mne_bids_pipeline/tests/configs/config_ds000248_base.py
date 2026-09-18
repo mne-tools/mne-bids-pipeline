@@ -30,7 +30,7 @@ def noise_cov(bp: mne_bids.BIDSPath) -> mne.Covariance:
     # Use pre-stimulus period as noise source
     if not bp.fpath.exists():
         bp.update(split="01")
-    epo = mne.read_epochs(bp)
+    epo = mne.read_epochs(bp.fpath)
     cov = mne.compute_covariance(epo, rank="info", tmax=0)
     return cov
 

@@ -65,7 +65,7 @@ def apply_ssp_epochs(
     logger.info(**gen_log_kwargs(message=msg))
     msg = f"Output:       {out_files['epochs'].basename}"
     logger.info(**gen_log_kwargs(message=msg))
-    epochs = mne.read_epochs(in_files.pop("epochs"), preload=True)
+    epochs = mne.read_epochs(in_files.pop("epochs").fpath, preload=True)
     projs = mne.read_proj(in_files.pop("proj"))
     epochs_cleaned = epochs.copy().add_proj(projs).apply_proj()
 

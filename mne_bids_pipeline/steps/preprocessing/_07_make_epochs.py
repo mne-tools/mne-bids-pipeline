@@ -346,6 +346,7 @@ def _get_events(
 
     # Concatenate the filtered raws and extract the events.
     raw_filt_concat = mne.concatenate_raws(raws_filt, on_mismatch="warn")
+    assert isinstance(raw_filt_concat, mne.io.BaseRaw)
     events, event_id = mne.events_from_annotations(raw=raw_filt_concat)
     return (events, event_id, raw_filt_concat.info["sfreq"], raw_filt_concat.first_samp)
 

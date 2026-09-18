@@ -12,7 +12,9 @@ repos:
     rev: v1.5.5
     hooks:
       - id: tombi-lint
+        exclude: ^uv\.lock$
       - id: tombi-format
+        exclude: ^uv\.lock$
 
   # checks the whole project in the uv.lock env, see [tool.ty.src] in pyproject.toml
   - repo: https://github.com/astral-sh/ty-pre-commit

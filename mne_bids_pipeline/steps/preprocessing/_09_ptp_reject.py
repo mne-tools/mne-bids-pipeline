@@ -89,7 +89,7 @@ def drop_ptp(
     logger.info(**gen_log_kwargs(message=msg))
 
     # Get rejection parameters and drop bad epochs
-    epochs = mne.read_epochs(in_files.pop("epochs"), preload=True)
+    epochs = mne.read_epochs(in_files.pop("epochs").fpath, preload=True)
 
     if cfg.reject == "autoreject_local":
         msg = (

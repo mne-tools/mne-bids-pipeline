@@ -141,7 +141,7 @@ def apply_ica_epochs(
     msg = f"Output: {out_files['epochs'].basename}"
     logger.info(**gen_log_kwargs(message=msg))
 
-    epochs = mne.read_epochs(in_files.pop("epochs"), preload=True)
+    epochs = mne.read_epochs(in_files.pop("epochs").fpath, preload=True)
     if cfg.ica_use_icalabel:
         epochs.set_eeg_reference("average", projection=True).apply_proj()
 

@@ -64,21 +64,17 @@ mne_bids_pipeline = "mne_bids_pipeline._main:main"
 [dependency-groups]
 dev = [
   "Pygments",
-  "codespell",
   "dask-jobqueue",  # SLURM test (MNE_BIDS_PIPELINE_TEST_DASK_CLUSTER)
   "httpx >= 0.20",
   "jinja2",
-  "lefthook",
   "openneuro-py >= 2022.2.0",
   "pooch >= 1.9.0",  # passes filter= to TarFile.extractall
+  "prek",
   "psutil",
   "pytest-cov",
   "pytest >= 9.0",
   "pyyaml",
-  "ruff",
-  "tombi",
   "tqdm",
-  "ty>=0.0.12",
 ]
 docs = [
   "black",  # docstring reformatting
@@ -168,3 +164,8 @@ ignore = [
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"
+
+[tool.ty.src]
+# top-level modules are not yet clean
+include = ["mne_bids_pipeline/steps", "mne_bids_pipeline/tests"]
+exclude = ["mne_bids_pipeline/steps/freesurfer/contrib"]

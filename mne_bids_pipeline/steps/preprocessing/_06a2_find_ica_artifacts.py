@@ -158,7 +158,7 @@ def find_ica_artifacts(
     ica = mne.preprocessing.read_ica(in_files.pop("ica"))
 
     # Epochs used for ICA fitting
-    epochs = mne.read_epochs(in_files.pop("epochs"), preload=True)
+    epochs = mne.read_epochs(in_files.pop("epochs").fpath, preload=True)
 
     # ECG component detection
     epochs_ecg = None

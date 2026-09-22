@@ -42,3 +42,4 @@
 - Improved the accounting of options used in each step (#1268 by @larsoner)
 - The CSP decoding step now band-pass filters the epochs once per passband instead of once per table row, cutting its runtime roughly in half with identical results (#1304 by @larsoner)
 - The pipeline flow recordings are now read and written with the standard-library `json` module rather than `json_tricks` (about 8× faster for their plain-JSON schema) and memoized per process, so a step no longer re-parses the whole recording on each of its calls (#1305 by @larsoner)
+- Moved from `lefthook` to `prek` for pre-commit hooks, matching MNE-Python, and removed the no-longer-needed bot workflow that pushed commits to trigger CircleCI on Dependabot PRs (#1310 by @larsoner)

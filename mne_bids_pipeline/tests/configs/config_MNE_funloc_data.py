@@ -1,6 +1,6 @@
-"""osf.io: Funloc data.
+"""mne-data: Funloc data.
 
-See [OSF](https://osf.io/download/upj3h) for more information.
+See [mne-data](https://github.com/mne-tools/mne-data/releases/tag/funloc-1) for more.
 """
 
 from pathlib import Path

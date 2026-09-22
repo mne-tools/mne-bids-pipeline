@@ -1,6 +1,6 @@
-"""osf.io: Matchingpennies EEG.
+"""mne-data: Matchingpennies EEG.
 
-See [OSF](https://osf.io/download/8rbfk) for more information.
+See https://github.com/mne-tools/mne-data/releases/tag/matchingpennies-1
 """
 
 bids_root = "~/mne_data/eeg_matchingpennies"

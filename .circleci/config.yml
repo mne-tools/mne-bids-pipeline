@@ -190,12 +190,19 @@ jobs:
           name: prepare PyVista settings dir
           command: mkdir -p /home/circleci/.local/share/pyvista
       - steps: << parameters.setup >>
+      # Via BASH_ENV because boolean step env values don't reach the shell as "false"
+      - unless:
+          condition: << parameters.rerun >>
+          steps:
+            - run: echo "export RERUN_TEST=false" >> $BASH_ENV
+      - unless:
+          condition: << parameters.copy_files >>
+          steps:
+            - run: echo "export COPY_FILES=false" >> $BASH_ENV
       - run:
           name: test << parameters.test >>
           no_output_timeout: << parameters.no_output_timeout >>
           environment:
-            RERUN_TEST: "<< parameters.rerun >>"
-            COPY_FILES: "<< parameters.copy_files >>"
             MNE_BIDS_PIPELINE_TEST_DASK_CLUSTER: << parameters.dask_cluster >>
           command: $RUN_TESTS << parameters.test >>
       - codecov/upload:

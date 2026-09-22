@@ -64,6 +64,7 @@ mne_bids_pipeline = "mne_bids_pipeline._main:main"
 [dependency-groups]
 dev = [
   "Pygments",
+  "dask-jobqueue",  # SLURM test (MNE_BIDS_PIPELINE_TEST_DASK_CLUSTER)
   "httpx >= 0.20",
   "jinja2",
   "openneuro-py >= 2022.2.0",

@@ -914,8 +914,17 @@ jobs:
           command: |
             google-chrome --version
       - run:
-          name: test ERP CORE N400
+          name: Start single-node SLURM
+          command: ./.circleci/setup_slurm.sh
+      - run:
+          name: test ERP CORE N400 (via SLURM-backed dask)
           command: $RUN_TESTS ERP_CORE_N400
+          environment:
+            MNE_BIDS_PIPELINE_TEST_DASK_CLUSTER: slurm
+      - run:
+          name: SLURM worker job logs
+          command: sinfo && ls -l slurm-*.out && tail -n2 slurm-*.out
+          when: always
       - *codecov_upload
       - store_test_results:
           path: ./test-results

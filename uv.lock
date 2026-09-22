@@ -995,6 +995,19 @@ distributed = [
 ]
 
 [[package]]
+name = "dask-jobqueue"
+version = "0.9.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "dask" },
+    { name = "distributed" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/32/2a/751bb5ba28533476b1c667eac158e5aa1840c416fd61d425328ef48a894a/dask_jobqueue-0.9.0.tar.gz", hash = "sha256:494ef64b7bb3848c7d72ed334c288030caca6a09dca54cfaa3f395f4ba7f5c47", size = 56475, upload-time = "2024-08-22T09:25:21.56Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/57/77/606f138bf70b14865842b3ec9a58dc1ba97153f466e5876fe4ced980f91f/dask_jobqueue-0.9.0-py2.py3-none-any.whl", hash = "sha256:253dfc4f0b8722201a08e05b841859dfeea1f6698ff21eff0d9370e5aa8ae20f", size = 52037, upload-time = "2024-08-22T09:25:20.106Z" },
+]
+
+[[package]]
 name = "decorator"
 version = "5.3.1"
 source = { registry = "https://pypi.org/simple" }
@@ -2449,6 +2462,7 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "dask-jobqueue" },
     { name = "httpx" },
     { name = "jinja2" },
     { name = "openneuro-py" },
@@ -2512,6 +2526,7 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "dask-jobqueue" },
     { name = "httpx", specifier = ">=0.20" },
     { name = "jinja2" },
     { name = "openneuro-py", specifier = ">=2022.2.0" },

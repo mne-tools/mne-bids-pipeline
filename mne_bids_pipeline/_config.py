@@ -928,13 +928,17 @@ Specifies the width of each stop band. `None` uses the MNE default.
 
 zapline_fline: float | None = None
 """
-Specifies frequency to remove using Zapline filtering. If None, zapline will not
-be used.
+Line frequency to remove with ZapLine. If `None`, ZapLine is disabled.
+ZapLine and notch filtering cannot be enabled at the same time.
 """
 
-zapline_iter: bool = False
+zapline_extra_kws: dict[str, Any] = {}
 """
-Specifies if the iterative version of the Zapline algorithm should be run.
+Additional keyword arguments passed to `mne_denoise.zapline.ZapLine`.
+The Pipeline uses `n_select=1` and `adaptive=False` by default; values supplied
+here can override these defaults, including enabling adaptive processing. The
+Pipeline sets `sfreq` from the Raw object and `line_freq` from `zapline_fline`;
+do not supply either here.
 """
 
 notch_extra_kws: dict[str, Any] = {}

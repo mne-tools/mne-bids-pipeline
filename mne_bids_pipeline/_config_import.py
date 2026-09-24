@@ -353,6 +353,23 @@ def _check_config(config: SimpleNamespace, config_path: PathLike | None) -> None
             f"`mf_extra_kws` contains keys {', '.join(sorted(duplicates))} that are "
             "handled by dedicated config keys. Please remove them from `mf_extra_kws`."
         )
+    zapline_reserved_kwargs = {"sfreq", "line_freq"}
+    if duplicates := set(config.zapline_extra_kws) & zapline_reserved_kwargs:
+        raise ConfigError(
+            f"`zapline_extra_kws` contains Pipeline-managed keys "
+            f"{', '.join(sorted(duplicates))}. `sfreq` is obtained from the data and "
+            "`line_freq` is controlled by `zapline_fline`. Please remove these keys "
+            "from `zapline_extra_kws`."
+        )
+    notch_enabled = (
+        config.notch_freq is not None
+        or config.notch_extra_kws.get("method") == "spectrum_fit"
+    )
+    if config.zapline_fline is not None and notch_enabled:
+        raise ConfigError(
+            "ZapLine and notch filtering cannot both be enabled. "
+            "Please configure only one line-noise removal method."
+        )
     spec = inspect.getfullargspec(mne.chpi.compute_head_pos)
     if config.mf_mc and config.mf_mc_weighted and "weighted" not in spec.kwonlyargs:
         raise ConfigError(
@@ -671,10 +688,17 @@ _REMOVED_NAMES: dict[str, dict[str, str | None]] = {
     "ica_ctps_ecg_threshold": dict(
         new_name="ica_ecg_threshold",
     ),
+    "zapline_iter": dict(
+        new_name=None,
+        instead=(
+            "there is no direct replacement; use `zapline_extra_kws` to configure "
+            "advanced ZapLine behavior if needed"
+        ),
+    ),
 }
 
 # False alarms
-_IGNORED_SIMILAR_NAMES = {"BaselineTypeT"}
+_IGNORED_SIMILAR_NAMES = {"BaselineTypeT", "zapline_iter"}
 
 
 def _check_misspellings_removals(

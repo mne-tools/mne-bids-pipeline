@@ -75,23 +75,32 @@ def zapline(
     run: str,
     task: str | None,
     fline: float | None,
-    iter_: bool,
+    zapline_extra_kws: dict[str, Any],
 ) -> None:
-    """Use Zapline to remove line frequencies."""
+    """Use ZapLine to remove line frequencies."""
     if fline is None:
         return
-    from meegkit import dss  # nested: pulls pyriemann and pyplot, Zapline-only
 
-    msg = f"Zapline filtering data at with {fline=} Hz."
+    from mne_denoise.zapline import ZapLine
+
+    msg = f"ZapLine filtering data at {fline} Hz."
     logger.info(**gen_log_kwargs(message=msg))
-    sfreq = raw.info["sfreq"]
+
+    zapline_kws: dict[str, Any] = dict(n_select=1, adaptive=False)
+    zapline_kws.update(zapline_extra_kws)
+    model = ZapLine(
+        sfreq=raw.info["sfreq"],
+        line_freq=fline,
+        **zapline_kws,
+    )
+
     picks = mne.pick_types(raw.info, meg=True, eeg=True)
-    data = raw.get_data(picks)
-    assert isinstance(data, np.ndarray)
-    data = data.T  # transpose to (n_samples, n_channels)
-    func = dss.dss_line_iter if iter_ else dss.dss_line
-    out, _ = func(data, fline, sfreq)
-    raw._data[picks] = out.T  # type: ignore
+    # ZapLine is multichannel, so process all selected MEG/EEG channels together.
+    raw.apply_function(
+        model.fit_transform,
+        picks=picks,
+        channel_wise=False,
+    )
 
 
 def notch_filter(
@@ -279,7 +288,7 @@ def filter_data(
         run=run,
         task=task,
         fline=cfg.zapline_fline,
-        iter_=cfg.zapline_iter,
+        zapline_extra_kws=cfg.zapline_extra_kws,
     )
     notch_filter(
         cfg=cfg,
@@ -371,7 +380,7 @@ def get_config(
         h_freq=config.h_freq,
         notch_freq=config.notch_freq,
         zapline_fline=config.zapline_fline,
-        zapline_iter=config.zapline_iter,
+        zapline_extra_kws=config.zapline_extra_kws,
         l_trans_bandwidth=config.l_trans_bandwidth,
         h_trans_bandwidth=config.h_trans_bandwidth,
         notch_trans_bandwidth=config.notch_trans_bandwidth,

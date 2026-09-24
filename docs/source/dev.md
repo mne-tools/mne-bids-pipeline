@@ -15,6 +15,7 @@
 ### :warning: Behavior changes
 
 - The default for [`mne_log_level`][mne_bids_pipeline._config.mne_log_level] has been changed from `'error'` to `'warning'` to make possible dataset and processing errors more visible (#1224 by @larsoner)
+- ZapLine line-noise removal now uses `mne-denoise` instead of `meegkit`. [`zapline_fline`][mne_bids_pipeline._config.zapline_fline] continues to control the line frequency and whether ZapLine is enabled; `zapline_iter` has been removed with no direct replacement, and advanced behavior can be configured with [`zapline_extra_kws`][mne_bids_pipeline._config.zapline_extra_kws]. ZapLine and notch filtering cannot be enabled together.
 
 ### :package: Requirements
 

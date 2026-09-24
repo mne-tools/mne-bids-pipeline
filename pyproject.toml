@@ -28,8 +28,8 @@ dependencies = [
   "json_tricks",
   "jupyter-server-proxy",  # to have dask and jupyter working together
   "matplotlib",
-  "meegkit",
   "mne-bids[full] >=0.16",
+  "mne-denoise >=0.0.3",
   "mne-icalabel",
   "mne[hdf5] >=1.8",
   "nibabel",

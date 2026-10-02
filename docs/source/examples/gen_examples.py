@@ -253,6 +253,8 @@ for test_dataset_name, test_dataset_options in ds_iter:
             f"    openneuro-py download \\\n"
             f"                 --dataset={options['openneuro']} \\\n"
         )
+        if "tag" in options:
+            download_str += f"                 --tag={options['tag']} \\\n"
         for count, include in enumerate(options["include"], start=1):
             download_str += f"                 --include={include}"
             if count < len(options["include"]) or options["exclude"]:

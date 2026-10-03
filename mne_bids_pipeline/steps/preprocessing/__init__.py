@@ -1,7 +1,8 @@
 """Preprocessing."""
 
 from . import (
-    _01_data_quality,
+    _01a_data_quality,
+    _01b_otp,
     _02_head_pos,
     _03_maxfilter,
     _04_frequency_filter,
@@ -16,7 +17,8 @@ from . import (
 )
 
 _STEPS = (
-    _01_data_quality,
+    _01a_data_quality,
+    _01b_otp,
     _02_head_pos,
     _03_maxfilter,
     _04_frequency_filter,

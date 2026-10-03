@@ -500,8 +500,24 @@ workflows:
           requires: [setup_env]
           <<: *filter_tags
       - test_dataset:
-          name: test_ds003392
-          test: ds003392
+          name: test_ds003392_base
+          test: ds003392_base
+          cache_key: *ds003392
+          json: true
+          tsv: true
+          requires: [cache_ds003392]
+          <<: *filter_tags
+      - test_dataset:
+          name: test_ds003392_otp_ff
+          test: ds003392_otp_ff
+          cache_key: *ds003392
+          json: true
+          tsv: true
+          requires: [cache_ds003392]
+          <<: *filter_tags
+      - test_dataset:
+          name: test_ds003392_otp_mxw
+          test: ds003392_otp_mxw
           cache_key: *ds003392
           json: true
           tsv: true
@@ -638,7 +654,9 @@ workflows:
             - test_ds000248_FLASH_BEM
             - test_ds001810
             - test_ds003104
-            - test_ds003392
+            - test_ds003392_base
+            - test_ds003392_otp_ff
+            - test_ds003392_otp_mxw
             - test_ds004229
             - test_eeg_matchingpennies
             - test_MNE-funloc-data

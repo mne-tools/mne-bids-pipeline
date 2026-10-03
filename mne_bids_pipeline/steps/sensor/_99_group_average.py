@@ -104,7 +104,7 @@ def average_evokeds(
     n_subjects = len(subjects)
     for this_subject in subjects:
         fname_in = in_files.pop(f"evoked-{this_subject}")
-        these_evokeds = mne.read_evokeds(fname_in)
+        these_evokeds = mne.read_evokeds(fname_in.fpath)
         assert isinstance(these_evokeds, list)
         for idx, evoked in enumerate(these_evokeds):
             assert isinstance(evoked, mne.Evoked)
@@ -157,7 +157,7 @@ def average_evokeds(
 
     msg = f"Saving grand-averaged evoked sensor data: {fname_out.basename}"
     logger.info(**gen_log_kwargs(message=msg))
-    mne.write_evokeds(fname_out, evokeds, overwrite=True)
+    mne.write_evokeds(fname_out.fpath, evokeds, overwrite=True)
     if exec_params.interactive:
         for evoked in evokeds:
             evoked.plot()
@@ -413,7 +413,7 @@ def average_time_by_time_decoding(
     logger.info(**gen_log_kwargs(message=msg))
     # Get the time points from the very first subject. They are identical
     # across all subjects and conditions, so this should suffice.
-    epochs = mne.read_epochs(in_files.pop("epochs"), preload=False)
+    epochs = mne.read_epochs(in_files.pop("epochs").fpath, preload=False)
     decim = cfg.decoding_time_decim
     if cfg.decoding_time_generalization:
         decim = max(cfg.decoding_time_generalization_decim, decim)

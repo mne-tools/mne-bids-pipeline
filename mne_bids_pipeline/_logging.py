@@ -3,17 +3,35 @@
 import contextlib
 import datetime
 import inspect
+import io
 import logging
 import os
 import sys
 from collections.abc import Generator, Iterable, Sequence
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TextIO
 
 from .typing import LogKwargsT
 
 if TYPE_CHECKING:
     # rich is ~10 ms to import and is only needed once something is logged
     import rich.console
+
+
+def _rich_safe_stdout() -> TextIO | None:
+    """Get a usable stdout, e.g. the job log of a dask (SLURM) worker.
+
+    None means "resolve ``sys.stdout`` at write time", which is what rich does by
+    default and what pytest's capturing needs.
+    """
+    stream: TextIO | None = sys.stdout
+    if stream is None:  # rich would silently write to its NULL_FILE
+        return sys.stderr
+    if isinstance(stream, io.TextIOWrapper):
+        # Flush per line so progress shows up in redirected logs, and don't let our
+        # emoji kill a worker running in a non-UTF-8 locale
+        with contextlib.suppress(Exception):
+            stream.reconfigure(line_buffering=True, errors="backslashreplace")
+    return None
 
 
 class _MBPLogger:
@@ -55,6 +73,7 @@ class _MBPLogger:
             )
         )
         self.__console = rich.console.Console(
+            file=_rich_safe_stdout(),
             soft_wrap=True,
             force_terminal=force_terminal,
             legacy_windows=legacy_windows,

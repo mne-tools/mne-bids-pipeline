@@ -116,7 +116,7 @@ def run_time_decoding(
     out_files = dict()
     bids_path = in_files["epochs"].copy().update(split=None)
 
-    epochs = mne.read_epochs(in_files.pop("epochs"))
+    epochs = mne.read_epochs(in_files.pop("epochs").fpath)
     _restrict_analyze_channels(epochs, cfg)
 
     # We define the epochs and the labels

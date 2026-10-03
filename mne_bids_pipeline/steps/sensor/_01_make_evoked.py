@@ -88,7 +88,7 @@ def run_evoked(
     msg = f"Output: {out_files['evoked'].basename}"
     logger.info(**gen_log_kwargs(message=msg))
 
-    epochs = mne.read_epochs(in_files.pop("epochs"), preload=True)
+    epochs = mne.read_epochs(in_files.pop("epochs").fpath, preload=True)
 
     msg = "Creating evoked data based on experimental conditions …"
     logger.info(**gen_log_kwargs(message=msg))

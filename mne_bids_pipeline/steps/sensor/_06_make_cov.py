@@ -129,7 +129,7 @@ def compute_cov_rank_from_epochs(
     logger.info(**gen_log_kwargs(message=msg))
     all_epochs = []
     for epo_fname in epo_fnames:
-        all_epochs.append(mne.read_epochs(epo_fname, preload=False))
+        all_epochs.append(mne.read_epochs(epo_fname.fpath, preload=False))
         all_epochs[-1].load_data().crop(tmin=tmin, tmax=tmax)
     epochs = (
         all_epochs[0]
@@ -346,7 +346,7 @@ def run_covariance(
             task = fname_evoked.task
             msg = f"Rendering whitened evoked data for task={task!r}."
             logger.info(**gen_log_kwargs(message=msg))
-            all_evoked = mne.read_evokeds(fname_evoked)
+            all_evoked = mne.read_evokeds(fname_evoked.fpath)
             conditions = _all_conditions(cfg=cfg, task=task)
             assert isinstance(all_evoked, list)
             assert len(all_evoked) == len(conditions)

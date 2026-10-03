@@ -24,6 +24,8 @@ _EXECUTION_OPTIONS = (
     "parallel_backend",
     "dask_open_dashboard",
     "dask_temp_dir",
+    "dask_cluster",
+    "dask_worker_startup_timeout",
     "dask_worker_memory_limit",
     "log_level",
     "mne_log_level",

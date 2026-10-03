@@ -170,7 +170,7 @@ def apply_inverse_data(
     method = cfg.inverse_method
     fname_ave = in_files.pop("evoked")
     fname_inv = in_files.pop("inverse")
-    evokeds = mne.read_evokeds(fname_ave)
+    evokeds = mne.read_evokeds(fname_ave.fpath)
     assert isinstance(evokeds, list)
     inverse_operator = mne.minimum_norm.read_inverse_operator(fname_inv)
 

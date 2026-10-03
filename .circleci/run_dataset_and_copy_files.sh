@@ -2,8 +2,9 @@
 
 set -eo pipefail
 
-COPY_FILES="true"
-RERUN_TEST="true"
+# Also settable via env (see config.yml)
+COPY_FILES="${COPY_FILES:-true}"
+RERUN_TEST="${RERUN_TEST:-true}"
 while getopts "cr" option; do
    echo $option
    case $option in

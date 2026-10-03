@@ -1,4 +1,4 @@
-"""osf.io: KIT phantom data.
+"""mne-data: KIT phantom data.
 
 See [MNE documentation](https://mne.tools/dev/documentation/datasets.html#kit-phantom-dataset) for more information.
 """  # noqa: E501

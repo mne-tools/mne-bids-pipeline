@@ -1,0 +1,29 @@
+exclude: ^mne_bids_pipeline/steps/freesurfer/contrib/
+
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.8
+    hooks:
+      - id: ruff-check
+        args: ["--fix"]
+      - id: ruff-format
+
+  - repo: https://github.com/tombi-toml/tombi-pre-commit
+    rev: v1.5.5
+    hooks:
+      - id: tombi-lint
+        exclude: ^uv\.lock$
+      - id: tombi-format
+        exclude: ^uv\.lock$
+
+  # checks the whole project in the uv.lock env, see [tool.ty.src] in pyproject.toml
+  - repo: https://github.com/astral-sh/ty-pre-commit
+    rev: v0.0.82
+    hooks:
+      - id: ty
+
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.4.3
+    hooks:
+      - id: codespell
+        files: \.(py|ya?ml|md|txt)$

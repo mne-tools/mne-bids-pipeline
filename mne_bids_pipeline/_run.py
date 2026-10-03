@@ -508,6 +508,10 @@ def save_logs(*, config: SimpleNamespace, logs: "Iterable[pd.Series | None]") ->
         assert isinstance(config, SimpleNamespace), type(config)
         cf_dict = dict()
         for key, val in config.__dict__.items():
+            if isinstance(val, SimpleNamespace):  # exec_params, e.g., dask_cluster
+                val = SimpleNamespace(
+                    **{k: _sanitize_callable(v) for k, v in val.__dict__.items()}
+                )
             # We need to be careful about functions, json_tricks does not work with them
             if inspect.isfunction(val):
                 new_val = ""

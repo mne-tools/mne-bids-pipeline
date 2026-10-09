@@ -24,6 +24,7 @@ dependencies = [
   "dask[distributed]",
   "filelock",
   "h5io",
+  "jamica >= 0.3.0",  # for ica_algorithm="jamica"
   "joblib >= 1.4.1",  # MemorizedFunc.call returns metadata
   "json_tricks",
   "jupyter-server-proxy",  # to have dask and jupyter working together

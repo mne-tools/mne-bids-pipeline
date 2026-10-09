@@ -1538,6 +1538,19 @@ wheels = [
 ]
 
 [[package]]
+name = "jamica"
+version = "0.3.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy" },
+    { name = "scipy" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/0c/4f/46f4e38f0904fa794541fdc5225d78c9f2d8947296eb98452eba83da19ee/jamica-0.3.0.tar.gz", hash = "sha256:06ee3a5b8aee630bddd2edb2d59412c309b0a37882ec5ee2cc8d1bf7d6aa8094", size = 139192, upload-time = "2026-08-28T20:42:34.753Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/46/f3/57e3401b6041d91af95346883513802ef62843ffee206e368d5cc89eadf2/jamica-0.3.0-py3-none-any.whl", hash = "sha256:a185ed9a847512bcf2250e47b2b154f471ad8b9f93373eea08bff2eb4c5a8f1d", size = 101730, upload-time = "2026-08-28T20:42:33.132Z" },
+]
+
+[[package]]
 name = "jh2"
 version = "5.0.15"
 source = { registry = "https://pypi.org/simple" }
@@ -2571,6 +2584,7 @@ dependencies = [
     { name = "dask", extra = ["distributed"] },
     { name = "filelock" },
     { name = "h5io" },
+    { name = "jamica" },
     { name = "joblib" },
     { name = "json-tricks" },
     { name = "jupyter-server-proxy" },
@@ -2635,6 +2649,7 @@ requires-dist = [
     { name = "dask", extras = ["distributed"] },
     { name = "filelock" },
     { name = "h5io" },
+    { name = "jamica", specifier = ">=0.3.0" },
     { name = "joblib", specifier = ">=1.4.1" },
     { name = "json-tricks" },
     { name = "jupyter-server-proxy" },

@@ -15,6 +15,7 @@ from typing import Any
 
 import mne
 import numpy as np
+from mne.utils import check_version
 from mne_bids import get_entity_vals
 from pydantic import BaseModel, ConfigDict, ValidationError
 
@@ -581,6 +582,15 @@ def _check_config(config: SimpleNamespace, config_path: PathLike | None) -> None
             raise ValueError(
                 f'{pre} ica_algorithm="picard-extended_infomax" or "extended_infomax", '
                 f"but got: ica_algorithm={repr(config.ica_algorithm)}"
+            )
+
+    # JAMICA
+    if config.spatial_filter == "ica" and config.ica_algorithm == "jamica":
+        ok, version = check_version("mne", "1.13", return_version=True)
+        if not ok:
+            raise ConfigError(
+                'ica_algorithm="jamica" requires MNE-Python 1.13 or newer, but got: '
+                f"{version}"
             )
 
 

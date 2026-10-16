@@ -12,6 +12,7 @@
 - Report HDF5 and HTML files are no longer rewritten when a step did not modify the report (requires MNE-Python ≥ 1.13; older versions keep the previous always-save behavior) (#1300 by @larsoner)
 - [`report_image_format`][mne_bids_pipeline._config.report_image_format] now accepts `dict(raster="webp-lossy")`, which encodes about as fast as PNG while producing reports roughly 3× smaller (requires MNE-Python ≥ 1.13) (#1304 by @larsoner)
 - Added the [`dask_cluster`][mne_bids_pipeline._config.dask_cluster] option to attach to an external Dask cluster, e.g. on an HPC system via [dask-jobqueue](https://jobqueue.dask.org) (SLURM, PBS, SGE, …), with [`dask_worker_startup_timeout`][mne_bids_pipeline._config.dask_worker_startup_timeout] controlling how long to wait for queued workers; step log messages now also reach each Dask worker's log (e.g., the SLURM job log) (#1307 by @larsoner)
+- Added `"jamica"` as an [`ica_algorithm`][mne_bids_pipeline._config.ica_algorithm] option to fit a single-model adaptive mixture ICA (AMICA) decomposition using the [jamica](https://snesmaeili.github.io/jamica/) package (requires MNE-Python ≥ 1.13) (#1320 by @drammock)
 
 ### :warning: Behavior changes
 
@@ -21,6 +22,7 @@
 ### :package: Requirements
 
 - Minimum supported versions were raised to Python 3.11, MNE-Python 1.8, MNE-BIDS 0.16, and joblib 1.4.1, following [SPEC 0](https://scientific-python.org/specs/spec-0000) (#1289 by @larsoner)
+- Added `jamica` as a dependency for the new [`ica_algorithm`][mne_bids_pipeline._config.ica_algorithm] option `"jamica"` (#1320 by @drammock)
 
 ### :bug: Bug fixes
 

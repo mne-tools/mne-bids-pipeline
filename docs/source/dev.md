@@ -49,3 +49,4 @@
 - The pipeline flow recordings are now read and written with the standard-library `json` module rather than `json_tricks` (about 8× faster for their plain-JSON schema) and memoized per process, so a step no longer re-parses the whole recording on each of its calls (#1305 by @larsoner)
 - Moved from `lefthook` to `prek` for pre-commit hooks, matching MNE-Python, and removed the no-longer-needed bot workflow that pushed commits to trigger CircleCI on Dependabot PRs (#1310 by @larsoner)
 - Added `AGENTS.md` (and a `CLAUDE.md` pointing to it) with guidance for AI coding agents, deferring to MNE-Python's policy on AI assistance (#1317 by @larsoner)
+- Stopped using the `inplace` keyword of pandas methods, which pandas 3.1 deprecates (#1323 by @larsoner)

@@ -165,7 +165,7 @@ def find_ica_artifacts(
     ecg_ics: list[int] = []
     ecg_scores: FloatArrayT = np.zeros(0)
     if cfg.ica_use_ecg_detection:
-        for ri, raw_fname in enumerate(raw_fnames):
+        for ri, ((run, task), raw_fname) in enumerate(zip(cfg.runs_tasks, raw_fnames)):
             # Have the channels needed to make ECG epochs
             raw = mne.io.read_raw(raw_fname, preload=False)
             if cfg.ica_use_icalabel:
@@ -186,44 +186,45 @@ def find_ica_artifacts(
                 msg = "Creating ECG epochs …"
                 logger.info(**gen_log_kwargs(message=msg))
 
-                # We want to extract a total of 5 min of data for ECG epochs generation
-                # (across all runs)
-                total_ecg_dur = 5 * 60
-                ecg_dur_per_run = total_ecg_dur / len(raw_fnames)
-                t_mid = (raw.times[-1] + raw.times[0]) / 2
-                raw = raw.crop(
-                    tmin=max(t_mid - 1 / 2 * ecg_dur_per_run, 0),
-                    tmax=min(t_mid + 1 / 2 * ecg_dur_per_run, raw.times[-1]),
-                ).load_data()
+            # We want to extract a total of 5 min of data for ECG epochs generation
+            # (across all runs)
+            total_ecg_dur = 5 * 60
+            ecg_dur_per_run = total_ecg_dur / len(raw_fnames)
+            t_mid = (raw.times[-1] + raw.times[0]) / 2
+            raw = raw.crop(
+                tmin=max(t_mid - 1 / 2 * ecg_dur_per_run, 0),
+                tmax=min(t_mid + 1 / 2 * ecg_dur_per_run, raw.times[-1]),
+            ).load_data()
 
-                these_ecg_epochs = create_ecg_epochs(
-                    raw,
-                    baseline=(None, -0.2),
-                    tmin=-0.5,
-                    tmax=0.5,
-                )
-                del raw  # Free memory
+            these_ecg_epochs = create_ecg_epochs(
+                raw,
+                baseline=(None, -0.2),
+                tmin=-0.5,
+                tmax=0.5,
+            )
+            del raw  # Free memory
+            if len(these_ecg_epochs):
+                if epochs.reject is not None:
+                    these_ecg_epochs.drop_bad(reject=epochs.reject)
                 if len(these_ecg_epochs):
-                    if epochs.reject is not None:
-                        these_ecg_epochs.drop_bad(reject=epochs.reject)
-                    if len(these_ecg_epochs):
-                        if epochs_ecg is None:
-                            epochs_ecg = these_ecg_epochs
-                        else:
-                            epochs_ecg = mne.concatenate_epochs(
-                                [epochs_ecg, these_ecg_epochs], on_mismatch="warn"
-                            )
-                del these_ecg_epochs
-            else:  # did not break so had usable channels
-                ecg_ics, ecg_scores = detect_bad_components(
-                    cfg=cfg,
-                    which="ecg",
-                    epochs=epochs_ecg,
-                    ica=ica,
-                    ch_names=None,  # we currently don't allow for custom channels
-                    subject=subject,
-                    session=session,
-                )
+                    if epochs_ecg is None:
+                        epochs_ecg = these_ecg_epochs
+                    else:
+                        epochs_ecg = mne.concatenate_epochs(
+                            [epochs_ecg, these_ecg_epochs], on_mismatch="warn"
+                        )
+            del these_ecg_epochs
+        else:  # did not break so had usable channels
+            ecg_ics, ecg_scores = detect_bad_components(
+                cfg=cfg,
+                which="ecg",
+                epochs=epochs_ecg,
+                ica=ica,
+                ch_names=None,  # we currently don't allow for custom channels
+                subject=subject,
+                session=session,
+            )
+        del run, task
 
     # EOG component detection
 
@@ -238,7 +239,7 @@ def find_ica_artifacts(
     eog_ics: list[int] = []
     eog_scores: FloatArrayT = np.zeros(0)
     if cfg.ica_use_eog_detection:
-        for ri, raw_fname in enumerate(raw_fnames):
+        for ri, ((run, task), raw_fname) in enumerate(zip(cfg.runs_tasks, raw_fnames)):
             raw = mne.io.read_raw_fif(raw_fname, preload=True)
             if cfg.ica_use_icalabel:
                 raw.set_eeg_reference("average", projection=True).apply_proj()
@@ -280,6 +281,7 @@ def find_ica_artifacts(
                 subject=subject,
                 session=session,
             )
+        del run, task
 
     # Run MNE-ICALabel if requested.
     exclude: list[int] = ecg_ics + eog_ics
@@ -582,7 +584,9 @@ def get_config(
     session: str | None = None,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        runs_tasks=get_runs_tasks(config=config, subject=subject, session=session),
+        runs_tasks=get_runs_tasks(
+            config=config, subject=subject, session=session, which=("runs", "rest")
+        ),
         ica_use_eog_detection=config.ica_use_eog_detection,
         ica_eog_threshold=config.ica_eog_threshold,
         ica_use_ecg_detection=config.ica_use_ecg_detection,

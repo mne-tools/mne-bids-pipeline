@@ -24,6 +24,9 @@
 
 ### :bug: Bug fixes
 
+- Fixed bug where the raw data cleaned by ICA or SSP (`*_proc-clean_raw.fif`, also used for the empty-room or resting-state noise covariance) did not have [`regress_artifact`][mne_bids_pipeline._config.regress_artifact] applied (#1323 by @larsoner)
+- Fixed crashes with [`regress_artifact`][mne_bids_pipeline._config.regress_artifact] when the artifact channels are missing from the empty-room recording (which is now left unregressed) or when the filtered data were split across multiple files (#1323 by @larsoner)
+- Fixed ICA: fitting no longer crashes when a separate resting-state recording is present, artifact detection no longer uses the empty-room recording (which skipped EOG detection when it lacked EOG channels), ECG epochs are now created from all runs rather than only the first, and artifact-detection log messages now include the task (#1323 by @larsoner)
 - Fixed spurious recomputation of the `init` steps on every run: the subject report was declared as a cached output but is legitimately rewritten by later steps, so its modification time always mismatched (#1300 by @larsoner)
 - Fixed report section ordering: run-specific sections now always appear in run order, even when parallelization across runs finishes them out of order (#1293 by @larsoner)
 - All `FileLock` acquisitions now time out after 10 minutes, so a contended lock raises an error naming the file rather than hanging the run forever (#1301 by @larsoner)

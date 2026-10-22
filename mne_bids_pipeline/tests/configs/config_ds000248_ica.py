@@ -10,6 +10,7 @@ subjects = ["01"]
 task = "audiovisual"
 l_freq = 0.3
 h_freq = 40.0
+regress_artifact = dict(picks="meg", picks_artifact=["EOG 061"])  # not in empty-room
 
 conditions = ["Auditory/Left", "Auditory/Right", "Visual/Left", "Visual/Right"]
 

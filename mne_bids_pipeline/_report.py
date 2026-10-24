@@ -568,7 +568,7 @@ def add_event_counts(
     logger.info(**gen_log_kwargs(message="Adding event counts to report …"))
 
     if df_events is not None:
-        df_events.reset_index(drop=False, inplace=True, col_level=1)
+        df_events = df_events.reset_index(drop=False, col_level=1)
         report.add_html(
             _df_bootstrap_table(df=df_events, data_id="events"),
             title="Event counts",
@@ -832,7 +832,7 @@ def add_csp_grand_average(
         results = csp_freq_results.loc[
             csp_freq_results["freq_range_name"] == freq_range_name, :
         ]
-        results.reset_index(drop=True, inplace=True)
+        results = results.reset_index(drop=True)
         assert len(results) == len(freq_bins)
         for bi, freq_bin in enumerate(freq_bins):
             freq_bin_starts.append(freq_bin[0])

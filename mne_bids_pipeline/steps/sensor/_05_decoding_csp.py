@@ -444,7 +444,7 @@ def one_subject_decoding(
                 results = csp_freq_results.loc[
                     csp_freq_results["freq_range_name"] == freq_range_name
                 ]
-                results.reset_index(drop=True, inplace=True)
+                results = results.reset_index(drop=True)
                 assert len(results["scores"]) == len(freq_bins)
                 for bi, freq_bin in enumerate(freq_bins):
                     all_decoding_scores.append(results["scores"][bi])

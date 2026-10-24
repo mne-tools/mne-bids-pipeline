@@ -19,7 +19,7 @@ from ._config_utils import (
 from ._io import _read_json
 from ._logging import gen_log_kwargs, logger
 from ._run import _update_for_splits
-from .typing import ConditionsTypeT, InFilesT, RunKindT, RunTypeT
+from .typing import ConditionsTypeT, InFilesT, IntArrayT, RunKindT, RunTypeT
 
 
 def make_epochs(
@@ -630,7 +630,7 @@ def _get_bids_path_in(
         check=False,
     )
     if kind != "orig":
-        assert kind in ("otp", "sss", "filt"), kind
+        assert kind in ("otp", "sss", "filt", "regress"), kind
         path_kwargs["root"] = cfg.deriv_root
         path_kwargs["suffix"] = "raw"
         path_kwargs["extension"] = ".fif"
@@ -713,7 +713,7 @@ def _get_noise_path(
     if not (cfg.process_empty_room and get_datatype(config=cfg) == "meg"):
         return dict()
     if kind != "orig":
-        assert kind in ("otp", "sss", "filt")
+        assert kind in ("otp", "sss", "filt", "regress")
         raw_fname = _get_bids_path_in(
             cfg=cfg,
             subject=subject,
@@ -953,6 +953,23 @@ def _import_data_kwargs(
         stim_artifact_tmax=config.stim_artifact_tmax,
         **_raw_path_kwargs(config=config, subject=subject, session=session),
     )
+
+
+def _get_regress_picks_artifact(
+    *,
+    info: mne.Info,
+    picks_artifact: Any,
+    task: str | None,
+) -> IntArrayT:
+    """Get regression artifact picks, empty if the empty-room lacks them."""
+    from mne.io.pick import _picks_to_idx
+
+    try:
+        return _picks_to_idx(info, picks_artifact)
+    except ValueError:
+        if task != "noise":
+            raise
+        return np.array([], int)
 
 
 def _read_raw_msg(

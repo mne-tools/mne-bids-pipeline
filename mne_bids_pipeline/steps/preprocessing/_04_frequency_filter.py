@@ -25,6 +25,7 @@ from mne.preprocessing import EOGRegression
 
 from mne_bids_pipeline._config_utils import _get_ssrt
 from mne_bids_pipeline._import_data import (
+    _get_regress_picks_artifact,
     _get_run_rest_noise_path,
     _import_data_kwargs,
     _read_raw_msg,
@@ -276,7 +277,9 @@ def filter_data(
         picks_regress = _picks_to_idx(
             raw.info, model.picks, none="data", exclude=model.exclude
         )
-        picks_artifact = _picks_to_idx(raw.info, model.picks_artifact)
+        picks_artifact = _get_regress_picks_artifact(
+            info=raw.info, picks_artifact=model.picks_artifact, task=task
+        )
         picks_data = _picks_to_idx(raw.info, "data", exclude=())  # raw.filter default
         picks = np.unique(np.r_[picks_regress, picks_artifact, picks_data])
 

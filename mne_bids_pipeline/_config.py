@@ -1305,6 +1305,7 @@ Keyword arguments to pass to the `mne.preprocessing.EOGRegression` model used
 in `mne.preprocessing.regress_artifact`. If `None`, no time-domain regression will
 be applied. Note that any channels picked in `regress_artifact["picks_artifact"]` will
 have the same time-domain filters applied to them as the experimental data.
+If these channels are missing from the empty-room recording, it is left unregressed.
 
 Artifact regression is applied before SSP or ICA.
 

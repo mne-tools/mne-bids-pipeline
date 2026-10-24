@@ -97,7 +97,7 @@ def get_input_fnames_apply_ssp_raw(
         session=session,
         run=run,
         task=task,
-        kind="filt",
+        kind=cfg.processing,
         mf_reference_run=cfg.mf_reference_run,
         mf_reference_task=cfg.mf_reference_task,
     )
@@ -162,6 +162,7 @@ def get_config(
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
         _epochs_split_size=config._epochs_split_size,
+        processing="filt" if config.regress_artifact is None else "regress",
         plot_psd_for_runs=config.plot_psd_for_runs,
         _raw_split_size=config._raw_split_size,
         **_raw_path_kwargs(config=config, subject=subject, session=session),

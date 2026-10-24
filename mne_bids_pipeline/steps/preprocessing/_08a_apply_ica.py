@@ -100,7 +100,7 @@ def get_input_fnames_apply_ica_raw(
         session=session,
         run=run,
         task=task,
-        kind="filt",
+        kind=cfg.processing,
         mf_reference_run=cfg.mf_reference_run,
         mf_reference_task=cfg.mf_reference_task,
     )
@@ -253,6 +253,7 @@ def get_config(
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
         ica_use_icalabel=config.ica_use_icalabel,
+        processing="filt" if config.regress_artifact is None else "regress",
         _epochs_split_size=config._epochs_split_size,
         plot_psd_for_runs=config.plot_psd_for_runs,
         _raw_split_size=config._raw_split_size,

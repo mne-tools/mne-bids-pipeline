@@ -73,6 +73,9 @@ jobs:
         id: dataset-cache
       - run: python -m mne_bids_pipeline._download ${{ matrix.dataset }}
         if: steps.dataset-cache.outputs.cache-hit != 'true'
+      - run: find ~/mne_data/${{ matrix.dataset }} -name "*.lock" -print -delete
+        shell: bash
+        name: Remove stale lock files
       - run: pytest --cov-append -k ${{ matrix.dataset }} mne_bids_pipeline/
         name: Run ${{ matrix.dataset }} test from scratch
       - run: pytest --cov-append -k ${{ matrix.dataset }} mne_bids_pipeline/
@@ -108,6 +111,9 @@ jobs:
         id: MNE-funloc-data-cache
       - run: python -m mne_bids_pipeline._download MNE-funloc-data
         if: steps.MNE-funloc-data-cache.outputs.cache-hit != 'true'
+      - run: find ~/mne_data/MNE-funloc-data -name "*.lock" -print -delete
+        shell: bash
+        name: Remove stale lock files
       - run: pytest --cov-append -k test_session_specific_mri mne_bids_pipeline/
       - run: coverage combine --append || true
       - run: coverage xml || true

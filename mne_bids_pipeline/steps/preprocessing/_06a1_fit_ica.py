@@ -383,7 +383,7 @@ def get_config(
     cfg = SimpleNamespace(
         conditions=config.conditions,
         runs_tasks=get_runs_tasks(
-            config=config, subject=subject, session=session, which=("runs", "rest")
+            config=config, subject=subject, session=session, which=("runs",)
         ),
         task_is_rest=config.task_is_rest,
         ica_h_freq=config.ica_h_freq,

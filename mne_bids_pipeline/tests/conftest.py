@@ -70,6 +70,8 @@ def pytest_configure(config: pytest.Config) -> None:
     ignore:.*Liblinear failed to converge.*:
     # json-tricks
     ignore:json-tricks.*numpy scalar serialization.*:UserWarning
+    # pandas 3.1 inplace deprecation in released MNE
+    ignore:The inplace keyword in DataFrame.*::mne\.
     # vtk<->NumPy 2.5
     ignore:.*Setting the shape on a NumPy array[\S\s]*:DeprecationWarning
     """

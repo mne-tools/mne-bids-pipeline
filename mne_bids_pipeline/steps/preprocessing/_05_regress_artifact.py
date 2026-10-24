@@ -8,6 +8,7 @@ from mne.preprocessing import EOGRegression
 
 from mne_bids_pipeline._config_utils import _get_ssrt
 from mne_bids_pipeline._import_data import (
+    _get_regress_picks_artifact,
     _get_run_rest_noise_path,
     _raw_path_kwargs,
     _read_raw_msg,
@@ -64,29 +65,37 @@ def run_regress_artifact(
     out_files = dict()
     in_key = f"raw_task-{task}_run-{run}"
     bids_path_in = in_files.pop(in_key)
-    out_files[in_key] = bids_path_in.copy().update(processing="regress")
+    out_files[in_key] = bids_path_in.copy().update(processing="regress", split=None)
     msg, _ = _read_raw_msg(bids_path_in=bids_path_in, run=run, task=task)
     logger.info(**gen_log_kwargs(message=msg))
     raw = mne.io.read_raw_fif(bids_path_in).load_data()
-    projs = raw.info["projs"]
-    raw.del_proj()
-    model.fit(raw)
-    all_types = raw.get_channel_types()
-    picks = _picks_to_idx(raw.info, model.picks, none="data", exclude=model.exclude)
-    ch_types = set(all_types[pick] for pick in picks)
-    del picks
-    out_files["regress"] = bids_path_in.copy().update(
-        processing=None,
-        split=None,
-        suffix="regress",
-        extension=".h5",
+    picks_artifact = _get_regress_picks_artifact(
+        info=raw.info, picks_artifact=model.picks_artifact, task=task
     )
-    model.apply(raw, copy=False)
-    if projs:
-        raw.add_proj(projs)
+    ch_types = set()
+    if not len(picks_artifact):
+        msg = "Artifact channels missing from empty-room data, not regressing"
+        logger.info(**gen_log_kwargs(message=msg))
+    else:
+        projs = raw.info["projs"]
+        raw.del_proj()
+        model.fit(raw)
+        all_types = raw.get_channel_types()
+        picks = _picks_to_idx(raw.info, model.picks, none="data", exclude=model.exclude)
+        ch_types = set(all_types[pick] for pick in picks)
+        del picks
+        out_files["regress"] = bids_path_in.copy().update(
+            processing=None,
+            split=None,
+            suffix="regress",
+            extension=".h5",
+        )
+        model.apply(raw, copy=False)
+        if projs:
+            raw.add_proj(projs)
+        model.save(out_files["regress"], overwrite=True)
     raw.save(out_files[in_key], overwrite=True, split_size=cfg._raw_split_size)
     _update_for_splits(out_files, in_key)
-    model.save(out_files["regress"], overwrite=True)
     assert len(in_files) == 0, in_files.keys()
 
     # Report

@@ -341,11 +341,19 @@ i.e. the average across all channels. If a string, must be the name of a single
 channel. To use multiple channels as reference, set to a list of channel names.
 
 !!! warning
-    If this option is set to `average`, AND `add_online_reference_channel` is `False`
-    (AND the online reference channel is not already included as flat channel), you 
-    will likely get incorrect results.
-    See https://github.com/mne-tools/mne-python/issues/13618
-    
+    For `average`, if the online (recording) reference electrode is not a channel
+    in the data, set
+    [`eeg_online_reference_channel`][mne_bids_pipeline._config.eeg_online_reference_channel]
+    so it is included in the average; otherwise sensor-space values will be off
+    (see [mne-python#13618](https://github.com/mne-tools/mne-python/issues/13618)).
+
+!!! warning
+    The reference is set on the epochs and, when
+    [`spatial_filter`][mne_bids_pipeline._config.spatial_filter] is `"ica"` or
+    `"ssp"`, on the cleaned continuous data (`*_proc-clean_raw.fif`). If
+    `spatial_filter` is `None`, the continuous data (e.g., `*_proc-filt_raw.fif`)
+    are not re-referenced.
+
 ???+ example "Example"
     Use the average reference:
     ```python
@@ -363,26 +371,25 @@ channel. To use multiple channels as reference, set to a list of channel names.
     ```
 """
 
-add_online_reference_channel: bool = True
-"""
-Whether the online reference channel should be added to the data (as flat channel),
-if it is not included in the data already.
-"""
-
 eeg_online_reference_channel: str | None = None
 """
-Specify the EEG channel that was used as reference channel during the recording.
+Name of the online (recording) reference electrode. If it is not a channel in the
+data, it is added as a flat channel before setting an
+[average reference][mne_bids_pipeline._config.eeg_reference] so that it is included
+in the average. If `None` (default), no channel is added. Ignored for other
+references.
+
+The channel is kept in the epochs (it is needed by the average reference
+projector). Its position is taken from the reference digitization point if there
+is one (e.g., MEGIN/Neuromag data); otherwise it has none. When the reference is
+applied directly, as for
+[`ica_use_icalabel`][mne_bids_pipeline._config.ica_use_icalabel], it is dropped
+afterward, giving full-rank data.
 
 ???+ example "Example"
     ```python
     eeg_online_reference_channel = "Cz"
     ```
-"""
-
-drop_channel_after_rereference: bool = True
-"""
-Whether the reconstructed online reference channel should be dropped again after applying
-an average reference. 
 """
 
 eeg_template_montage: str | DigMontageType | None = None
@@ -459,20 +466,16 @@ preprocessing stage itself, nor to the source analysis stage.
 reader_extra_params: dict[str, Any] = {}
 """
 Parameters to be passed to `read_raw_bids()` calls when importing raw data.
+If an empty dict (default) is provided and
+[`use_maxwell_filter=True`][mne_bids_pipeline._config.use_maxwell_filter] and
+the dataset uses FIF files, we will automatically set
+`reader_extra_params = dict(allow_maxshield="yes")`.
 
 ???+ example "Example"
     Enforce units for EDF files:
     ```python
     reader_extra_params = {"units": "uV"}
     ```
-"""
-
-read_raw_bids_verbose: Literal["error"] | None = None
-"""
-Verbosity level to pass to `read_raw_bids(..., verbose=read_raw_bids_verbose)`.
-If you know your dataset will contain files that are not perfectly BIDS
-compliant (e.g., "Did not find any meg.json..."), you can set this to
-`'error'` to suppress warnings emitted by read_raw_bids.
 """
 
 plot_psd_for_runs: Literal["all"] | Sequence[str] = "all"
@@ -631,6 +634,39 @@ A dictionary of extra kwargs to pass to `mne.preprocessing.find_bad_channels_max
 will be raised.
 For full documentation of the bad channel detection:
 https://mne.tools/stable/generated/mne.preprocessing.find_bad_channels_maxwell
+"""
+
+
+# %%
+# ## Oversampled Temporal Projection (OTP)
+
+use_otp_denoising: bool = False
+"""
+Whether or not to use [Oversampled Temporal Projection]
+[mne.preprocessing.oversampled_temporal_projection] to preprocess the data.
+
+!!! warning
+    If the data will be processed using Maxwell filtering, OTP must be applied first,
+    and the user must set the correlation limit for tSSS ([`mf_st_correlation`]
+    [mne_bids_pipeline._config.mf_st_correlation]) to 0.99 or higher. Flat and noisy
+    channels should be marked as bad prior to applying OTP or else the noise will be
+    spread to all channels because of OTP. Setting automatic bad channel detection to
+    True ([`find_flat_channels_meg`][mne_bids_pipeline._config.find_flat_channels_meg]
+    and [`find_noisy_channels_meg`][mne_bids_pipeline._config.find_noisy_channels_meg])
+    will mark bad channels prior to OTP, or alternately bad channels can be marked
+    manually in the BIDS `channels.tsv` file.
+"""
+
+
+otp_duration: Literal["min"] | float = 10.00
+"""
+Window duration in seconds. Can also be "min" to use the shortest possible window
+duration.
+
+???+ example "Example"
+    ```python
+    otp_duration = 10.
+    ```
 """
 
 
@@ -846,6 +882,12 @@ mf_mc_dist_limit: float = 0.005
 Minimum distance (m) to accept for cHPI position fitting.
 """
 
+mf_mc_weighted: bool = True
+"""
+Whether to use smooth weighting for HPI during movement compensation.
+Using `True` (default) requires MNE >= 1.13.
+"""
+
 mf_mc_rotation_velocity_limit: float | None = None
 """
 The rotation velocity limit (degrees/second) to use when annotating
@@ -954,13 +996,17 @@ Specifies the width of each stop band. `None` uses the MNE default.
 
 zapline_fline: float | None = None
 """
-Specifies frequency to remove using Zapline filtering. If None, zapline will not
-be used.
+Line frequency to remove with ZapLine. If `None`, ZapLine is disabled.
+ZapLine and notch filtering cannot be enabled at the same time.
 """
 
-zapline_iter: bool = False
+zapline_extra_kws: dict[str, Any] = {}
 """
-Specifies if the iterative version of the Zapline algorithm should be run.
+Additional keyword arguments passed to `mne_denoise.zapline.ZapLine`.
+The Pipeline uses `n_select=1` and `adaptive=False` by default; values supplied
+here can override these defaults, including enabling adaptive processing. The
+Pipeline sets `sfreq` from the Raw object and `line_freq` from `zapline_fline`;
+do not supply either here.
 """
 
 notch_extra_kws: dict[str, Any] = {}
@@ -1223,7 +1269,10 @@ Can be a dict mapping task names to tmax values.
 
 rest_epochs_duration: float | None = None
 """
-Duration of epochs in seconds.
+Duration of fixed-length epochs, in seconds. This parameter must be set when
+[`task_is_rest`][mne_bids_pipeline._config.task_is_rest] is `True`. Use
+[`rest_epochs_overlap`][mne_bids_pipeline._config.rest_epochs_overlap] to control
+the overlap between consecutive epochs.
 """
 
 rest_epochs_overlap: float | None = None
@@ -1291,6 +1340,7 @@ Keyword arguments to pass to the `mne.preprocessing.EOGRegression` model used
 in `mne.preprocessing.regress_artifact`. If `None`, no time-domain regression will
 be applied. Note that any channels picked in `regress_artifact["picks_artifact"]` will
 have the same time-domain filters applied to them as the experimental data.
+If these channels are missing from the empty-room recording, it is left unregressed.
 
 Artifact regression is applied before SSP or ICA.
 
@@ -1420,7 +1470,7 @@ otherwise, SSP won't be able to "see" these artifacts.
     ```
 """
 
-ssp_ecg_channel: str | dict[str, str] | None = None
+ssp_ecg_channel: str | dict[str, str | None] | None = None
 """
 Channel to use for ECG SSP. Can be useful when the autodetected ECG channel
 is not reliable. If `str`, the same channel will be used for all subjects.
@@ -2523,6 +2573,13 @@ empty list, `[]`.
 
 # ## Report generation
 
+smoothing_steps: int | None = None
+"""
+Specifies the number of smoothing steps to use when morphing from individual subject
+data to the average subject. See the `smooth` parameter of `mne.compute_source_morph`
+for details.
+"""
+
 report_evoked_n_time_points: int | None = None
 """
 Specifies the number of time points to display for each evoked
@@ -2544,6 +2601,25 @@ in the report. If `None`, it defaults to the current default in MNE-Python.
     Only display 5 images per source estimate:
     ```python
     report_stc_n_time_points = 5
+    ```
+"""
+
+report_image_format: dict[
+    Literal["raster", "vector"], Literal["webp", "webp-lossy", "png", "svg"]
+] = dict(raster="webp", vector="svg")
+"""
+The formats used to store images embedded in the reports. The `"raster"` entry applies
+to inherently pixel-based content (topographic map sliders, ICA properties, epochs
+images, and similar) and can be `"webp"`, `"webp-lossy"`, or `"png"` — WebP produces the
+smallest reports, but lossless WebP is considerably slower to encode than PNG, which can
+make a difference on report-heavy runs; lossy WebP encodes about as fast as PNG and
+still yields much smaller reports. The `"vector"` entry applies to line-art figures and
+can additionally be `"svg"`. Missing keys keep their default values.
+
+???+ example "Example"
+    Trade larger reports for faster processing:
+    ```python
+    report_image_format = dict(raster="png")
     ```
 """
 
@@ -2645,21 +2721,86 @@ dask_worker_memory_limit: str = "10G"
 The maximum amount of RAM per Dask worker.
 """
 
+dask_worker_startup_timeout: float = 3600
+"""
+How long to wait (in seconds) for workers to come up before giving up, e.g. while
+[`dask_cluster`][mne_bids_pipeline._config.dask_cluster] jobs sit in the batch queue.
+Only used when `dask_cluster` is set.
+"""
+
+dask_cluster: str | Callable[[], Any] | None = None
+"""
+Attach to an external Dask cluster instead of starting workers locally, e.g., on an
+HPC system via [dask-jobqueue](https://jobqueue.dask.org). Either the address of a
+running scheduler (e.g., `"tcp://10.0.0.1:8786"`), or a callable that returns a
+[Dask cluster object](https://distributed.dask.org/en/stable/api.html#cluster) (or
+anything accepted by `distributed.Client`):
+
+```python
+def dask_cluster():
+    from dask_jobqueue import SLURMCluster
+
+    cluster = SLURMCluster(queue="cpu", cores=8, memory="32GB", walltime="02:00:00")
+    cluster.scale(jobs=4)  # or cluster.adapt(maximum_jobs=8)
+    return cluster
+```
+
+If the callable returns a cluster with no workers requested, the pipeline calls
+`cluster.scale(n_jobs)`. Compute nodes must share the filesystem holding
+[`bids_root`][mne_bids_pipeline._config.bids_root] and
+[`deriv_root`][mne_bids_pipeline._config.deriv_root] and have the same Python
+environment. Ignored if `parallel_backend` is not `'dask'`;
+[`dask_worker_memory_limit`][mne_bids_pipeline._config.dask_worker_memory_limit] and
+[`dask_temp_dir`][mne_bids_pipeline._config.dask_temp_dir] are then also ignored
+(configure these on the cluster instead).
+"""
+
 # %%
 # # Logging
 #
 # These options control how much logging output is produced.
 
-log_level: Literal["info", "error"] = "info"
+log_level: Literal["info", "warning", "error"] = "info"
 """
 Set the pipeline logging verbosity.
 """
 
-mne_log_level: Literal["info", "error"] = "error"
+mne_log_level: Literal["info", "warning", "error"] = "warning"
 """
 Set the MNE-Python logging verbosity.
 """
 
+read_raw_bids_verbose: Literal["info", "warning", "error"] | None = None
+"""
+Verbosity level to pass to `read_raw_bids(..., verbose=read_raw_bids_verbose)`.
+If you know your dataset will contain files that are not perfectly BIDS
+compliant (e.g., "Did not find any meg.json..."), you can set this to
+`'error'` to suppress warnings emitted by read_raw_bids.
+"""
+
+ignore_warnings: Sequence[str] = ()
+r"""
+A list of message strings to ignore during execution. This gives you
+finer-grained control over warnings to suppress during `read_raw_bids`,
+fitting sphere to headshape, etc. Each string is treated as a regular expression,
+and for convenience, they will be used with additional regex added at each end like:
+```
+warnings.ignorewarnings("ignore", message=rf"[\S\s]*{msg}[\S\s]*")
+```
+
+???+ example "Example"
+    Suppressing warnings for ds000117 can be done with:
+    ```python
+    ignore_warnings = (
+        "The number of channels in the channels.tsv sidecar file",
+        'contains a "stim_type" column. This column should be renamed to "trial_type"',
+        "Cannot set channel type for the following channels",
+        "Unable to map the following column",
+        "more than 20 mm from head frame origin",
+        "Did not find any (channels.tsv|meg.json) associated with sub-emptyroom_ses",
+    )
+    ```
+"""
 
 # %%
 # # Error handling

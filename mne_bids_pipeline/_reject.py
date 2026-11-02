@@ -4,6 +4,7 @@ from collections.abc import Iterable
 from typing import Literal
 
 import mne
+from mne.utils import check_version
 
 from ._logging import gen_log_kwargs, logger
 
@@ -25,6 +26,12 @@ def _get_reject(
             raise ValueError(f'Setting {param}="autoreject_global" is not supported')
         # Automated threshold calculation requested
         import autoreject
+
+        if check_version("sklearn", "1.9") and not check_version("autoreject", "0.4.4"):
+            raise RuntimeError(
+                f"autoreject 0.4.4 or higher (got {autoreject.__version__}) "
+                f"is required for scikit-learn 1.9 or higher"
+            )
 
         ch_types_autoreject = list(ch_types)
         if "meg" in ch_types_autoreject:

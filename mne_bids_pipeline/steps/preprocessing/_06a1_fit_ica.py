@@ -24,10 +24,14 @@ from mne_bids_pipeline._config_utils import (
     get_eeg_reference,
     get_runs_tasks,
 )
-from mne_bids_pipeline._import_data import annotations_to_events, make_epochs
+from mne_bids_pipeline._import_data import (
+    _epochs_kwargs,
+    annotations_to_events,
+    make_epochs,
+)
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
-from mne_bids_pipeline._reference import set_initial_average_reference
+from mne_bids_pipeline._reference import _set_eeg_reference
 from mne_bids_pipeline._reject import _get_reject
 from mne_bids_pipeline._report import _open_report
 from mne_bids_pipeline._run import (
@@ -206,19 +210,7 @@ def run_ica(
     del run
     assert epochs is not None
 
-    # Set an EEG reference
-    if "eeg" in cfg.ch_types:
-        if cfg.eeg_reference == "average":
-            set_initial_average_reference(epochs, cfg)
-            if cfg.ica_use_icalabel:
-                epochs.apply_proj()  # Apply the reference projection
-                if cfg.drop_channel_after_rereference:
-                    msg = f"Online reference channel {cfg.eeg_online_reference_channel} will be dropped again."
-                    logger.info(**gen_log_kwargs(message=msg))
-                    epochs.drop_channels(cfg.eeg_online_reference_channel)
-
-        else:
-            epochs.set_eeg_reference(cfg.eeg_reference, projection=False)
+    _set_eeg_reference(epochs, cfg=cfg, apply=cfg.ica_use_icalabel)
 
     ar_reject_log = ar_n_interpolate_ = None
     if cfg.ica_reject == "autoreject_local":
@@ -387,7 +379,7 @@ def get_config(
     cfg = SimpleNamespace(
         conditions=config.conditions,
         runs_tasks=get_runs_tasks(
-            config=config, subject=subject, session=session, which=("runs", "rest")
+            config=config, subject=subject, session=session, which=("runs",)
         ),
         task_is_rest=config.task_is_rest,
         ica_h_freq=config.ica_h_freq,
@@ -403,23 +395,13 @@ def get_config(
         ch_types=config.ch_types,
         epochs_decim=config.epochs_decim,
         raw_resample_sfreq=config.raw_resample_sfreq,
-        event_repeated=config.event_repeated,
         epochs_tmin=epochs_tmin,
         epochs_tmax=epochs_tmax,
-        epochs_custom_metadata=config.epochs_custom_metadata,
-        epochs_metadata_tmin=config.epochs_metadata_tmin,
-        epochs_metadata_tmax=config.epochs_metadata_tmax,
-        epochs_metadata_keep_first=config.epochs_metadata_keep_first,
-        epochs_metadata_keep_last=config.epochs_metadata_keep_last,
-        epochs_metadata_query=config.epochs_metadata_query,
         eeg_reference=get_eeg_reference(config),
         eeg_online_reference_channel=config.eeg_online_reference_channel,
-        add_online_reference_channel=config.add_online_reference_channel,
-        drop_channel_after_rereference=config.drop_channel_after_rereference,
-        rest_epochs_duration=config.rest_epochs_duration,
-        rest_epochs_overlap=config.rest_epochs_overlap,
         processing="filt" if config.regress_artifact is None else "regress",
         _epochs_split_size=config._epochs_split_size,
+        **_epochs_kwargs(config=config),
         **_bids_kwargs(config=config),
     )
     return cfg

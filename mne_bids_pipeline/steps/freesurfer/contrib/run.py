@@ -584,7 +584,7 @@ elif args.analysis_level == "group2":  # running stats tables
                                         columns=["subject", "lh_euler", "rh_euler"])
             df = df.append(df_subject)
         df["mean_euler_bh"] = df[["lh_euler", "rh_euler"]].mean(1)
-        df.sort_values("subject", inplace=True)
+        df = df.sort_values("subject")
         df.to_csv(euler_out_file, sep="\t", index=False)
     else:
         print("\nNo subjects included in the analysis. Skipping group2 level euler number table.")

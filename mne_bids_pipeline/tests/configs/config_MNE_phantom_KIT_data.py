@@ -1,8 +1,7 @@
-"""
-KIT phantom data.
+"""mne-data: KIT phantom data.
 
-https://mne.tools/dev/documentation/datasets.html#kit-phantom-dataset
-"""
+See [MNE documentation](https://mne.tools/dev/documentation/datasets.html#kit-phantom-dataset) for more information.
+"""  # noqa: E501
 
 bids_root = "~/mne_data/MNE-phantom-KIT-data"
 deriv_root = "~/mne_data/derivatives/mne-bids-pipeline/MNE-phantom-KIT-data"
@@ -25,3 +24,5 @@ conditions = ["dip01", "dip13", "dip25", "dip37", "dip49"]
 
 # Decoding
 decode = True  # should be very good performance
+
+report_image_format = dict(raster="png")

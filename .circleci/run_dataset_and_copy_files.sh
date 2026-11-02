@@ -2,8 +2,9 @@
 
 set -eo pipefail
 
-COPY_FILES="true"
-RERUN_TEST="true"
+# Also settable via env (see config.yml)
+COPY_FILES="${COPY_FILES:-true}"
+RERUN_TEST="${RERUN_TEST:-true}"
 while getopts "cr" option; do
    echo $option
    case $option in
@@ -47,6 +48,10 @@ else
 fi
 test $RUN_TIME -le $RERUN_LIMIT
 
+# Merge in coverage from loky/dask workers; --append keeps the parent's data.
+coverage combine --append || true
+coverage xml || true
+
 if [[ "$COPY_FILES" == "false" ]]; then
   echo -e "${EMPH}Not copying files${RESET}"
   exit 0
@@ -55,9 +60,9 @@ echo
 echo -e "${EMPH}Copying files${RESET}"
 mkdir -p ~/reports/${DS}
 # these should always exist
-cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.html ~/reports/${DS}/
+cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/sub-*/**/*.html ~/reports/${DS}/
 cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*.xlsx ~/reports/${DS}/
 # these are allowed to be optional
-cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.json ~/reports/${DS}/ || :
-cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/*/**/*.tsv ~/reports/${DS}/ || :
+cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/sub-*/**/*.json ~/reports/${DS}/ || :
+cp -av ~/mne_data/derivatives/mne-bids-pipeline/${DS}/sub-*/**/*.tsv ~/reports/${DS}/ || :
 ls -al test-results/*.xml

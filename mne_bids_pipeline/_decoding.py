@@ -33,6 +33,27 @@ class LogReg(LogisticRegression):  # type: ignore[misc]
             return super().fit(*args, **kwargs)
 
 
+def _get_nan_decoding_scores_if_insufficient(
+    *,
+    n_cond1: int,
+    n_cond2: int,
+    n_splits: int,
+    score_shape: tuple[int, ...],
+    contrast_msg: str,
+) -> FloatArrayT | None:
+    """Return NaN scores when stratified cross-validation cannot run."""
+    if min(n_cond1, n_cond2) >= n_splits:
+        return None
+
+    msg = (
+        f"Cannot run {n_splits}-fold decoding for {contrast_msg}: each condition "
+        f"needs at least {n_splits} epochs, but found {n_cond1} and {n_cond2}. "
+        "Saving all-NaN scores for this subject and contrast."
+    )
+    logger.warning(**gen_log_kwargs(message=msg))
+    return np.full((n_splits, *score_shape), np.nan)
+
+
 def _handle_csp_args(
     decoding_csp_times: list[float] | tuple[float, ...] | FloatArrayT | None,
     decoding_csp_freqs: dict[str, Any] | None,

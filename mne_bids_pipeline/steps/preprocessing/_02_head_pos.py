@@ -1,5 +1,6 @@
 """Estimate head positions."""
 
+import inspect
 from types import SimpleNamespace
 
 import mne
@@ -16,7 +17,12 @@ from mne_bids_pipeline._import_data import (
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
 from mne_bids_pipeline._report import _get_prefix_tags, _open_report
-from mne_bids_pipeline._run import _prep_out_files, failsafe_run, save_logs
+from mne_bids_pipeline._run import (
+    _ignore_warnings,
+    _prep_out_files,
+    failsafe_run,
+    save_logs,
+)
 from mne_bids_pipeline.typing import InFilesT, OutFilesT
 
 
@@ -44,6 +50,7 @@ def get_input_fnames_head_pos(
 
 @failsafe_run(
     get_input_fnames=get_input_fnames_head_pos,
+    sidecars=True,
 )
 def run_head_pos(
     *,
@@ -76,6 +83,7 @@ def run_head_pos(
 
     raw = import_experimental_data(
         cfg=cfg,
+        exec_params=exec_params,
         bids_path_in=bids_path_in,
         bids_path_bads_in=bids_path_bads_in,
         data_is_rest=None,  # autodetect
@@ -98,11 +106,16 @@ def run_head_pos(
     logger.info(**gen_log_kwargs(message="Estimating cHPI locations"))
     chpi_locs = mne.chpi.compute_chpi_locs(raw.info, chpi_amplitudes)
     logger.info(**gen_log_kwargs(message="Estimating head positions"))
+    kwargs = dict()
+    spec = inspect.getfullargspec(mne.chpi.compute_head_pos)
+    if "weighted" in spec.kwonlyargs:
+        kwargs["weighted"] = cfg.mf_mc_weighted
     head_pos = mne.chpi.compute_head_pos(
         raw.info,
         chpi_locs,
         gof_limit=cfg.mf_mc_gof_limit,
         dist_limit=cfg.mf_mc_dist_limit,
+        **kwargs,
     )
     mne.chpi.write_head_pos(out_files[key], head_pos)
 
@@ -125,7 +138,7 @@ def run_head_pos(
         report.add_figure(
             fig=fig,
             title=f"cHPI SNR{prefix}",
-            image_format="svg",
+            image_format=cfg.report_image_format["vector"],
             section=section,
             tags=tags,
             replace=True,
@@ -135,7 +148,7 @@ def run_head_pos(
         report.add_figure(
             fig=fig,
             title=f"Head positions{prefix}",
-            image_format="svg",
+            image_format=cfg.report_image_format["vector"],
             section=section,
             tags=tags,
             replace=True,
@@ -193,6 +206,7 @@ def get_input_fnames_twa_head_pos(
 
 @failsafe_run(
     get_input_fnames=get_input_fnames_twa_head_pos,
+    sidecars=True,
 )
 def compute_twa_head_pos(
     *,
@@ -247,7 +261,8 @@ def compute_twa_head_pos(
     ]
     # compute time-weighted average head position and save it to disk
     destination = mne.preprocessing.compute_average_dev_head_t(raws, head_poses)
-    mne.write_trans(fname=dest_path.fpath, trans=destination, overwrite=True)
+    with _ignore_warnings("does not conform to MNE naming conventions"):
+        mne.write_trans(fname=dest_path.fpath, trans=destination, overwrite=True)
     # output
     out_files = dict(destination_head_pos=dest_path)
     return _prep_out_files(exec_params=exec_params, out_files=out_files)
@@ -264,6 +279,7 @@ def get_config_head_pos(
         mf_mc_gof_limit=config.mf_mc_gof_limit,
         mf_mc_dist_limit=config.mf_mc_dist_limit,
         mf_mc_t_window=config.mf_mc_t_window,
+        mf_mc_weighted=config.mf_mc_weighted,
         **_import_data_kwargs(config=config, subject=subject, session=session),
     )
     return cfg

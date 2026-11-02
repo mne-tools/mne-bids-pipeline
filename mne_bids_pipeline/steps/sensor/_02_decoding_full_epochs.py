@@ -29,7 +29,11 @@ from mne_bids_pipeline._config_utils import (
     _restrict_analyze_channels,
     get_eeg_reference,
 )
-from mne_bids_pipeline._decoding import LogReg, _decoding_preproc_steps
+from mne_bids_pipeline._decoding import (
+    LogReg,
+    _decoding_preproc_steps,
+    _get_nan_decoding_scores_if_insufficient,
+)
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
 from mne_bids_pipeline._report import (
@@ -95,12 +99,13 @@ def run_epochs_decoding(
 ) -> OutFilesT:
     import matplotlib.pyplot as plt
 
-    msg = f"Contrasting conditions: {condition1} – {condition2}"
+    contrast_msg = f"{condition1} – {condition2}"
+    msg = f"Contrasting conditions: {contrast_msg}"
     logger.info(**gen_log_kwargs(message=msg))
     out_files = dict()
     bids_path = in_files["epochs"].copy().update(split=None)
 
-    epochs = mne.read_epochs(in_files.pop("epochs"))
+    epochs = mne.read_epochs(in_files.pop("epochs").fpath)
     _restrict_analyze_channels(epochs, cfg)
 
     # We define the epochs and the labels
@@ -127,42 +132,48 @@ def run_epochs_decoding(
         epochs.info, meg=True, eeg=True, ref_meg=False, exclude="bads"
     )
     epochs.pick(pick_idx)
-    pre_steps = _decoding_preproc_steps(
-        cfg=cfg,
-        subject=subject,
-        session=session,
-        task=task,
-        epochs=epochs,
-    )
-
     n_cond1 = len(epochs[epochs_conds[0]])
     n_cond2 = len(epochs[epochs_conds[1]])
 
-    X = epochs.get_data()
-    y = np.r_[np.ones(n_cond1), np.zeros(n_cond2)]
-
-    clf = make_pipeline(
-        *pre_steps,
-        Vectorizer(),
-        LogReg(random_state=cfg.random_state),
-    )
-
-    # Now, actually run the classification, and evaluate it via a
-    # cross-validation procedure.
-    cv = StratifiedKFold(
-        shuffle=True,
-        random_state=cfg.random_state,
+    scores = _get_nan_decoding_scores_if_insufficient(
+        n_cond1=n_cond1,
+        n_cond2=n_cond2,
         n_splits=cfg.decoding_n_splits,
+        score_shape=(),
+        contrast_msg=contrast_msg,
     )
-    scores = cross_val_score(
-        estimator=clf,
-        X=X,
-        y=y,
-        cv=cv,
-        scoring="roc_auc",
-        n_jobs=1,
-        error_score="raise",
-    )
+    if scores is None:
+        pre_steps = _decoding_preproc_steps(
+            cfg=cfg,
+            subject=subject,
+            session=session,
+            task=task,
+            epochs=epochs,
+        )
+        X = epochs.get_data()
+        y = np.r_[np.ones(n_cond1), np.zeros(n_cond2)]
+        clf = make_pipeline(
+            *pre_steps,
+            Vectorizer(),
+            LogReg(random_state=cfg.random_state),
+        )
+
+        # Now, actually run the classification, and evaluate it via a
+        # cross-validation procedure.
+        cv = StratifiedKFold(
+            shuffle=True,
+            random_state=cfg.random_state,
+            n_splits=cfg.decoding_n_splits,
+        )
+        scores = cross_val_score(
+            estimator=clf,
+            X=X,
+            y=y,
+            cv=cv,
+            scoring="roc_auc",
+            n_jobs=1,
+            error_score="raise",
+        )
 
     # Save the scores
     a_vs_b = f"{cond_names[0]}+{cond_names[1]}".replace(op.sep, "")
@@ -175,12 +186,21 @@ def run_epochs_decoding(
     )
     out_files[tsv_key] = out_files[mat_key].copy().update(extension=".tsv")
     savemat(out_files[f"mat_{processing}"], {"scores": scores})
+    mean_crossval_score = scores.mean()
+    if np.isnan(scores).all():
+        msg = f"Mean score for {contrast_msg} is unavailable."
+    else:
+        msg = (
+            f"Mean score for {contrast_msg}: "
+            f"{cfg.decoding_metric}={mean_crossval_score:0.3f}"
+        )
+    logger.info(**gen_log_kwargs(message=msg))
 
     tabular_data = pd.Series(
         {
-            "cond_1": cond_names[0],
-            "cond_2": cond_names[1],
-            "mean_crossval_score": scores.mean(axis=0),
+            "cond_1": condition1,
+            "cond_2": condition2,
+            "mean_crossval_score": mean_crossval_score,
             "metric": cfg.decoding_metric,
         }
     )
@@ -246,7 +266,6 @@ def get_config(
         conditions=_get_task_conditions_dict(conditions=config.conditions, task=task),
         contrasts=_get_task_decoding_contrasts(config, task=task),
         cov_rank=config.cov_rank,
-        decode=config.decode,
         decoding_which_epochs=config.decoding_which_epochs,
         decoding_metric=config.decoding_metric,
         decoding_epochs_tmin=config.decoding_epochs_tmin,

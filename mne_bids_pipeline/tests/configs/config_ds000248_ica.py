@@ -1,4 +1,4 @@
-"""MNE Sample Data: ICA."""
+"""ds000248: MNE Sample Data ICA."""
 
 bids_root = "~/mne_data/ds000248"
 deriv_root = "~/mne_data/derivatives/mne-bids-pipeline/ds000248_ica"
@@ -10,6 +10,7 @@ subjects = ["01"]
 task = "audiovisual"
 l_freq = 0.3
 h_freq = 40.0
+regress_artifact = dict(picks="meg", picks_artifact=["EOG 061"])  # not in empty-room
 
 conditions = ["Auditory/Left", "Auditory/Right", "Visual/Left", "Visual/Right"]
 
@@ -25,3 +26,5 @@ ica_n_components = 0.8
 ica_max_iterations = 500
 
 interactive = False
+
+report_image_format = dict(raster="png")

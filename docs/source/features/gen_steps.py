@@ -4,10 +4,11 @@
 import importlib
 from pathlib import Path
 
-from mne_bids_pipeline._config_utils import _get_step_modules
+from mne_bids_pipeline._config_utils import _get_step_modules, _get_step_title
+from mne_bids_pipeline._run import _short_step_path
 
 autogen_header = f"""\
-[//]: # (AUTO-GENERATED, TO CHANGE EDIT {"/".join(Path(__file__).parts[-4:])})
+[//a]: # (AUTO-GENERATED, TO CHANGE EDIT {"/".join(Path(__file__).parts[-4:])})\
 """
 
 steps_pre = f"""\
@@ -25,7 +26,7 @@ instead to ensure that all steps affected by a given change are re-run.
 overview_pre = f"""\
 {autogen_header}
 
-# MNE-BIDS-Pipeline overview
+# Pipeline overview
 
 MNE-BIDS-Pipeline processes your data in a sequential manner, i.e., one step
 at a time. The next step is only run after the previous steps have been
@@ -76,7 +77,9 @@ char_start = ord("A")
 # (and rare) enough to do.
 manual_order = {
     "Preprocessing": (
-        ("01", "02"),
+        ("01a", "01b"),
+        ("01a", "02"),
+        ("01b", "02"),
         ("02", "03"),
         ("03", "04"),
         ("04", "05"),
@@ -116,7 +119,8 @@ for di, (dir_, modules) in enumerate(step_modules.items(), 1):
         continue  # this is an alias
     dir_module = importlib.import_module(f"mne_bids_pipeline.steps.{dir_}")
     assert dir_module.__doc__ is not None
-    dir_header = dir_module.__doc__.split("\n")[0].rstrip(".")
+    dir_header = _get_step_title(dir_module)
+    assert dir_header is not None
     dir_body_list = dir_module.__doc__.split("\n", maxsplit=1)
     dir_body = dir_body_list[1].strip() if len(dir_body_list) > 1 else ""
     icon = icon_map[dir_header]
@@ -131,10 +135,10 @@ for di, (dir_, modules) in enumerate(step_modules.items(), 1):
     lines.append(f"`{dir_name}` | {step_title} |")
     for module in modules:
         assert module.__file__ is not None
-        assert module.__doc__ is not None
-        step_name = f"{dir_name}/{Path(module.__file__).name}"[:-3]
-        step_title = module.__doc__.split("\n")[0]
-        lines.append(f"`{step_name}` | {step_title} |")
+        step_name = _short_step_path(Path(module.__file__))
+        step_title = _get_step_title(module)
+        assert step_title is not None
+        lines.append(f"`{step_name}` | {step_title}. |")
     lines.append("")
 
     # Overview
@@ -153,9 +157,9 @@ flowchart TD"""
     prev_idx = None
     title_map = {}
     for mi, module in enumerate(modules, 1):
-        assert module.__doc__ is not None
         assert module.__name__ is not None
-        step_title = module.__doc__.split("\n")[0].rstrip(".")
+        step_title = _get_step_title(module)
+        assert step_title is not None
         idx = module.__name__.split(".")[-1].split("_")[1]  # 01, 05a, etc.
         # Need to quote the title to deal with parens, and sanitize quotes
         step_title = step_title.replace('"', "'")

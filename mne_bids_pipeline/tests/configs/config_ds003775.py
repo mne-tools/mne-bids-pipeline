@@ -1,11 +1,16 @@
-"""SRM Resting-state EEG."""
+"""ds003775: Resting-state EEG.
+
+SRM Resting State EEG Dataset.
+See [OpenNeuro](https://openneuro.org/datasets/ds003775) for more information.
+"""
 
 bids_root = "~/mne_data/ds003775"
 deriv_root = "~/mne_data/derivatives/mne-bids-pipeline/ds003775"
 
-# To get all subjects for example:
-# from mne_bids import get_entity_vals
-# subjects = sorted(get_entity_vals(bids_root, entity_key='subject'))
+ignore_warnings = [
+    r"Unable to map the following column\(s\)",  # metadata
+]
+
 subjects = ["010"]
 
 reader_extra_params = {"units": "uV"}
@@ -37,3 +42,5 @@ dask_open_dashboard = True
 log_level = "info"
 
 n_jobs = 1
+
+report_image_format = dict(raster="png")

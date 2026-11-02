@@ -34,7 +34,7 @@ from mne_bids_pipeline._run import (
 from mne_bids_pipeline.typing import InFilesT, IntArrayT, OutFilesT
 
 
-def _find_ecg_events(raw: mne.io.Raw, ch_name: str | None) -> IntArrayT:
+def _find_ecg_events(raw: mne.io.BaseRaw, ch_name: str | None) -> IntArrayT:
     """Wrap find_ecg_events to use the same defaults as create_ecg_events."""
     out: IntArrayT = find_ecg_events(raw, ch_name=ch_name, l_freq=8, h_freq=16)[0]
     return out
@@ -97,6 +97,7 @@ def run_ssp(
     raw = mne.concatenate_raws(
         [mne.io.read_raw_fif(raw_fname_in) for raw_fname_in in raw_fnames]
     )
+    assert isinstance(raw, mne.io.BaseRaw)
     del raw_fnames
 
     projs: dict[str, list[mne.Projection]] = dict()
@@ -119,7 +120,7 @@ def run_ssp(
         ch_name_ecg = get_ecg_channel(
             ecg_channel=cfg.ssp_ecg_channel, subject=subject, session=session
         )
-        if ch_name_ecg not in raw.ch_names:
+        if ch_name_ecg is not None and ch_name_ecg not in raw.ch_names:
             raise ConfigError(
                 f"SSP ECG channel '{ch_name_ecg}' not found in data for "
                 f"subject {subject}, session {session}"
@@ -193,7 +194,7 @@ def run_ssp(
                 .copy()
                 .update(suffix=f"{kind}-epo", split=None, check=False)
             )
-            proj_epochs.save(out_files[f"epochs_{kind}"], overwrite=True)
+            proj_epochs.save(out_files[f"epochs_{kind}"].fpath, overwrite=True)
         else:
             msg = (
                 f"No {kind.upper()} projectors computed: got "
@@ -218,20 +219,22 @@ def run_ssp(
 
             msg = f"Adding {kind.upper()} SSP to report."
             logger.info(**gen_log_kwargs(message=msg))
-            proj_epochs = mne.read_epochs(out_files[f"epochs_{kind}"])
+            proj_epochs = mne.read_epochs(out_files[f"epochs_{kind}"].fpath)
             these_projs: list[mne.Projection] = mne.read_proj(out_files["proj"])
             these_projs = [p for p in these_projs if kind.upper() in p["desc"]]
             assert len(these_projs), len(these_projs)  # should exist if the epochs do
             picks_trace: str | list[str] | None = None
             if kind == "ecg":
                 if cfg.ssp_ecg_channel:
-                    picks_trace = [
-                        get_ecg_channel(
-                            ecg_channel=cfg.ssp_ecg_channel,
-                            subject=subject,
-                            session=session,
-                        )
-                    ]
+                    this_ch: str | None = get_ecg_channel(
+                        ecg_channel=cfg.ssp_ecg_channel,
+                        subject=subject,
+                        session=session,
+                    )
+                    if this_ch is None:  # "use MNE default ECG channel"
+                        picks_trace = "ecg"
+                    else:
+                        picks_trace = [this_ch]
                 elif "ecg" in proj_epochs:
                     picks_trace = "ecg"
             else:

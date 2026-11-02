@@ -14,6 +14,7 @@ It is critical to mark bad channels before Maxwell filtering.
 The function loads machine-specific calibration files.
 """
 
+import contextlib
 import gc
 from collections import defaultdict
 from copy import deepcopy
@@ -27,14 +28,14 @@ from mne_bids import BIDSPath, read_raw_bids
 from mne_bids_pipeline._config_utils import (
     _get_ss,
     _get_ssrt,
+    _mf_cal_kwargs,
     _pl,
-    get_mf_cal_fname,
-    get_mf_ctc_fname,
     get_runs_tasks,
 )
 from mne_bids_pipeline._import_data import (
     _get_bids_path_in,
     _get_mf_reference_path,
+    _get_reader_extra_params,
     _get_run_path,
     _get_run_rest_noise_path,
     _import_data_kwargs,
@@ -45,6 +46,7 @@ from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
 from mne_bids_pipeline._report import _add_raw, _open_report
 from mne_bids_pipeline._run import (
+    _ignore_warnings,
     _prep_out_files,
     _update_for_splits,
     failsafe_run,
@@ -63,6 +65,7 @@ def get_input_fnames_all_bads(
 ) -> dict[str, BIDSPath]:
     """Get paths of files required by compute_all_bads function."""
     in_files: dict[str, BIDSPath] = dict()
+    use_kind = "orig"
     for run, task in cfg.runs_tasks:
         key = f"raw_task-{task}_run-{run}-bads"
         in_files[key] = _get_run_path(
@@ -72,7 +75,7 @@ def get_input_fnames_all_bads(
             run=run,
             task=task,
             add_bads=True,
-            kind="orig",
+            kind=use_kind,
         )[key]
     return in_files
 
@@ -83,13 +86,15 @@ def _get_allbads_path(
     subject: str,
     session: str | None,
 ) -> BIDSPath:
+    use_kind = "orig"
+    use_proc = None
     path = _get_bids_path_in(
         cfg=cfg,
         subject=subject,
         session=session,
         run=None,
         task=None,
-        kind="orig",
+        kind=use_kind,
     )
     path.update(
         suffix="allbads",
@@ -97,6 +102,7 @@ def _get_allbads_path(
         root=cfg.deriv_root,
         split=None,
         check=False,
+        processing=use_proc,
     )
     return path
 
@@ -154,6 +160,7 @@ def get_config_all_bads(
             session=session,
             which=("runs", "noise", "rest"),
         ),
+        otp=config.use_otp_denoising,
         **_import_data_kwargs(config=config, subject=subject, session=session),
     )
     return cfg
@@ -168,23 +175,33 @@ def get_input_fnames_esss(
     subject: str,
     session: str | None,
 ) -> InFilesT:
+    use_kind = "otp" if cfg.otp else "orig"
     in_files = _get_run_rest_noise_path(
         run=None,
         task="noise",
-        kind="orig",
+        kind=use_kind,
         mf_reference_run=cfg.mf_reference_run,
         mf_reference_task=cfg.mf_reference_task,
         cfg=cfg,
         subject=subject,
         session=session,
     )
-    in_files.update(_get_mf_reference_path(cfg=cfg, subject=subject, session=session))
+
+    in_files.update(
+        _get_mf_reference_path(cfg=cfg, subject=subject, session=session, kind=use_kind)
+    )
     in_files["bads_tsv"] = _get_allbads_path(cfg=cfg, subject=subject, session=session)
+    if cfg.otp:
+        for key in in_files.keys():
+            if key != "bads_tsv":
+                in_files[key].update(processing="otp")
+
     return in_files
 
 
 @failsafe_run(
     get_input_fnames=get_input_fnames_esss,
+    sidecars=True,
 )
 def compute_esss_proj(
     *,
@@ -201,8 +218,14 @@ def compute_esss_proj(
     bids_path_in = in_files.pop(in_key)
     bids_path_ref_in = in_files.pop("raw_ref_run")
     bids_path_bads = in_files.pop("bads_tsv")
+    if cfg.otp:
+        # instruct read_raw_bids to ignore lack of events files in deriv directory
+        exec_params.read_raw_bids_verbose = (
+            "error"  # should be able to remove after MNE-BIDS 0.20.0
+        )
     raw_noise = import_er_data(
         cfg=cfg,
+        exec_params=exec_params,
         bids_path_er_in=bids_path_in,
         bids_path_ref_in=bids_path_ref_in,
         bids_path_er_bads_in=bids_path_bads,
@@ -237,7 +260,8 @@ def compute_esss_proj(
         root=cfg.deriv_root,
         check=False,
     )
-    mne.write_proj(out_files["esss_basis"], projs, overwrite=True)
+    with _ignore_warnings("does not conform to MNE naming conventions"):
+        mne.write_proj(out_files["esss_basis"], projs, overwrite=True)
 
     with _open_report(
         cfg=cfg,
@@ -300,6 +324,7 @@ def get_config_esss(
     cfg = SimpleNamespace(
         mf_esss=config.mf_esss,
         mf_esss_reject=config.mf_esss_reject,
+        otp=config.use_otp_denoising,
         **_import_data_kwargs(config=config, subject=subject, session=session),
     )
     return cfg
@@ -317,10 +342,11 @@ def get_input_fnames_maxwell_filter(
     task: str | None,
 ) -> InFilesT:
     """Get paths of files required by maxwell_filter function."""
+    use_kind = "otp" if cfg.otp else "orig"
     in_files = _get_run_rest_noise_path(
         run=run,
         task=task,
-        kind="orig",
+        kind=use_kind,
         mf_reference_run=cfg.mf_reference_run,
         mf_reference_task=cfg.mf_reference_task,
         cfg=cfg,
@@ -329,6 +355,8 @@ def get_input_fnames_maxwell_filter(
     )
     in_key = f"raw_task-{task}_run-{run}"
     assert in_key in in_files
+    if cfg.otp:
+        in_files[in_key].update(processing="otp")
     # head positions
     if cfg.mf_mc:
         if run is None and task == "noise":
@@ -379,7 +407,9 @@ def get_input_fnames_maxwell_filter(
         )
 
     # reference run (used for `destination`)
-    in_files.update(_get_mf_reference_path(cfg=cfg, subject=subject, session=session))
+    in_files.update(
+        _get_mf_reference_path(cfg=cfg, subject=subject, session=session, kind=use_kind)
+    )
 
     is_rest_noise = run is None and task in ("noise", "rest")
     if is_rest_noise:
@@ -411,6 +441,7 @@ def get_input_fnames_maxwell_filter(
 
 @failsafe_run(
     get_input_fnames=get_input_fnames_maxwell_filter,
+    sidecars=True,
 )
 def run_maxwell_filter(
     *,
@@ -465,17 +496,20 @@ def run_maxwell_filter(
     logger.info(**gen_log_kwargs(message=msg))
 
     bids_path_ref_in = in_files.pop("raw_ref_run")
+    if cfg.otp:
+        exec_params.read_raw_bids_verbose = "error"
     raw = read_raw_bids(
         bids_path=bids_path_ref_in,
-        extra_params=cfg.reader_extra_params,
-        verbose=cfg.read_raw_bids_verbose,
+        extra_params=_get_reader_extra_params(cfg=cfg, bids_path=bids_path_ref_in),
+        verbose=exec_params.read_raw_bids_verbose,
     )
     # triage string-valued destinations
     if isinstance(destination, str):
         if destination == "reference_run":
             destination = raw.info["dev_head_t"]
         elif destination == "twa":
-            destination = mne.read_trans(in_files.pop(f"{in_key}-twa"))
+            with _ignore_warnings("does not conform to MNE naming conventions"):
+                destination = mne.read_trans(in_files.pop(f"{in_key}-twa"))
     del raw
     assert isinstance(destination, mne.transforms.Transform), destination
 
@@ -493,7 +527,8 @@ def run_maxwell_filter(
         head_pos = None
     if cfg.mf_esss:
         extra.append("eSSS")
-        extended_proj = mne.read_proj(in_files.pop("esss_basis"))
+        with _ignore_warnings("does not conform to MNE naming conventions"):
+            extended_proj = mne.read_proj(in_files.pop("esss_basis"))
     else:
         extended_proj = ()
     if extra:
@@ -518,10 +553,18 @@ def run_maxwell_filter(
     mf_kws |= cfg.mf_extra_kws
 
     logger.info(**gen_log_kwargs(message=f"{apply_msg} {recording_type} data"))
-    if not (run is None and task == "noise"):
+    er_data = run is None and task == "noise"
+    if not er_data:
+        # here the value of data_is_rest is set based on the values of run and task
         data_is_rest = run is None and task == "rest"
+        if cfg.otp:
+            # instruct read_raw_bids to ignore lack of events files in deriv directory
+            exec_params.read_raw_bids_verbose = (
+                "error"  # should be able to remove after MNE-BIDS 0.20.0
+            )
         raw = import_experimental_data(
             cfg=cfg,
+            exec_params=exec_params,
             bids_path_in=bids_path_in,
             bids_path_bads_in=bids_path_bads,
             data_is_rest=data_is_rest,
@@ -529,8 +572,14 @@ def run_maxwell_filter(
         fr = raw.info["dev_head_t"]["trans"]
         where = "original head position"
     else:
+        if cfg.otp:
+            # instruct read_raw_bids to ignore lack of events files in deriv directory
+            exec_params.read_raw_bids_verbose = (
+                "error"  # should be able to remove after MNE-BIDS 0.20.0
+            )
         raw = import_er_data(
             cfg=cfg,
+            exec_params=exec_params,
             bids_path_er_in=bids_path_in,
             bids_path_ref_in=bids_path_ref_in,
             bids_path_er_bads_in=bids_path_bads,
@@ -574,7 +623,6 @@ def run_maxwell_filter(
         f" external order: {mf_kws['ext_order']})"
     )
     logger.info(**gen_log_kwargs(message=msg))
-
     raw_sss = mne.preprocessing.maxwell_filter(raw, **mf_kws)
     del raw
     gc.collect()
@@ -655,7 +703,12 @@ def run_maxwell_filter(
             "<p>The raw data were annotated with the following movement-related bad "
             f"segment annotations:<ul>{''.join(extra_html_list)}</ul></p>"
         )
-        raw_sss.set_annotations(raw_sss.annotations + movement_annot)
+        if er_data:
+            ctx = _ignore_warnings(r"(Omitted|Limited) [0-9]+ annotation")
+        else:
+            ctx = contextlib.nullcontext()
+        with ctx:
+            raw_sss.set_annotations(raw_sss.annotations + movement_annot)
 
     out_files["sss_raw"] = bids_path_out
     msg = f"Writing {out_files['sss_raw'].fpath.relative_to(cfg.deriv_root)}"
@@ -704,19 +757,8 @@ def get_config_maxwell_filter(
     session: str | None,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        mf_cal_fname=get_mf_cal_fname(
-            config=config,
-            subject=subject,
-            session=session,
-        ),
-        mf_ctc_fname=get_mf_ctc_fname(
-            config=config,
-            subject=subject,
-            session=session,
-        ),
         mf_st_duration=config.mf_st_duration,
         mf_st_correlation=config.mf_st_correlation,
-        mf_head_origin=config.mf_head_origin,
         mf_mc=config.mf_mc,
         mf_filter_chpi=config.mf_filter_chpi,
         mf_destination=config.mf_destination,
@@ -727,6 +769,10 @@ def get_config_maxwell_filter(
         mf_mc_translation_velocity_limit=config.mf_mc_translation_velocity_limit,
         mf_esss=config.mf_esss,
         mf_extra_kws=config.mf_extra_kws,
+        plot_psd_for_runs=config.plot_psd_for_runs,
+        _raw_split_size=config._raw_split_size,
+        otp=config.use_otp_denoising,
+        **_mf_cal_kwargs(config=config, subject=subject, session=session),
         **_import_data_kwargs(config=config, subject=subject, session=session),
     )
     return cfg

@@ -2,6 +2,7 @@ import ast
 import copy
 import difflib
 import importlib.util
+import inspect
 import os
 import pathlib
 import re
@@ -12,7 +13,6 @@ from inspect import signature
 from types import SimpleNamespace
 from typing import Any
 
-import matplotlib
 import mne
 import numpy as np
 from mne_bids import get_entity_vals
@@ -99,9 +99,6 @@ def _import_config(
     # Finally, reduce to our actual supported params (all keep_names should be present)
     config = SimpleNamespace(**{k: getattr(config, k) for k in keep_names})
 
-    # Take some standard actions
-    mne.set_log_level(verbose=config.mne_log_level.upper())
-
     # Take variables out of config (which affects the pipeline outputs) and
     # put into config.exec_params (which affect the pipeline execution methods,
     # but not the outputs)
@@ -112,6 +109,8 @@ def _import_config(
         "dask_temp_dir",
         "dask_worker_memory_limit",
         "dask_open_dashboard",
+        "dask_cluster",
+        "dask_worker_startup_timeout",
         # Interaction
         "on_error",
         "interactive",
@@ -120,12 +119,23 @@ def _import_config(
         "memory_subdir",
         "memory_verbose",
         "memory_file_method",
+        # Logging
+        "log_level",
+        "mne_log_level",
+        "ignore_warnings",
+        "read_raw_bids_verbose",
         # Misc
         "deriv_root",
         "config_path",
     ) + extra_exec_params_keys
     in_both = {"deriv_root"}
     exec_params = SimpleNamespace(**{k: getattr(config, k) for k in keys})
+    if config.eeg_online_reference_channel is not None:  # flat until avg ref applied
+        exec_params.ignore_warnings = (
+            *exec_params.ignore_warnings,
+            "value in (spectrum|PSD) for channel "
+            + re.escape(config.eeg_online_reference_channel),
+        )
     override_keys = ("subjects",)
     exec_params.overrides = SimpleNamespace(
         **{k: getattr(overrides, k) for k in override_keys if hasattr(overrides, k)}
@@ -138,6 +148,10 @@ def _import_config(
     # And we need these for some steps, too
     if add_all_tasks:
         config.all_tasks = get_tasks(config=config)
+
+    # Take some standard actions
+    mne.set_log_level(verbose=exec_params.mne_log_level.upper())
+    logger.level = exec_params.log_level
 
     return config
 
@@ -237,11 +251,12 @@ def _update_with_user_config(
     # 3. Overrides via command-line switches
     overrides = overrides or SimpleNamespace()
     for name in dir(overrides):
-        if not name.startswith("__"):
-            val = getattr(overrides, name)
-            msg = f"Overriding config.{name} = {repr(val)}"
-            logger.info(**gen_log_kwargs(message=msg, emoji="override"))
-            setattr(config, name, val)
+        if name.startswith("__"):
+            continue
+        val = getattr(overrides, name)
+        msg = f"Overriding config.{name} = {repr(val)}"
+        logger.info(**gen_log_kwargs(message=msg, emoji="override"))
+        setattr(config, name, val)
 
     # 4. Env vars and other triaging
     if not config.bids_root:
@@ -266,6 +281,8 @@ def _update_with_user_config(
             logger.info(**gen_log_kwargs(message=msg, **log_kwargs))
         config.on_error = "debug"
     else:
+        import matplotlib
+
         matplotlib.use("Agg")  # do not open any window  # noqa
     if config.on_error == "debug":
         if config.n_jobs != 1:
@@ -286,6 +303,25 @@ def _check_config(config: SimpleNamespace, config_path: PathLike | None) -> None
 
     # Eventually all of these could be pydantic-validated, but for now we'll
     # just change the ones that are easy
+
+    # fill in missing keys; per-key value constraints are beyond the dict annotation
+    config.report_image_format = (
+        dict(raster="webp", vector="svg") | config.report_image_format
+    )
+    if config.report_image_format["raster"] == "svg":
+        raise ConfigError(
+            'report_image_format["raster"] cannot be "svg"; pixel-based report '
+            'content (sliders, topographic maps, ...) requires "webp", '
+            '"webp-lossy", or "png".'
+        )
+    if "webp-lossy" in config.report_image_format.values():
+        from mne.report.report import _ALLOWED_IMAGE_FORMATS  # slow import, defer
+
+        # fail here rather than partway through the first report-writing step
+        if "webp-lossy" not in _ALLOWED_IMAGE_FORMATS:
+            raise ConfigError(
+                'report_image_format value "webp-lossy" requires MNE-Python >= 1.13.'
+            )
 
     config.bids_root.resolve(strict=True)
     if config.bids_root == config.deriv_root:
@@ -323,6 +359,30 @@ def _check_config(config: SimpleNamespace, config_path: PathLike | None) -> None
             f"`mf_extra_kws` contains keys {', '.join(sorted(duplicates))} that are "
             "handled by dedicated config keys. Please remove them from `mf_extra_kws`."
         )
+    zapline_reserved_kwargs = {"sfreq", "line_freq"}
+    if duplicates := set(config.zapline_extra_kws) & zapline_reserved_kwargs:
+        raise ConfigError(
+            f"`zapline_extra_kws` contains Pipeline-managed keys "
+            f"{', '.join(sorted(duplicates))}. `sfreq` is obtained from the data and "
+            "`line_freq` is controlled by `zapline_fline`. Please remove these keys "
+            "from `zapline_extra_kws`."
+        )
+    notch_enabled = (
+        config.notch_freq is not None
+        or config.notch_extra_kws.get("method") == "spectrum_fit"
+    )
+    if config.zapline_fline is not None and notch_enabled:
+        raise ConfigError(
+            "ZapLine and notch filtering cannot both be enabled. "
+            "Please configure only one line-noise removal method."
+        )
+    spec = inspect.getfullargspec(mne.chpi.compute_head_pos)
+    if config.mf_mc and config.mf_mc_weighted and "weighted" not in spec.kwonlyargs:
+        raise ConfigError(
+            "mf_mc_weighted is set to True, but your version of MNE-Python does not "
+            "support the `weighted` argument in mne.chpi.compute_head_pos. Please "
+            "update MNE-Python to >= 1.13"
+        )
     # if `destination="twa"` make sure `mf_mc=True`
     if (
         isinstance(config.mf_destination, str)
@@ -349,8 +409,8 @@ def _check_config(config: SimpleNamespace, config_path: PathLike | None) -> None
         for sub, sessions in subjects_sessions.items():
             for ses in sessions:
                 if (
-                    config.ssp_ecg_channel.get(f"sub-{sub}") is None
-                    and config.ssp_ecg_channel.get(f"sub-{sub}_ses-{ses}") is None
+                    f"sub-{sub}" not in config.ssp_ecg_channel
+                    and f"sub-{sub}_ses-{ses}" not in config.ssp_ecg_channel
                 ):
                     missing.append(
                         f"sub-{sub}" if ses is None else f"sub-{sub}_ses-{ses}"
@@ -488,6 +548,12 @@ def _check_config(config: SimpleNamespace, config_path: PathLike | None) -> None
         )
 
     # Another check that depends on some of the functions defined above
+    if config.task_is_rest and config.rest_epochs_duration is None:
+        raise ValueError(
+            "Please set `rest_epochs_duration` in your configuration when "
+            "`task_is_rest` is True."
+        )
+
     if not config.task_is_rest and config.conditions is None:
         raise ValueError(
             "Please indicate the name of your conditions in your "
@@ -551,6 +617,7 @@ def _default_factory(key: str, val: Any) -> Any:
             "channel noise": 0.3,
             "other": 0.3,
         },  # ica_class_thresholds
+        {"raster": "webp", "vector": "svg"},  # report_image_format
     ]
 
     def default_factory() -> Any:
@@ -627,10 +694,17 @@ _REMOVED_NAMES: dict[str, dict[str, str | None]] = {
     "ica_ctps_ecg_threshold": dict(
         new_name="ica_ecg_threshold",
     ),
+    "zapline_iter": dict(
+        new_name=None,
+        instead=(
+            "there is no direct replacement; use `zapline_extra_kws` to configure "
+            "advanced ZapLine behavior if needed"
+        ),
+    ),
 }
 
 # False alarms
-_IGNORED_SIMILAR_NAMES = {"BaselineTypeT"}
+_IGNORED_SIMILAR_NAMES = {"BaselineTypeT", "zapline_iter"}
 
 
 def _check_misspellings_removals(
@@ -656,6 +730,7 @@ def _check_misspellings_removals(
                     f"{msg} did you mean {repr(closest_match[0])}? "
                     "If so, please correct the error. If not, please rename "
                     "the variable to reduce ambiguity and avoid this message, "
+                    "prefix the variable name with an underscore (_), "
                     "or set config.config_validation to 'warn' or 'ignore'."
                 )
                 _handle_config_error(this_msg, config_validation)

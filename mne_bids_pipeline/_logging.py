@@ -3,14 +3,35 @@
 import contextlib
 import datetime
 import inspect
+import io
 import logging
 import os
-from collections.abc import Generator
-
-import rich.console
-import rich.theme
+import sys
+from collections.abc import Generator, Iterable, Sequence
+from typing import TYPE_CHECKING, TextIO
 
 from .typing import LogKwargsT
+
+if TYPE_CHECKING:
+    # rich is ~10 ms to import and is only needed once something is logged
+    import rich.console
+
+
+def _rich_safe_stdout() -> TextIO | None:
+    """Get a usable stdout, e.g. the job log of a dask (SLURM) worker.
+
+    None means "resolve ``sys.stdout`` at write time", which is what rich does by
+    default and what pytest's capturing needs.
+    """
+    stream: TextIO | None = sys.stdout
+    if stream is None:  # rich would silently write to its NULL_FILE
+        return sys.stderr
+    if isinstance(stream, io.TextIOWrapper):
+        # Flush per line so progress shows up in redirected logs, and don't let our
+        # emoji kill a worker running in a non-UTF-8 locale
+        with contextlib.suppress(Exception):
+            stream.reconfigure(line_buffering=True, errors="backslashreplace")
+    return None
 
 
 class _MBPLogger:
@@ -21,7 +42,10 @@ class _MBPLogger:
     # Do lazy instantiation of _console so that pytest's output capture
     # mechanics don't get messed up
     @property
-    def _console(self) -> rich.console.Console:
+    def _console(self) -> "rich.console.Console":
+        import rich.console
+        import rich.theme
+
         if isinstance(self.__console, rich.console.Console):
             return self.__console
 
@@ -49,6 +73,7 @@ class _MBPLogger:
             )
         )
         self.__console = rich.console.Console(
+            file=_rich_safe_stdout(),
             soft_wrap=True,
             force_terminal=force_terminal,
             legacy_windows=legacy_windows,
@@ -69,7 +94,11 @@ class _MBPLogger:
         return self._level
 
     @level.setter
-    def level(self, level: int) -> None:
+    def level(self, level: int | str) -> None:
+        if isinstance(level, str):
+            level = getattr(logging, level.upper(), None)
+            if level is None:
+                raise ValueError(f"Invalid log level: {level}")
         level = int(level)
         self._level = level
 
@@ -157,27 +186,33 @@ def gen_log_kwargs(
         emoji = default_emoji
     if emoji == "skip":
         default_subject = "*"
-    stack = inspect.stack()
-    up_locals = stack[1].frame.f_locals
-    if subject is None:
-        subject = up_locals.get("subject", default_subject)
-    if session is None:
-        session = up_locals.get("session", None)
-    if run is None:
-        run = up_locals.get("run", None)
-    if task is None:
-        task = up_locals.get("task", None)
-        if task not in ("noise", "rest"):
-            # If task is set but there's only one task, don't show it
-            n_tasks = 2
-            cfg = up_locals.get("cfg", None)
-            if cfg is None:
-                config = up_locals.get("config", None)
-                n_tasks = len(getattr(config, "all_tasks", []))
-            else:
-                n_tasks = len(getattr(cfg, "all_tasks", []))
-            if n_tasks == 1:
-                task = None
+    frame = inspect.currentframe()
+    try:
+        up_locals = frame.f_back.f_locals
+    except Exception:
+        pass
+    else:
+        if subject is None:
+            subject = up_locals.get("subject", default_subject)
+        if session is None:
+            session = up_locals.get("session", None)
+        if run is None:
+            run = up_locals.get("run", None)
+        if task is None:
+            task = up_locals.get("task", None)
+            if task not in ("noise", "rest"):
+                # If task is set but there's only one task, don't show it
+                n_tasks = 2
+                cfg = up_locals.get("cfg", None)
+                if cfg is None:
+                    config = up_locals.get("config", None)
+                    n_tasks = len(getattr(config, "all_tasks", []))
+                else:
+                    n_tasks = len(getattr(cfg, "all_tasks", []))
+                if n_tasks == 1:
+                    task = None
+    finally:
+        del frame
 
     # Do some nice formatting
     if subject is not None:
@@ -215,6 +250,46 @@ def _linkfile(uri: str) -> str:
     return f"[link=file://{uri}]{uri}[/link]"
 
 
+def _collapse_runs(runs: Iterable[str]) -> str:
+    """Turn a set of run labels into something like ``runs 01–03, 07``."""
+    runs = sorted(set(runs))
+    if not runs:
+        return ""
+    label = "run" if len(runs) == 1 else "runs"
+    try:
+        numbers = sorted(int(run) for run in runs)
+    except ValueError:
+        return f"{label} {', '.join(runs)}"
+    width = max(len(run) for run in runs)
+    groups: list[list[int]] = [[numbers[0]]]
+    for number in numbers[1:]:
+        if number == groups[-1][-1] + 1:
+            groups[-1].append(number)
+        else:
+            groups.append([number])
+    chunks = [
+        f"{group[0]:0{width}d}"
+        if len(group) == 1
+        else f"{group[0]:0{width}d}–{group[-1]:0{width}d}"
+        for group in groups
+    ]
+    return f"{label} {', '.join(chunks)}"
+
+
+def _shorten_paths(paths: Sequence[str], roots: dict[str, str]) -> list[str]:
+    """Rewrite absolute paths as ``<root_name>/...`` for readability."""
+    subs = sorted(roots.items(), key=lambda kv: -len(kv[1]))  # deriv may be in bids
+    out: list[str] = list()
+    for path in paths:
+        for name, root in subs:
+            root = root.rstrip("/")
+            if path == root or path.startswith(f"{root}/"):
+                path = f"<{name}>{path[len(root) :]}"
+                break
+        out.append(path)
+    return out
+
+
 def _is_testing() -> bool:
     return os.getenv("_MNE_BIDS_STUDY_TESTING", "") == "true"
 
@@ -228,3 +303,20 @@ def _log_context(level: int) -> Generator[None, None, None]:
         yield
     finally:
         logger.level = old_level
+
+
+@contextlib.contextmanager
+def _terminal_title(title):
+    # Adapted from https://github.com/ipython/ipython/blob/0c587d631a01a3ba01eb783f790a0fc69f6cc953/IPython/utils/terminal.py#L68
+    # but with exception suppression (don't die because we can't write to the terminal)
+    # which is probably overkill since IPython doesn't bother (but they do provide
+    # a way to turn this behavior off)
+    with contextlib.suppress(Exception):
+        sys.stdout.write("\033[22;0t")  # saves the state
+        sys.stdout.write(f"\033]0;{title}\007")  # sets the title
+        sys.stdout.flush()
+    try:
+        yield
+    finally:
+        with contextlib.suppress(Exception):
+            sys.stdout.write("\033[23;0t")  # restores the state, but don't flush

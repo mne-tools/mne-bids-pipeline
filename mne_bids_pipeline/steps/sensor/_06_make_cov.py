@@ -43,9 +43,9 @@ def get_input_fnames_cov(
     cfg: SimpleNamespace,
     subject: str,
     session: str | None,
-) -> InFilesT:
+) -> dict[str, BIDSPath | str]:
     cov_type = _get_cov_type(cfg)
-    in_files = dict()
+    in_files: InFilesT = dict()
     fname_epochs = BIDSPath(
         subject=subject,
         session=session,
@@ -61,7 +61,10 @@ def get_input_fnames_cov(
         root=cfg.deriv_root,
         check=False,
     )
-    in_files["report_info"] = fname_epochs.copy().update(processing="clean")
+    report_info = fname_epochs.copy().update(processing="clean")
+    assert isinstance(report_info, BIDSPath)
+    in_files["report_info"] = report_info
+    in_files_broad: dict[str, BIDSPath | str] = dict()
     _update_for_splits(in_files, "report_info", single=True)
     for task in cfg.all_tasks:
         fname_evoked = fname_epochs.copy().update(
@@ -70,8 +73,10 @@ def get_input_fnames_cov(
         if fname_evoked.fpath.exists():
             in_files[f"evoked_task-{task}"] = fname_evoked
     if cov_type == "custom":
-        in_files["__unknown_inputs__"] = "custom noise_cov callable"
-        return in_files
+        for key, val in in_files.items():
+            in_files_broad[key] = val
+        in_files_broad["__unknown_inputs__"] = "custom noise_cov callable"
+        return in_files_broad
     if cov_type == "raw":
         assert cfg.noise_cov in ("rest", "emptyroom"), cfg.noise_cov
         in_files["raw"] = BIDSPath(
@@ -95,7 +100,9 @@ def get_input_fnames_cov(
             key = f"epochs_task-{task}"
             in_files[key] = fname_epochs.copy().update(task=task)
             _update_for_splits(in_files, key, single=True)
-    return in_files
+    for key, val in in_files.items():
+        in_files_broad[key] = val
+    return in_files_broad
 
 
 def compute_cov_rank_from_epochs(
@@ -122,10 +129,12 @@ def compute_cov_rank_from_epochs(
     logger.info(**gen_log_kwargs(message=msg))
     all_epochs = []
     for epo_fname in epo_fnames:
-        all_epochs.append(mne.read_epochs(epo_fname, preload=False))
+        all_epochs.append(mne.read_epochs(epo_fname.fpath, preload=False))
         all_epochs[-1].load_data().crop(tmin=tmin, tmax=tmax)
     epochs = (
-        all_epochs[0] if len(all_epochs) == 1 else mne.concatenate_epochs(all_epochs)
+        all_epochs[0]
+        if len(all_epochs) == 1
+        else mne.concatenate_epochs(all_epochs, verbose="error")
     )
 
     rank = _get_rank(cfg=cfg, subject=subject, session=session, inst=epochs)
@@ -250,7 +259,7 @@ def _fake_sss_context() -> Generator[None, None, None]:
         out[-1] = out[-2]  # has_sss = has_meg (which really means: mag + grad)
         return tuple(out)
 
-    mne.viz.utils._check_sss = replacement  # type: ignore[assignment]
+    mne.viz.utils._check_sss = replacement  # type: ignore
     try:
         yield
     finally:
@@ -337,11 +346,12 @@ def run_covariance(
             task = fname_evoked.task
             msg = f"Rendering whitened evoked data for task={task!r}."
             logger.info(**gen_log_kwargs(message=msg))
-            all_evoked = mne.read_evokeds(fname_evoked)
+            all_evoked = mne.read_evokeds(fname_evoked.fpath)
             conditions = _all_conditions(cfg=cfg, task=task)
             assert isinstance(all_evoked, list)
             assert len(all_evoked) == len(conditions)
             for evoked, condition in zip(all_evoked, conditions):
+                assert isinstance(evoked, mne.Evoked)
                 _restrict_analyze_channels(evoked, cfg)
                 prefix, extra_tags = _get_prefix_tags(
                     cfg=cfg, task=task, condition=condition
@@ -372,7 +382,6 @@ def get_config(
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
         ch_types=config.ch_types,
-        run_source_estimation=config.run_source_estimation,
         noise_cov=_sanitize_callable(config.noise_cov),
         conditions=config.conditions,
         contrasts=config.contrasts,

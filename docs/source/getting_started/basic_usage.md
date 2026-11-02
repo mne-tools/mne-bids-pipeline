@@ -1,3 +1,5 @@
+# Basic usage
+
 ## :face_with_monocle: Prepare your dataset
 
 MNE-BIDS-Pipeline **only** works with

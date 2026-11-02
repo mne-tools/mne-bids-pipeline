@@ -92,8 +92,15 @@ def prepare_epochs_and_y(
     cfg: SimpleNamespace,
     fmin: float,
     fmax: float,
+    cache: dict[tuple[float, float], tuple[mne.BaseEpochs, IntArrayT]],
 ) -> tuple[mne.BaseEpochs, IntArrayT]:
-    """Band-pass between, sub-select the desired epochs, and prepare y."""
+    """Band-pass between, sub-select the desired epochs, and prepare y.
+
+    Results are cached per passband, so callers must not modify what they get back.
+    """
+    if (fmin, fmax) in cache:
+        return cache[(fmin, fmax)]
+
     # filtering out the conditions we are not interested in, to ensure here we
     # have a valid partition between the condition of the contrast.
 
@@ -110,6 +117,7 @@ def prepare_epochs_and_y(
     epochs_filt = epochs_filt.filter(fmin, fmax, n_jobs=1, verbose="error")
     y = _prepare_labels(epochs=epochs_filt, contrast=contrast)
 
+    cache[(fmin, fmax)] = (epochs_filt, y)
     return epochs_filt, y
 
 
@@ -167,7 +175,7 @@ def one_subject_decoding(
     logger.info(**gen_log_kwargs(msg))
 
     bids_path = in_files["epochs"].copy().update(processing=None, split=None)
-    epochs = mne.read_epochs(in_files.pop("epochs"))
+    epochs = mne.read_epochs(in_files.pop("epochs").fpath)
     _restrict_analyze_channels(epochs, cfg)
     pick_idx = mne.pick_types(
         epochs.info, meg=True, eeg=True, ref_meg=False, exclude="bads"
@@ -242,6 +250,8 @@ def one_subject_decoding(
         freq_range_name: str,
         tmin: float | None = None,
         tmax: float | None = None,
+        *,
+        score: float,
     ) -> str:
         msg = (
             f"Contrast: {cond1} – {cond2}, "
@@ -249,7 +259,12 @@ def one_subject_decoding(
         )
         if tmin is not None:
             msg += f" {tmin:+5.3f}–{tmax:+5.3f} sec"
+        msg += f": {cfg.decoding_metric}={score:0.3f}"
         return msg
+
+    # Only a handful of distinct passbands are used by the two tables below, and
+    # filtering dominates the runtime, so filter each one once (cropping comes after)
+    filt_cache: dict[tuple[float, float], tuple[mne.BaseEpochs, IntArrayT]] = dict()
 
     for idx, row in freq_decoding_table.iterrows():
         assert isinstance(row, pd.Series)
@@ -259,13 +274,13 @@ def one_subject_decoding(
         cond2 = row["cond_2"]
         freq_range_name = row["freq_range_name"]
 
-        msg = _fmt_contrast(cond1, cond2, fmin, fmax, freq_range_name)
-        logger.info(**gen_log_kwargs(msg))
-
-        # XXX We're filtering here again in each iteration. This should be
-        # XXX optimized.
         epochs_filt, y = prepare_epochs_and_y(
-            epochs=epochs, contrast=contrast, fmin=fmin, fmax=fmax, cfg=cfg
+            epochs=epochs,
+            contrast=contrast,
+            fmin=fmin,
+            fmax=fmax,
+            cfg=cfg,
+            cache=filt_cache,
         )
         # Get the data for all time points
         X = epochs_filt.get_data()
@@ -279,8 +294,11 @@ def one_subject_decoding(
             n_jobs=1,
             error_score="raise",
         )
-        freq_decoding_table.loc[idx, "mean_crossval_score"] = cv_scores.mean()
+        score = cv_scores.mean()
+        freq_decoding_table.loc[idx, "mean_crossval_score"] = score
         freq_decoding_table.at[idx, "scores"] = cv_scores
+        msg = _fmt_contrast(cond1, cond2, fmin, fmax, freq_range_name, score=score)
+        logger.info(**gen_log_kwargs(msg))
         del fmin, fmax, cond1, cond2, freq_range_name
 
     # Loop over times x frequencies
@@ -332,12 +350,17 @@ def one_subject_decoding(
         freq_range_name = row["freq_range_name"]
 
         epochs_filt, y = prepare_epochs_and_y(
-            epochs=epochs, contrast=contrast, fmin=fmin, fmax=fmax, cfg=cfg
+            epochs=epochs,
+            contrast=contrast,
+            fmin=fmin,
+            fmax=fmax,
+            cfg=cfg,
+            cache=filt_cache,
         )
         # Crop data to the time window of interest
         if tmax is not None:  # avoid warnings about outside the interval
             tmax = min(tmax, epochs_filt.times[-1])
-        X = epochs_filt.crop(tmin, tmax).get_data()
+        X = epochs_filt.copy().crop(tmin, tmax).get_data()  # cached, so don't crop it
         del epochs_filt
         cv_scores = cross_val_score(
             estimator=clf,
@@ -351,10 +374,20 @@ def one_subject_decoding(
         score = cv_scores.mean()
         tf_decoding_table.loc[idx, "mean_crossval_score"] = score
         tf_decoding_table.at[idx, "scores"] = cv_scores
-        msg = _fmt_contrast(cond1, cond2, fmin, fmax, freq_range_name, tmin, tmax)
-        msg += f": {cfg.decoding_metric}={score:0.3f}"
+        msg = _fmt_contrast(
+            cond1,
+            cond2,
+            fmin,
+            fmax,
+            freq_range_name,
+            tmin,
+            tmax,
+            score=score,
+        )
         logger.info(**gen_log_kwargs(msg))
         del tmin, tmax, fmin, fmax, cond1, cond2, freq_range_name
+
+    del filt_cache  # free the filtered copies before building the report
 
     # Write each DataFrame to a different Excel worksheet.
     a_vs_b = f"{condition1}+{condition2}".replace(op.sep, "")
@@ -411,7 +444,7 @@ def one_subject_decoding(
                 results = csp_freq_results.loc[
                     csp_freq_results["freq_range_name"] == freq_range_name
                 ]
-                results.reset_index(drop=True, inplace=True)
+                results = results.reset_index(drop=True)
                 assert len(results["scores"]) == len(freq_bins)
                 for bi, freq_bin in enumerate(freq_bins):
                     all_decoding_scores.append(results["scores"][bi])
@@ -425,7 +458,7 @@ def one_subject_decoding(
                 scores=all_decoding_scores,
                 metric=cfg.decoding_metric,
             )
-            title = f"CSP decoding{prefix}"
+            title = f"CSP decoding: {prefix}"
             report.add_figure(
                 fig=fig,
                 title=title,

@@ -3,6 +3,7 @@
 import copy
 import functools
 import pathlib
+import re
 from collections.abc import Iterable, Sequence, Sized
 from inspect import signature
 from types import ModuleType, SimpleNamespace
@@ -47,7 +48,9 @@ def get_fs_subject(
         assert isinstance(config.use_template_mri, str), type(config.use_template_mri)
         return config.use_template_mri
 
-    if session is not None:
+    if session is not None and _has_session_specific_anat(
+        subject, session, subjects_dir
+    ):
         return f"sub-{subject}_ses-{session}"
     elif (pathlib.Path(subjects_dir) / subject).exists():
         return subject
@@ -278,10 +281,14 @@ def get_subjects_sessions(
 def get_subjects_given_session(
     config: SimpleNamespace, session: str | None
 ) -> tuple[str, ...]:
-    """Get the subjects who actually have data for a given session."""
-    sub_ses = get_subjects_sessions(config)
+    """Get the subjects who actually have data for a given session.
+
+    Steps call this at run time with their ``cfg``, so it reads the mapping that
+    ``get_config()`` already resolved instead of re-scanning the dataset (which
+    it used to do on every call, and then discard unless sessions were missing).
+    """
     subjects = (
-        tuple(sub for sub, ses in sub_ses.items() if session in ses)
+        tuple(sub for sub, ses in config.subjects_sessions.items() if session in ses)
         if config.allow_missing_sessions
         else config.subjects
     )
@@ -544,14 +551,14 @@ def get_ecg_channel(
     ecg_channel: str | dict[str, str],
     subject: str = "",
     session: str | None = "",
-) -> str:
+) -> str | None:
     out = _get_channels_generic(
         ecg_channel,
         subject,
         session,
         variable_name="ssp_ecg_channel",
     )
-    assert isinstance(out, str)  # mypy
+    assert isinstance(out, str | None)  # mypy
     return out
 
 
@@ -575,19 +582,37 @@ def sanitize_cond_name(cond: str) -> str:
     return cond
 
 
+@functools.cache
+def _cached_match(
+    *,
+    root: pathlib.Path,
+    subject: str | None,
+    session: str | None,
+    suffix: str | None,
+    datatype: str | None,
+) -> tuple[BIDSPath, list[BIDSPath]]:
+    bids_path = BIDSPath(
+        root=root,
+        subject=subject,
+        session=session,
+        suffix=suffix,
+        datatype=datatype,
+    )
+    return bids_path, bids_path.match()
+
+
 def get_mf_cal_fname(
     *, config: SimpleNamespace, subject: str, session: str | None
 ) -> pathlib.Path | None:
     msg = "Could not find Maxwell Filter calibration file {where}."
     if config.mf_cal_fname is None:
-        bids_path = BIDSPath(
+        bids_path, bids_match = _cached_match(
             subject=subject,
             session=session,
             suffix="meg",
             datatype="meg",
             root=config.bids_root,
         )
-        bids_match = bids_path.match()
         mf_cal_fpath = None
         if len(bids_match) > 0:
             mf_cal_fpath = bids_match[0].meg_calibration_fpath
@@ -619,14 +644,13 @@ def get_mf_ctc_fname(
 ) -> pathlib.Path | None:
     msg = "Could not find Maxwell Filter cross-talk file {where}."
     if config.mf_ctc_fname is None:
-        bids_path = BIDSPath(
+        bids_path, bids_match = _cached_match(
             subject=subject,
             session=session,
             suffix="meg",
             datatype="meg",
             root=config.bids_root,
         )
-        bids_match = bids_path.match()
         mf_ctc_fpath = None
         if len(bids_match) > 0:
             mf_ctc_fpath = bids_match[0].meg_crosstalk_fpath
@@ -692,6 +716,23 @@ def _get_bem_conductivity(cfg: SimpleNamespace) -> tuple[tuple[float, ...] | Non
         conductivity = (0.3,)
         tag = "5120"
     return conductivity, tag
+
+
+def get_src_fname(
+    *, fs_subjects_dir: pathlib.Path, fs_subject: str, spacing: str | int
+) -> pathlib.Path:
+    """Get the path to src file for the given spacing, tolerant of an extra dash."""
+    bem_dir = fs_subjects_dir / fs_subject / "bem"
+    stem = str(spacing)
+    stems = [stem]
+    match = re.fullmatch(r"([a-zA-Z]+)(\d+)", stem)
+    if match:
+        stems.append(f"{match.group(1)}-{match.group(2)}")
+    for this_stem in stems:
+        fname = bem_dir / f"{fs_subject}-{this_stem}-src.fif"
+        if fname.exists():
+            return fname
+    return bem_dir / f"{fs_subject}-{stem}-src.fif"
 
 
 def _meg_in_ch_types(ch_types: str) -> bool:
@@ -878,6 +919,12 @@ def _validate_contrasts(
                 raise ValueError("Contrasts must be tuples or well-formed dicts")
 
 
+def _get_step_title(module: ModuleType | None) -> str | None:
+    """Get a step's human-readable title: its docstring's first line, no period."""
+    doc = getattr(module, "__doc__", None) or ""
+    return doc.strip().split("\n")[0].rstrip(".") or None
+
+
 def _get_step_modules() -> dict[str, tuple[ModuleType, ...]]:
     from .steps import freesurfer, init, preprocessing, sensor, source
 
@@ -918,6 +965,18 @@ def _bids_kwargs(*, config: SimpleNamespace) -> dict[str, str | None]:
         bids_root=config.bids_root,
         deriv_root=config.deriv_root,
         all_tasks=config.all_tasks,  # we compute this once and store it for brevity
+        report_image_format=config.report_image_format,  # _open_report needs it
+    )
+
+
+def _mf_cal_kwargs(
+    *, config: SimpleNamespace, subject: str, session: str | None
+) -> dict[str, Any]:
+    """Get the Maxwell filter calibration / cross-talk params."""
+    return dict(
+        mf_cal_fname=get_mf_cal_fname(config=config, subject=subject, session=session),
+        mf_ctc_fname=get_mf_ctc_fname(config=config, subject=subject, session=session),
+        mf_head_origin=config.mf_head_origin,
     )
 
 

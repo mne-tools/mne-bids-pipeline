@@ -14,18 +14,18 @@ To save space, the raw data can be resampled.
 If config.interactive = True plots raw data and power spectral density.
 """  # noqa: E501
 
-from collections.abc import Iterable
+from collections.abc import Sequence
 from types import SimpleNamespace
 from typing import Any, Literal
 
 import mne
 import numpy as np
-from meegkit import dss
 from mne.io.pick import _picks_to_idx
 from mne.preprocessing import EOGRegression
 
 from mne_bids_pipeline._config_utils import _get_ssrt
 from mne_bids_pipeline._import_data import (
+    _get_regress_picks_artifact,
     _get_run_rest_noise_path,
     _import_data_kwargs,
     _read_raw_msg,
@@ -53,7 +53,8 @@ def get_input_fnames_frequency_filter(
     task: str | None,
 ) -> InFilesT:
     """Get paths of files required by filter_data function."""
-    kind: RunKindT = "sss" if cfg.use_maxwell_filter else "orig"
+    otp_used = "otp" if cfg.otp else "orig"
+    kind: RunKindT = "sss" if cfg.use_maxwell_filter else otp_used
     return _get_run_rest_noise_path(
         cfg=cfg,
         subject=subject,
@@ -76,20 +77,32 @@ def zapline(
     run: str,
     task: str | None,
     fline: float | None,
-    iter_: bool,
+    zapline_extra_kws: dict[str, Any],
 ) -> None:
-    """Use Zapline to remove line frequencies."""
+    """Use ZapLine to remove line frequencies."""
     if fline is None:
         return
 
-    msg = f"Zapline filtering data at with {fline=} Hz."
+    from mne_denoise.zapline import ZapLine
+
+    msg = f"ZapLine filtering data at {fline} Hz."
     logger.info(**gen_log_kwargs(message=msg))
-    sfreq = raw.info["sfreq"]
+
+    zapline_kws: dict[str, Any] = dict(n_select=1, adaptive=False)
+    zapline_kws.update(zapline_extra_kws)
+    model = ZapLine(
+        sfreq=raw.info["sfreq"],
+        line_freq=fline,
+        **zapline_kws,
+    )
+
     picks = mne.pick_types(raw.info, meg=True, eeg=True)
-    data = raw.get_data(picks).T  # transpose to (n_samples, n_channels)
-    func = dss.dss_line_iter if iter_ else dss.dss_line
-    out, _ = func(data, fline, sfreq)
-    raw._data[picks] = out.T  # type: ignore[invalid-assignment]
+    # ZapLine is multichannel, so process all selected MEG/EEG channels together.
+    raw.apply_function(
+        model.fit_transform,
+        picks=picks,
+        channel_wise=False,
+    )
 
 
 def notch_filter(
@@ -100,9 +113,9 @@ def notch_filter(
     session: str | None,
     run: str,
     task: str | None,
-    freqs: float | Iterable[float] | None,
-    trans_bandwidth: float | Literal["auto"],
-    notch_widths: float | Iterable[float] | None,
+    freqs: float | Sequence[float] | None,
+    trans_bandwidth: float,
+    notch_widths: float | Sequence[float] | None,
     run_type: RunTypeT,
     picks: IntArrayT | None,
     notch_extra_kws: dict[str, Any],
@@ -121,9 +134,9 @@ def notch_filter(
         return
 
     raw.notch_filter(
-        freqs=freqs,
+        freqs=None if freqs is None else np.atleast_1d(freqs),
         trans_bandwidth=trans_bandwidth,
-        notch_widths=notch_widths,
+        notch_widths=None if notch_widths is None else np.atleast_1d(notch_widths),
         n_jobs=1,
         picks=picks,
         **notch_extra_kws,
@@ -193,6 +206,7 @@ def resample(
 
 @failsafe_run(
     get_input_fnames=get_input_fnames_frequency_filter,
+    sidecars=True,
 )
 def filter_data(
     *,
@@ -208,14 +222,14 @@ def filter_data(
     out_files = dict()
     in_key = f"raw_task-{task}_run-{run}"
     bids_path_in = in_files.pop(in_key)
-    if bids_path_in.processing == "sss":
+    if bids_path_in.processing in ("sss", "otp"):
         bids_path_bads_in = None
     else:
         bids_path_bads_in = in_files.pop(f"{in_key}-bads")
     msg, run_type = _read_raw_msg(bids_path_in=bids_path_in, run=run, task=task)
     logger.info(**gen_log_kwargs(message=msg))
-    if cfg.use_maxwell_filter:
-        raw = mne.io.read_raw_fif(bids_path_in)
+    if cfg.use_maxwell_filter or cfg.otp:
+        raw = mne.io.read_raw_fif(bids_path_in, allow_maxshield=cfg.otp)
     elif run is None and task == "noise":
         bids_path_ref_in = in_files.pop("raw_ref_run", None)
         if bids_path_ref_in is not None and bids_path_in.processing != "sss":
@@ -224,6 +238,7 @@ def filter_data(
             bids_path_ref_bads_in = None
         raw = import_er_data(
             cfg=cfg,
+            exec_params=exec_params,
             bids_path_er_in=bids_path_in,
             bids_path_ref_in=bids_path_ref_in,
             bids_path_er_bads_in=bids_path_bads_in,
@@ -235,6 +250,7 @@ def filter_data(
         data_is_rest = run is None and task == "rest"
         raw = import_experimental_data(
             cfg=cfg,
+            exec_params=exec_params,
             bids_path_in=bids_path_in,
             bids_path_bads_in=bids_path_bads_in,
             data_is_rest=data_is_rest,
@@ -261,7 +277,9 @@ def filter_data(
         picks_regress = _picks_to_idx(
             raw.info, model.picks, none="data", exclude=model.exclude
         )
-        picks_artifact = _picks_to_idx(raw.info, model.picks_artifact)
+        picks_artifact = _get_regress_picks_artifact(
+            info=raw.info, picks_artifact=model.picks_artifact, task=task
+        )
         picks_data = _picks_to_idx(raw.info, "data", exclude=())  # raw.filter default
         picks = np.unique(np.r_[picks_regress, picks_artifact, picks_data])
 
@@ -274,7 +292,7 @@ def filter_data(
         run=run,
         task=task,
         fline=cfg.zapline_fline,
-        iter_=cfg.zapline_iter,
+        zapline_extra_kws=cfg.zapline_extra_kws,
     )
     notch_filter(
         cfg=cfg,
@@ -320,7 +338,7 @@ def filter_data(
     # derivatives/mne-bids-pipeline/sub-emptyroom/ses-20230412/meg
     out_files[in_key].fpath.parent.mkdir(exist_ok=True, parents=True)
     raw.save(
-        out_files[in_key],
+        out_files[in_key].fpath,
         overwrite=True,
         split_naming="bids",
         split_size=cfg._raw_split_size,
@@ -366,7 +384,7 @@ def get_config(
         h_freq=config.h_freq,
         notch_freq=config.notch_freq,
         zapline_fline=config.zapline_fline,
-        zapline_iter=config.zapline_iter,
+        zapline_extra_kws=config.zapline_extra_kws,
         l_trans_bandwidth=config.l_trans_bandwidth,
         h_trans_bandwidth=config.h_trans_bandwidth,
         notch_trans_bandwidth=config.notch_trans_bandwidth,
@@ -375,6 +393,9 @@ def get_config(
         regress_artifact=config.regress_artifact,
         notch_extra_kws=config.notch_extra_kws,
         bandpass_extra_kws=config.bandpass_extra_kws,
+        plot_psd_for_runs=config.plot_psd_for_runs,
+        _raw_split_size=config._raw_split_size,
+        otp=config.use_otp_denoising,
         **_import_data_kwargs(config=config, subject=subject, session=session),
     )
     return cfg

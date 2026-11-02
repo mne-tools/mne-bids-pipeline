@@ -1,8 +1,13 @@
-"""hMT+ Localizer."""
+"""ds003392: hMT+ Localizer.
+
+See [OpenNeuro](https://openneuro.org/datasets/ds003392) for more information.
+"""
 
 bids_root = "~/mne_data/ds003392"
-deriv_root = "~/mne_data/derivatives/mne-bids-pipeline/ds003392"
-
+deriv_root = "~/mne_data/derivatives/mne-bids-pipeline/ds003392_base"
+ignore_warnings = [
+    "Internal Active Shielding data",  # until MNE-BIDS releases a fix for ERM finding
+]
 subjects = ["01"]
 
 task = "localizer"
@@ -50,3 +55,5 @@ decoding_csp_freqs = {
 
 # Noise estimation
 noise_cov = "emptyroom"
+
+report_image_format = dict(raster="png")

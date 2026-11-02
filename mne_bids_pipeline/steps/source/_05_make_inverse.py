@@ -33,6 +33,7 @@ from mne_bids_pipeline._report import (
     _open_report,
 )
 from mne_bids_pipeline._run import (
+    _ignore_warnings,
     _prep_out_files,
     _sanitize_callable,
     failsafe_run,
@@ -169,7 +170,7 @@ def apply_inverse_data(
     method = cfg.inverse_method
     fname_ave = in_files.pop("evoked")
     fname_inv = in_files.pop("inverse")
-    evokeds = mne.read_evokeds(fname_ave)
+    evokeds = mne.read_evokeds(fname_ave.fpath)
     assert isinstance(evokeds, list)
     inverse_operator = mne.minimum_norm.read_inverse_operator(fname_inv)
 
@@ -180,8 +181,10 @@ def apply_inverse_data(
             extension=".h5",
         )
 
+        assert isinstance(evoked, mne.Evoked)
         if "eeg" in cfg.ch_types:
-            evoked.set_eeg_reference("average", projection=True)
+            with _ignore_warnings("An average reference projection was already added"):
+                evoked.set_eeg_reference("average", projection=True)
 
         stc = apply_inverse(
             evoked=evoked,
@@ -195,8 +198,12 @@ def apply_inverse_data(
     with _open_report(
         cfg=cfg, exec_params=exec_params, subject=subject, session=session, task=task
     ) as report:
-        prefix, extra_tags = _get_prefix_tags(cfg=cfg, task=task, condition=condition)
         for condition in conditions:
+            prefix, extra_tags = _get_prefix_tags(
+                cfg=cfg,
+                task=task,
+                condition=condition,
+            )
             msg = f"Rendering inverse solution for {condition=}"
             logger.info(**gen_log_kwargs(message=msg))
             tags = ("source-estimate",) + extra_tags
@@ -227,7 +234,6 @@ def get_config_make_inverse(
         source_info_path_update=config.source_info_path_update,
         loose=config.loose,
         depth=config.depth,
-        inverse_method=config.inverse_method,
         noise_cov=_sanitize_callable(config.noise_cov),
         **_bids_kwargs(config=config),
     )

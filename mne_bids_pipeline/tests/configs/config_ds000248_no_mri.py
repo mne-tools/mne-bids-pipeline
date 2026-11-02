@@ -1,4 +1,4 @@
-"""MNE Sample Data: Using the `fsaverage` template MRI."""
+"""ds000248: MNE sample data using template MRI."""
 
 bids_root = "~/mne_data/ds000248"
 deriv_root = "~/mne_data/derivatives/mne-bids-pipeline/ds000248_no_mri"
@@ -16,3 +16,5 @@ process_raw_clean = False
 
 use_template_mri = "fsaverage"
 adjust_coreg = True
+
+report_image_format = dict(raster="webp-lossy")

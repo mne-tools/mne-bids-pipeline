@@ -1,4 +1,7 @@
-"""MNE Sample Data: M/EEG combined processing."""
+"""ds000248: MNE sample data (M/EEG).
+
+See [OpenNeuro](https://openneuro.org/datasets/ds000248) for more information.
+"""
 
 import mne
 import mne_bids
@@ -27,7 +30,7 @@ def noise_cov(bp: mne_bids.BIDSPath) -> mne.Covariance:
     # Use pre-stimulus period as noise source
     if not bp.fpath.exists():
         bp.update(split="01")
-    epo = mne.read_epochs(bp)
+    epo = mne.read_epochs(bp.fpath)
     cov = mne.compute_covariance(epo, rank="info", tmax=0)
     return cov
 
@@ -51,3 +54,6 @@ def mri_t1_path_generator(bids_path: mne_bids.BIDSPath) -> mne_bids.BIDSPath:
     """Return the path to a T1 image."""
     # don't really do any modifications – just for testing!
     return bids_path
+
+
+report_image_format = dict(raster="png")

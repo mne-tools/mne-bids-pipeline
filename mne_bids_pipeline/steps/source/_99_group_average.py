@@ -17,6 +17,7 @@ from mne_bids_pipeline._config_utils import (
     get_sessions,
     get_subjects,
     get_subjects_given_session,
+    get_subjects_sessions,
     sanitize_cond_name,
 )
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
@@ -66,6 +67,21 @@ def get_input_fnames_morph_stc(
     task: str | None,
 ) -> InFilesT:
     in_files = dict()
+    # we need to use fwd for the source space because some vertices can get excluded
+    in_files["src"] = BIDSPath(
+        subject=subject,
+        session=session,
+        task=None,
+        acquisition=cfg.acq,
+        run=None,
+        recording=cfg.rec,
+        space=cfg.space,
+        extension=".fif",
+        suffix="fwd",
+        datatype=cfg.datatype,
+        root=cfg.deriv_root,
+        check=False,
+    )
     for condition in _all_conditions(cfg=cfg, task=task):
         in_files[f"original-{condition}"] = _stc_path(
             cfg=cfg,
@@ -92,15 +108,20 @@ def morph_stc(
     in_files: InFilesT,
 ) -> OutFilesT:
     out_files = dict()
-    for condition in _all_conditions(cfg=cfg, task=task):
-        fname_stc = in_files.pop(f"original-{condition}")
-        stc = mne.read_source_estimate(fname_stc)
-        morph = mne.compute_source_morph(
-            stc,
-            subject_from=fs_subject,
-            subject_to="fsaverage",
-            subjects_dir=cfg.fs_subjects_dir,
-        )
+    conditions = _all_conditions(cfg=cfg, task=task)
+    subject_to = "fsaverage"
+    logger.info(
+        **gen_log_kwargs(message=f"Morphing {len(conditions)} STC(s) to {subject_to}")
+    )
+    morph = mne.compute_source_morph(
+        in_files.pop("src"),
+        subject_from=fs_subject,
+        subject_to=subject_to,
+        subjects_dir=cfg.fs_subjects_dir,
+        smooth=cfg.smoothing_steps,
+    )
+    for condition in conditions:
+        stc = mne.read_source_estimate(in_files.pop(f"original-{condition}"))
         stc_fsaverage = morph.apply(stc)
         key = f"morphed-{condition}"
         out_files[key] = _stc_path(
@@ -173,6 +194,7 @@ def run_average(
             condition=condition,
             morphed=True,
         )
+        out_files[condition].fpath.parent.mkdir(parents=True, exist_ok=True)
         stc.save(out_files[condition], ftype="h5", overwrite=True)
 
     #######################################################################
@@ -213,21 +235,15 @@ def get_config(
     config: SimpleNamespace,
 ) -> SimpleNamespace:
     cfg = SimpleNamespace(
-        task_is_rest=config.task_is_rest,
         conditions=config.conditions,
         inverse_method=config.inverse_method,
         fs_subjects_dir=get_fs_subjects_dir(config),
-        subjects_dir=get_fs_subjects_dir(config),
-        ch_types=config.ch_types,
         subjects=get_subjects(config=config),
-        exclude_subjects=config.exclude_subjects,
-        sessions=get_sessions(config),
+        subjects_sessions=get_subjects_sessions(config),
         allow_missing_sessions=config.allow_missing_sessions,
-        use_template_mri=config.use_template_mri,
         contrasts=config.contrasts,
         report_stc_n_time_points=config.report_stc_n_time_points,
-        # TODO: needed because get_datatype gets called again...
-        data_type=config.data_type,
+        smoothing_steps=config.smoothing_steps,
         **_bids_kwargs(config=config),
     )
     return cfg
@@ -261,7 +277,9 @@ def main(*, config: SimpleNamespace) -> None:
                 cfg=cfg,
                 exec_params=exec_params,
                 subject=subject,
-                fs_subject=get_fs_subject(config=cfg, subject=subject, session=session),
+                fs_subject=get_fs_subject(
+                    config=config, subject=subject, session=session
+                ),
                 session=session,
                 task=task,
             )

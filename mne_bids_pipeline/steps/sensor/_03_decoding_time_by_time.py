@@ -37,7 +37,11 @@ from mne_bids_pipeline._config_utils import (
     _restrict_analyze_channels,
     get_eeg_reference,
 )
-from mne_bids_pipeline._decoding import LogReg, _decoding_preproc_steps
+from mne_bids_pipeline._decoding import (
+    LogReg,
+    _decoding_preproc_steps,
+    _get_nan_decoding_scores_if_insufficient,
+)
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, get_parallel_backend_name
 from mne_bids_pipeline._report import (
@@ -106,12 +110,13 @@ def run_time_decoding(
         kind = "time generalization"
     else:
         kind = "sliding estimator"
-    msg = f"Contrasting conditions ({kind}): {condition1} – {condition2}"
+    contrast_msg = f"{condition1} – {condition2}"
+    msg = f"Contrasting conditions ({kind}): {contrast_msg}"
     logger.info(**gen_log_kwargs(message=msg))
     out_files = dict()
     bids_path = in_files["epochs"].copy().update(split=None)
 
-    epochs = mne.read_epochs(in_files.pop("epochs"))
+    epochs = mne.read_epochs(in_files.pop("epochs").fpath)
     _restrict_analyze_channels(epochs, cfg)
 
     # We define the epochs and the labels
@@ -132,76 +137,82 @@ def run_time_decoding(
     # We have to use this approach because the conditions could be based on
     # metadata selection, so simply using epochs[conds[0], conds[1]] would
     # not work.
-    epochs = mne.concatenate_epochs([epochs[epochs_conds[0]], epochs[epochs_conds[1]]])
+    epochs = mne.concatenate_epochs(
+        [epochs[epochs_conds[0]], epochs[epochs_conds[1]]],
+        verbose="error",
+    )
     n_cond1 = len(epochs[epochs_conds[0]])
     n_cond2 = len(epochs[epochs_conds[1]])
     pick_idx = mne.pick_types(
         epochs.info, meg=True, eeg=True, ref_meg=False, exclude="bads"
     )
     epochs.pick(pick_idx)
-    # We can't use the full rank here because the number of samples can just be the
-    # number of epochs (which can be fewer than the number of channels)
-    pre_steps = _decoding_preproc_steps(
-        cfg=cfg,
-        subject=subject,
-        session=session,
-        task=task,
-        epochs=epochs,
-        pca=False,
-    )
-    # At some point we might want to enable this, but it's really slow and arguably
-    # unnecessary so let's omit it for now:
-    # pre_steps.append(
-    #     mne.decoding.UnsupervisedSpatialFilter(
-    #         PCA(n_components=0.999, whiten=True),
-    #     )
-    # )
-
     decim = cfg.decoding_time_decim
     if cfg.decoding_time_generalization:
         decim = max(cfg.decoding_time_generalization_decim, decim)
     if decim > 1:
         epochs.decimate(decim, verbose="error")
 
-    X = epochs.get_data()
-    y = np.r_[np.ones(n_cond1), np.zeros(n_cond2)]
+    score_shape = (len(epochs.times),)
+    if cfg.decoding_time_generalization:
+        score_shape += (len(epochs.times),)
+    scores = _get_nan_decoding_scores_if_insufficient(
+        n_cond1=n_cond1,
+        n_cond2=n_cond2,
+        n_splits=cfg.decoding_n_splits,
+        score_shape=score_shape,
+        contrast_msg=contrast_msg,
+    )
+
     # ProgressBar does not work on dask, so only enable it if not using dask
     verbose = get_parallel_backend_name(exec_params=exec_params) != "dask"
     with get_parallel_backend(exec_params):
-        clf = make_pipeline(
-            *pre_steps,
-            Vectorizer(),
-            LogReg(random_state=cfg.random_state),
-        )
-        cv = StratifiedKFold(
-            shuffle=True,
-            random_state=cfg.random_state,
-            n_splits=cfg.decoding_n_splits,
-        )
-
-        if cfg.decoding_time_generalization:
-            estimator = GeneralizingEstimator(
-                clf,
-                scoring=cfg.decoding_metric,
-                n_jobs=exec_params.n_jobs,
+        if scores is None:
+            # We can't use the full rank here because the number of samples can
+            # just be the number of epochs (which can be fewer than the number
+            # of channels).
+            pre_steps = _decoding_preproc_steps(
+                cfg=cfg,
+                subject=subject,
+                session=session,
+                task=task,
+                epochs=epochs,
+                pca=False,
             )
-            cv_scoring_n_jobs = 1
-        else:
-            estimator = SlidingEstimator(
-                clf,
-                scoring=cfg.decoding_metric,
-                n_jobs=1,
+            clf = make_pipeline(
+                *pre_steps,
+                Vectorizer(),
+                LogReg(random_state=cfg.random_state),
             )
-            cv_scoring_n_jobs = exec_params.n_jobs
+            cv = StratifiedKFold(
+                shuffle=True,
+                random_state=cfg.random_state,
+                n_splits=cfg.decoding_n_splits,
+            )
 
-        scores = cross_val_multiscore(
-            estimator,
-            X=X,
-            y=y,
-            cv=cv,
-            n_jobs=cv_scoring_n_jobs,
-            verbose=verbose,  # ensure ProgressBar is shown (can be slow)
-        )
+            if cfg.decoding_time_generalization:
+                estimator = GeneralizingEstimator(
+                    clf,
+                    scoring=cfg.decoding_metric,
+                    n_jobs=exec_params.n_jobs,
+                )
+                cv_scoring_n_jobs = 1
+            else:
+                estimator = SlidingEstimator(
+                    clf,
+                    scoring=cfg.decoding_metric,
+                    n_jobs=1,
+                )
+                cv_scoring_n_jobs = exec_params.n_jobs
+
+            scores = cross_val_multiscore(
+                estimator,
+                X=epochs.get_data(),
+                y=np.r_[np.ones(n_cond1), np.zeros(n_cond2)],
+                cv=cv,
+                n_jobs=cv_scoring_n_jobs,
+                verbose=verbose,  # ensure ProgressBar is shown (can be slow)
+            )
 
         # let's save the scores now
         a_vs_b = f"{cond_names[0]}+{cond_names[1]}".replace(op.sep, "")
@@ -227,6 +238,15 @@ def run_time_decoding(
             mean_crossval_score = np.diag(scores.mean(axis=0))
         else:
             mean_crossval_score = scores.mean(axis=0)
+        if np.isnan(scores).all():
+            msg = f"Maximum score for {contrast_msg} is unavailable."
+        else:
+            max_idx = np.argmax(mean_crossval_score)
+            msg = (
+                f"Max score for {contrast_msg}: t={epochs.times[max_idx]:0.3f} sec, "
+                f"{cfg.decoding_metric}={mean_crossval_score[max_idx]:0.3f}"
+            )
+        logger.info(**gen_log_kwargs(message=msg))
 
         out_files[f"tsv_{processing}"] = (
             out_files[mat_key].copy().update(extension=".tsv")
@@ -326,7 +346,6 @@ def get_config(
         conditions=_get_task_conditions_dict(conditions=config.conditions, task=task),
         contrasts=_get_task_decoding_contrasts(config, task=task),
         cov_rank=config.cov_rank,
-        decode=config.decode,
         decoding_which_epochs=config.decoding_which_epochs,
         decoding_metric=config.decoding_metric,
         decoding_n_splits=config.decoding_n_splits,

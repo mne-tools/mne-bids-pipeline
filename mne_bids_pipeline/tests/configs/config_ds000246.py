@@ -1,15 +1,15 @@
-"""Brainstorm - Auditory Dataset.
+"""ds000246: Brainstorm Auditory MEG.
 
-See https://openneuro.org/datasets/ds000246/versions/1.0.0 for more
-information.
+See [OpenNeuro](https://openneuro.org/datasets/ds000246) for more information.
 """
+
+import sys
 
 bids_root = "~/mne_data/ds000246"
 deriv_root = "~/mne_data/derivatives/mne-bids-pipeline/ds000246"
 
 runs = ["01"]
 crop_runs = (0, 120)  # Reduce memory usage on CI system
-read_raw_bids_verbose = "error"  # No BIDS -> MNE mapping found for channel ...
 l_freq = 0.3
 h_freq = 100
 epochs_decim = 4
@@ -26,7 +26,9 @@ on_error = "abort"
 plot_psd_for_runs = []  # too much memory on CIs
 
 parallel_backend = "dask"
-dask_worker_memory_limit = "2G"
+dask_worker_memory_limit = "3G" if sys.platform == "darwin" else "2G"
 dask_temp_dir = "./.dask-worker-space"
 dask_open_dashboard = True
 n_jobs = 2
+
+report_image_format = dict(raster="png")

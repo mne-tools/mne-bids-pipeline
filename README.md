@@ -25,7 +25,7 @@ Structure (BIDS)](https://bids.neuroimaging.io/).
 * 👣 Data processing as a sequence of standard processing steps.
 * ⏩ Steps are cached to avoid unnecessary recomputation.
 * ⏏️ Data can be "ejected" from the pipeline at any stage. No lock-in!
-* ☁️ Runs on your laptop, on a powerful server, or on a high-performance cluster via Dask.
+* ☁️ Runs on your laptop, on a powerful server, or on a high-performance (e.g., SLURM) cluster via Dask.
 
 <!--features-list-end-->
 

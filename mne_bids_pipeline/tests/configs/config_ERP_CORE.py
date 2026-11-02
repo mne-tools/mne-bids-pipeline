@@ -1,4 +1,4 @@
-"""ERP CORE.
+"""ERP CORE EEG.
 
 This example demonstrates how to process 5 participants from the
 [ERP CORE](https://erpinfo.org/erp-core) dataset. It shows how to obtain 7 ERP
@@ -17,13 +17,17 @@ components from a total of 6 experimental tasks:
                        Andrew X. Stewart, and Steven J. Luck
 - **License:** CC-BY-4.0
 - **URL:** [https://erpinfo.org/erp-core](https://erpinfo.org/erp-core)
-- **Citation:** Kappenman, E., Farrens, J., Zhang, W., Stewart, A. X.,
-                & Luck, S. J. (2021). ERP CORE: An open resource for human
-                event-related potential research. *NeuroImage* 225: 117465.
-                [https://doi.org/10.1016/j.neuroimage.2020.117465](https://doi.org/10.1016/j.neuroimage.2020.117465)
+- **Citation:**
+  ```
+  Kappenman, E., Farrens, J., Zhang, W., Stewart, A. X.,
+  & Luck, S. J. (2021). ERP CORE: An open resource for human
+  event-related potential research. *NeuroImage* 225: 117465.
+  https://doi.org/10.1016/j.neuroimage.2020.117465
+  ```
 """
 
 import argparse
+import os
 import sys
 
 import mne
@@ -50,7 +54,7 @@ raw_resample_sfreq = 128
 # Suppress "Data file name in EEG.data (sub-019_task-ERN_eeg.fdt) is incorrect..."
 read_raw_bids_verbose = "error"
 
-eeg_template_montage = mne.channels.make_standard_montage("standard_1005")
+eeg_template_montage = mne.channels.make_standard_montage("colin27_1005")
 eeg_bipolar_channels = {
     "HEOG": ("HEOG_left", "HEOG_right"),
     "VEOG": ("VEOG_lower", "FP2"),
@@ -102,6 +106,23 @@ on_rename_missing_events = "ignore"
 parallel_backend = "dask"
 dask_worker_memory_limit = "2.5G"
 n_jobs = 4
+
+# In CI we farm the workers out through a real SLURM scheduler (see the
+# test_ERP_CORE_N400 CircleCI job); this is also how you would run on an HPC system.
+# Without the env var set, Dask starts local workers as usual.
+if os.getenv("MNE_BIDS_PIPELINE_TEST_DASK_CLUSTER", "") == "slurm":
+    dask_worker_startup_timeout = 60.0  # CI's slurmd grants in seconds; fail fast
+
+    def dask_cluster():
+        """Submit each Dask worker as a 1-core SLURM job."""
+        from dask_jobqueue import SLURMCluster
+
+        cluster = SLURMCluster(
+            cores=1, processes=1, memory="2.5GB", walltime="02:00:00"
+        )
+        cluster.scale(jobs=4)
+        return cluster
+
 
 if task == "N400":
     dask_open_dashboard = True
@@ -159,7 +180,7 @@ elif task == "ERN":
     conditions = ["response/correct", "response/incorrect"]
     contrasts = [("response/incorrect", "response/correct")]
     cluster_forming_t_threshold = 5  # Only for testing!
-    cluster_permutation_p_threshold = 0.2  # Only for testing!
+    cluster_permutation_p_threshold = 0.5  # Only for testing!
     decoding_csp = True
     decoding_csp_freqs = {
         "theta": [4, 7],
@@ -168,6 +189,7 @@ elif task == "ERN":
         "gamma": [50, 63],
     }
     decoding_csp_times = [-0.2, 0.0, 0.2, 0.4]
+    cluster_forming_t_threshold = 2  # Only for testing!
 elif task == "LRP":
     rename_events = {
         "stimulus/11": "compatible/left",
@@ -264,6 +286,7 @@ elif task == "N170":
     }
 
     eeg_reference = "average"
+    eeg_online_reference_channel = "CMS"  # BioSemi; exercises add + ICLabel drop
     # Analyze all EEG channels -- we only specify the channels here for the purpose of
     # demonstration
     analyze_channels = [
@@ -362,3 +385,5 @@ elif task == "P3":
     cluster_permutation_p_threshold = 0.2  # Only for testing!
 else:
     raise RuntimeError(f"Task {task} not currently supported")
+
+report_image_format = dict(raster="png")

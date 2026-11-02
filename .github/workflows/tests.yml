@@ -17,16 +17,19 @@ jobs:
       run:
         shell: bash -l {0}
     steps:
-    - uses: actions/checkout@v6
-    - uses: actions/setup-python@v6
+    - uses: actions/checkout@v7
+    - uses: actions/setup-python@v7
       with:
         python-version: "3.12"
     - uses: astral-sh/setup-uv@v7
     - run: pip install --upgrade pip
-    - run: pip install -ve . --group dev "mne-bids[full] @ git+https://github.com/mne-tools/mne-bids@main" "openneuro-py @ https://api.github.com/repos/openneuro-py/openneuro-py/zipball/main" codespell tomli --only-binary="numpy,scipy,pandas,matplotlib,pyarrow,numexpr"
-    - run: lefthook run pre-commit --all-files  # fail early if code style issues!
+    - run: pip install -ve . --group dev "mne-bids[full] @ git+https://github.com/mne-tools/mne-bids@main" "openneuro-py @ https://api.github.com/repos/openneuro-py/openneuro-py/zipball/main" --only-binary="numpy,scipy,pandas,matplotlib,pyarrow,numexpr"
+    - run: prek run --all-files  # fail early if code style issues!
     - run: pytest mne_bids_pipeline -m "not dataset_test"
-    - uses: codecov/codecov-action@v5
+    # merge in coverage from loky/dask workers; see [tool.coverage.run]
+    - run: coverage combine --append || true
+    - run: coverage xml || true
+    - uses: codecov/codecov-action@v7
       if: success()
       name: 'Upload coverage to CodeCov'
   caching:
@@ -40,46 +43,47 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, windows-latest]
-        dataset: [ds001971, ds003392]  # one uses "hash", the other "mtime"
+        dataset: [ds001971, ds003775]  # one uses "hash", the other "mtime"
         python: ["3.12"]
         include:
           - os: ubuntu-latest
             dataset: ds001971
-            python: "3.10"
+            python: "3.11"
           - os: ubuntu-latest
-            dataset: ds003392
+            dataset: ds003775
             python: "3.13"
+
     env:
       MNE_BIDS_PIPELINE_LEGACY_WINDOWS: "false"
       PYTHONIOENCODING: 'utf8'  # for Windows
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: pyvista/setup-headless-display-action@main
         with:
           qt: true
           pyvista: false
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: "${{ matrix.python }}"
       - run: pip install -ve . --group dev --only-binary="numpy,scipy,pandas,matplotlib,pyarrow,numexpr"
-      - uses: actions/cache@v5
+      - uses: actions/cache@v6
         with:
           key: ${{ matrix.dataset }}
           path: ~/mne_data/${{ matrix.dataset }}
         id: dataset-cache
       - run: python -m mne_bids_pipeline._download ${{ matrix.dataset }}
         if: steps.dataset-cache.outputs.cache-hit != 'true'
-      - run: |
-          rm -f ~/mne_data/ds003392/sub-01/meg/sub-01_acq-calibration_meg.dat
-          rm -f ~/mne_data/ds003392/sub-01/meg/sub-01_acq-crosstalk_meg.fif
-        if: matrix.dataset == 'ds003392'
-        name: Remove cross-talk and cal files from ds003392
+      - run: find ~/mne_data/${{ matrix.dataset }} -name "*.lock" -print -delete
+        shell: bash
+        name: Remove stale lock files
       - run: pytest --cov-append -k ${{ matrix.dataset }} mne_bids_pipeline/
         name: Run ${{ matrix.dataset }} test from scratch
       - run: pytest --cov-append -k ${{ matrix.dataset }} mne_bids_pipeline/
         timeout-minutes: 1
         name: Rerun ${{ matrix.dataset }} test to check all steps cached
-      - uses: codecov/codecov-action@v5
+      - run: coverage combine --append || true
+      - run: coverage xml || true
+      - uses: codecov/codecov-action@v7
         if: success() || failure()
   non-doc-dataset-tests:
     name: 'Non-doc dataset tests'
@@ -91,20 +95,28 @@ jobs:
     strategy:
       fail-fast: true
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: pyvista/setup-headless-display-action@main
         with:
           qt: true
           pyvista: false
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - run: pip install -ve . --group dev pyvistaqt PySide6 --only-binary="numpy,scipy,pandas,matplotlib,pyarrow,numexpr,PySide6"
-      - uses: actions/cache@v5
+      - uses: actions/cache@v6
         with:
           key: MNE-funloc-data
           path: ~/mne_data/MNE-funloc-data
         id: MNE-funloc-data-cache
       - run: python -m mne_bids_pipeline._download MNE-funloc-data
         if: steps.MNE-funloc-data-cache.outputs.cache-hit != 'true'
+      - run: find ~/mne_data/MNE-funloc-data -name "*.lock" -print -delete
+        shell: bash
+        name: Remove stale lock files
       - run: pytest --cov-append -k test_session_specific_mri mne_bids_pipeline/
+      - run: coverage combine --append || true
+      - run: coverage xml || true
+      - uses: codecov/codecov-action@v7
+        if: success()
+        name: 'Upload coverage to CodeCov'

@@ -1,4 +1,6 @@
-!!! info
+# Preparations for source-level analyses
+
+???+ Info
     Preparations for inverse modeling involve the installation of
     [FreeSurfer](https://surfer.nmr.mgh.harvard.edu/fswiki/).
     If you do not intend to run the source reconstruction steps of MNE-BIDS-Pipeline,
@@ -14,7 +16,7 @@
     [these instructions](https://mne.tools/stable/install/advanced.html#installing-to-a-headless-linux-server)
     on the MNE-Python website).
 
-!!! warning
+???+ Warning
     FreeSurfer does not natively run on Windows. We are currently working on
     ways to make it possible to use it on Windows, too.
 
@@ -45,7 +47,7 @@ is a free software package that runs on macOS and Linux.
 To install FreeSurfer, follow the [official download and installation
 nstructions](https://surfer.nmr.mgh.harvard.edu/fswiki/rel6downloads).
 
-!!! info
+???+ Info
     The only currently tested FreeSurfer version is **6.0**.
 
 ## :brain: Generate surfaces and brain parcellation
@@ -62,7 +64,7 @@ This will run the
 [`recon-all` command](https://surfer.nmr.mgh.harvard.edu/fswiki/recon-all)
 to create the required surfaces.
 
-!!! info
+???+ Info
     This process is very computationally expensive, and will usually take
     several hours to complete. It's a good idea to let this command run
     over night.

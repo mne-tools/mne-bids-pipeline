@@ -1,4 +1,7 @@
-"""Funloc data."""
+"""mne-data: Funloc data.
+
+See [mne-data](https://github.com/mne-tools/mne-data/releases/tag/funloc-1) for more.
+"""
 
 from pathlib import Path
 
@@ -9,6 +12,7 @@ subjects_dir = bids_root / "derivatives" / "freesurfer" / "subjects"
 task = "funloc"
 ch_types = ["meg", "eeg"]
 data_type = "meg"
+n_jobs = 2  # sub-01 and sub-02 (sub-emptyroom is not processed)
 
 # filter
 l_freq = None
@@ -20,7 +24,7 @@ mf_st_duration = 60.0
 # SSP
 spatial_filter = "ssp"
 process_raw_clean = False
-ssp_ecg_channel = {"sub-01": "MEG0111", "sub-02": "MEG0141"}
+ssp_ecg_channel = {"sub-01": "MEG0111", "sub-02": None}
 n_proj_eog = dict(n_mag=1, n_grad=1, n_eeg=2)
 n_proj_ecg = dict(n_mag=1, n_grad=1, n_eeg=0)
 
@@ -43,3 +47,5 @@ cov_rank = dict(tol_kind="relative", tol=1e-4)
 
 # contrasts
 # contrasts = [("auditory", "visual")]
+
+report_image_format = dict(raster="png")

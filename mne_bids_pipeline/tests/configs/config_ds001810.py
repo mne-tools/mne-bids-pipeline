@@ -1,4 +1,7 @@
-"""tDCS EEG."""
+"""ds001810: tDCS EEG.
+
+See [OpenNeuro](https://openneuro.org/datasets/ds001810) for more information.
+"""
 
 import numpy as np
 import pandas as pd
@@ -64,3 +67,5 @@ epochs_custom_metadata = {
         }
     ),
 }  # number of rows are hand-set
+
+report_image_format = dict(raster="png")

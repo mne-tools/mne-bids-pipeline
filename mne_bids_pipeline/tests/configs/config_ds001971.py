@@ -35,6 +35,8 @@ subjects = ["001"]
 runs = ["01"]
 epochs_decim = 5  # to 100 Hz
 
+eeg_online_reference_channel = "M2"  # right mastoid
+
 # This is mostly for testing purposes!
 decode = True
 decoding_time_generalization = True

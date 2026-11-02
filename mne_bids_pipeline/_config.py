@@ -340,6 +340,20 @@ The EEG reference to use. If `average`, will use the average reference,
 i.e. the average across all channels. If a string, must be the name of a single
 channel. To use multiple channels as reference, set to a list of channel names.
 
+!!! warning
+    For `average`, if the online (recording) reference electrode is not a channel
+    in the data, set
+    [`eeg_online_reference_channel`][mne_bids_pipeline._config.eeg_online_reference_channel]
+    so it is included in the average; otherwise sensor-space values will be off
+    (see [mne-python#13618](https://github.com/mne-tools/mne-python/issues/13618)).
+
+!!! warning
+    The reference is set on the epochs and, when
+    [`spatial_filter`][mne_bids_pipeline._config.spatial_filter] is `"ica"` or
+    `"ssp"`, on the cleaned continuous data (`*_proc-clean_raw.fif`). If
+    `spatial_filter` is `None`, the continuous data (e.g., `*_proc-filt_raw.fif`)
+    are not re-referenced.
+
 ???+ example "Example"
     Use the average reference:
     ```python
@@ -354,6 +368,27 @@ channel. To use multiple channels as reference, set to a list of channel names.
     Use the average of the `P9` and `P10` channels as reference:
     ```python
     eeg_reference = ['P9', 'P10']
+    ```
+"""
+
+eeg_online_reference_channel: str | None = None
+"""
+Name of the online (recording) reference electrode. If it is not a channel in the
+data, it is added as a flat channel before setting an
+[average reference][mne_bids_pipeline._config.eeg_reference] so that it is included
+in the average. If `None` (default), no channel is added. Ignored for other
+references.
+
+The channel is kept in the epochs (it is needed by the average reference
+projector). Its position is taken from the reference digitization point if there
+is one (e.g., MEGIN/Neuromag data); otherwise it has none. When the reference is
+applied directly, as for
+[`ica_use_icalabel`][mne_bids_pipeline._config.ica_use_icalabel], it is dropped
+afterward, giving full-rank data.
+
+???+ example "Example"
+    ```python
+    eeg_online_reference_channel = "Cz"
     ```
 """
 

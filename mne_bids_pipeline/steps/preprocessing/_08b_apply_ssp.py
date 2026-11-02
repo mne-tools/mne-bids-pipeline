@@ -13,10 +13,12 @@ from mne_bids_pipeline._config_utils import (
     _get_sst,
     _limit_which_clean,
     _proj_path,
+    get_eeg_reference,
 )
 from mne_bids_pipeline._import_data import _get_run_rest_noise_path, _raw_path_kwargs
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
+from mne_bids_pipeline._reference import _set_eeg_reference
 from mne_bids_pipeline._report import _add_raw, _open_report
 from mne_bids_pipeline._run import (
     _prep_out_files,
@@ -124,7 +126,8 @@ def apply_ssp_raw(
     assert in_key.startswith("raw"), in_key
     raw_fname = in_files.pop(in_key)
     assert len(in_files) == 0, in_files.keys()
-    raw = mne.io.read_raw_fif(raw_fname)
+    raw = mne.io.read_raw_fif(raw_fname, preload="eeg" in cfg.ch_types)
+    _set_eeg_reference(raw, cfg=cfg)  # match epochs
     raw.add_proj(projs)
     out_files = dict()
     out_files[in_key] = raw_fname.copy().update(processing="clean", split=None)
@@ -165,6 +168,8 @@ def get_config(
         processing="filt" if config.regress_artifact is None else "regress",
         plot_psd_for_runs=config.plot_psd_for_runs,
         _raw_split_size=config._raw_split_size,
+        eeg_reference=get_eeg_reference(config),
+        eeg_online_reference_channel=config.eeg_online_reference_channel,
         **_raw_path_kwargs(config=config, subject=subject, session=session),
     )
     return cfg

@@ -130,6 +130,12 @@ def _import_config(
     ) + extra_exec_params_keys
     in_both = {"deriv_root"}
     exec_params = SimpleNamespace(**{k: getattr(config, k) for k in keys})
+    if config.eeg_online_reference_channel is not None:  # flat until avg ref applied
+        exec_params.ignore_warnings = (
+            *exec_params.ignore_warnings,
+            "value in (spectrum|PSD) for channel "
+            + re.escape(config.eeg_online_reference_channel),
+        )
     override_keys = ("subjects",)
     exec_params.overrides = SimpleNamespace(
         **{k: getattr(overrides, k) for k in override_keys if hasattr(overrides, k)}

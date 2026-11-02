@@ -286,6 +286,7 @@ elif task == "N170":
     }
 
     eeg_reference = "average"
+    eeg_online_reference_channel = "CMS"  # BioSemi; exercises add + ICLabel drop
     # Analyze all EEG channels -- we only specify the channels here for the purpose of
     # demonstration
     analyze_channels = [

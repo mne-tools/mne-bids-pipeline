@@ -12,10 +12,16 @@ import pandas as pd
 from mne.preprocessing import read_ica
 from mne_bids import BIDSPath
 
-from mne_bids_pipeline._config_utils import _get_ssrt, _get_sst, _limit_which_clean
+from mne_bids_pipeline._config_utils import (
+    _get_ssrt,
+    _get_sst,
+    _limit_which_clean,
+    get_eeg_reference,
+)
 from mne_bids_pipeline._import_data import _get_run_rest_noise_path, _raw_path_kwargs
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
+from mne_bids_pipeline._reference import _set_eeg_reference
 from mne_bids_pipeline._report import _add_raw, _open_report
 from mne_bids_pipeline._run import (
     _prep_out_files,
@@ -143,7 +149,7 @@ def apply_ica_epochs(
 
     epochs = mne.read_epochs(in_files.pop("epochs").fpath, preload=True)
     if cfg.ica_use_icalabel:
-        epochs.set_eeg_reference("average", projection=True).apply_proj()
+        _set_eeg_reference(epochs, cfg=cfg, apply=True)
 
     # Now actually reject the components.
     msg = (
@@ -218,8 +224,7 @@ def apply_ica_raw(
     msg = f"Writing {out_files[in_key].basename} …"
     logger.info(**gen_log_kwargs(message=msg))
     raw = mne.io.read_raw_fif(raw_fname, preload=True)
-    if cfg.ica_use_icalabel:
-        raw.set_eeg_reference("average", projection=True).apply_proj()
+    _set_eeg_reference(raw, cfg=cfg, apply=cfg.ica_use_icalabel)  # match epochs
     ica.apply(raw)
     raw.save(out_files[in_key], overwrite=True, split_size=cfg._raw_split_size)
     _update_for_splits(out_files, in_key)
@@ -257,6 +262,8 @@ def get_config(
         _epochs_split_size=config._epochs_split_size,
         plot_psd_for_runs=config.plot_psd_for_runs,
         _raw_split_size=config._raw_split_size,
+        eeg_reference=get_eeg_reference(config),
+        eeg_online_reference_channel=config.eeg_online_reference_channel,
         **_raw_path_kwargs(config=config, subject=subject, session=session),
     )
     return cfg

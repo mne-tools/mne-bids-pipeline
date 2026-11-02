@@ -31,6 +31,7 @@ from mne_bids_pipeline._import_data import (
 )
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
+from mne_bids_pipeline._reference import _set_eeg_reference
 from mne_bids_pipeline._reject import _get_reject
 from mne_bids_pipeline._report import _open_report
 from mne_bids_pipeline._run import (
@@ -209,12 +210,7 @@ def run_ica(
     del run
     assert epochs is not None
 
-    # Set an EEG reference
-    if "eeg" in cfg.ch_types:
-        projection = True if cfg.eeg_reference == "average" else False
-        epochs.set_eeg_reference(cfg.eeg_reference, projection=projection)
-        if cfg.ica_use_icalabel:
-            epochs.apply_proj()  # Apply the reference projection
+    _set_eeg_reference(epochs, cfg=cfg, apply=cfg.ica_use_icalabel)
 
     ar_reject_log = ar_n_interpolate_ = None
     if cfg.ica_reject == "autoreject_local":
@@ -402,6 +398,7 @@ def get_config(
         epochs_tmin=epochs_tmin,
         epochs_tmax=epochs_tmax,
         eeg_reference=get_eeg_reference(config),
+        eeg_online_reference_channel=config.eeg_online_reference_channel,
         processing="filt" if config.regress_artifact is None else "regress",
         _epochs_split_size=config._epochs_split_size,
         **_epochs_kwargs(config=config),

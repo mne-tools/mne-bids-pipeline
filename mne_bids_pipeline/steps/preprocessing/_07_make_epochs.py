@@ -29,6 +29,7 @@ from mne_bids_pipeline._import_data import (
 )
 from mne_bids_pipeline._logging import gen_log_kwargs, logger
 from mne_bids_pipeline._parallel import get_parallel_backend, parallel_func
+from mne_bids_pipeline._reference import _set_eeg_reference
 from mne_bids_pipeline._report import _get_prefix_tags, _open_report
 from mne_bids_pipeline._run import (
     _ignore_warnings,
@@ -227,10 +228,7 @@ def run_epochs(
             msg = f'The MEG rank of the "{task}" epochs is now: {rank_epochs_new}'
             logger.warning(**gen_log_kwargs(message=msg))
 
-    # Set an EEG reference
-    if "eeg" in cfg.ch_types:
-        projection = True if cfg.eeg_reference == "average" else False
-        epochs.set_eeg_reference(cfg.eeg_reference, projection=projection)
+    _set_eeg_reference(epochs, cfg=cfg)
 
     assert isinstance(epochs.drop_log, tuple)
     n_epochs_before_metadata_query = len(epochs.drop_log)
@@ -378,6 +376,7 @@ def get_config(
         ch_types=config.ch_types,
         noise_cov=_sanitize_callable(config.noise_cov),
         eeg_reference=get_eeg_reference(config),
+        eeg_online_reference_channel=config.eeg_online_reference_channel,
         _epochs_split_size=config._epochs_split_size,
         runs_for_task=_get_runs_sst(
             config=config, subject=subject, session=session, task=task

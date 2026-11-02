@@ -12,10 +12,12 @@
 - Report HDF5 and HTML files are no longer rewritten when a step did not modify the report (requires MNE-Python ≥ 1.13; older versions keep the previous always-save behavior) (#1300 by @larsoner)
 - [`report_image_format`][mne_bids_pipeline._config.report_image_format] now accepts `dict(raster="webp-lossy")`, which encodes about as fast as PNG while producing reports roughly 3× smaller (requires MNE-Python ≥ 1.13) (#1304 by @larsoner)
 - Added the [`dask_cluster`][mne_bids_pipeline._config.dask_cluster] option to attach to an external Dask cluster, e.g. on an HPC system via [dask-jobqueue](https://jobqueue.dask.org) (SLURM, PBS, SGE, …), with [`dask_worker_startup_timeout`][mne_bids_pipeline._config.dask_worker_startup_timeout] controlling how long to wait for queued workers; step log messages now also reach each Dask worker's log (e.g., the SLURM job log) (#1307 by @larsoner)
+- Added [`eeg_online_reference_channel`][mne_bids_pipeline._config.eeg_online_reference_channel] to include the online reference electrode as a flat channel when computing an average EEG reference (#1184 by @jschepers and @larsoner)
 
 ### :warning: Behavior changes
 
 - The default for [`mne_log_level`][mne_bids_pipeline._config.mne_log_level] has been changed from `'error'` to `'warning'` to make possible dataset and processing errors more visible (#1224 by @larsoner)
+- The EEG reference is now also set on the raw data cleaned by ICA or SSP (`*_proc-clean_raw.fif`, also used for resting-state noise covariances), matching the epochs. Previously it was only set there for an average reference with [`ica_use_icalabel`][mne_bids_pipeline._config.ica_use_icalabel] (#1184 by @jschepers and @larsoner)
 - ZapLine line-noise removal now uses `mne-denoise` instead of `meegkit`. [`zapline_fline`][mne_bids_pipeline._config.zapline_fline] continues to control the line frequency and whether ZapLine is enabled; `zapline_iter` has been removed with no direct replacement, and advanced behavior can be configured with [`zapline_extra_kws`][mne_bids_pipeline._config.zapline_extra_kws]. ZapLine and notch filtering cannot be enabled together (#1313 by @BabaSanfour).
 
 ### :package: Requirements

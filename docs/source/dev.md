@@ -23,6 +23,7 @@
 ### :package: Requirements
 
 - Minimum supported versions were raised to Python 3.11, MNE-Python 1.8, MNE-BIDS 0.16, and joblib 1.4.1, following [SPEC 0](https://scientific-python.org/specs/spec-0000) (#1289 by @larsoner)
+- The minimum supported Python version was raised to 3.11.5 so that patched versions of `soupsieve` (a transitive dependency via `jupyter-server-proxy`) can be installed (#1335 by @larsoner)
 
 ### :bug: Bug fixes
 
